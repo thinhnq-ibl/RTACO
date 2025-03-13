@@ -7,22 +7,20 @@ function hash(data) {
 
 // 🔹 Generate a random number in a range
 function randomInRange(max) {
-  return crypto.randomBytes(4).readUInt32BE(0) % max; // 4 bytes = 32-bit number
+  return crypto.randomBytes(4).readUInt32BE(0) % max; // 4 bytes = 32-bit integer
 }
 
 // 🔹 User (Prover)
 class User {
   constructor(name, dob) {
-    this.name = name;
-    this.dob = dob;
     this.salt = crypto.randomBytes(16).toString("hex"); // Random salt
-    this.commitment = hash(`${name}${dob}${this.salt}`); // Store on server
+    this.commitment = hash(`${name}${dob}${this.salt}`); // Store commitment on the server
   }
 
   // Step 1: Generate a random commitment R
   generateCommitment() {
     this.r = randomInRange(1000000);
-    this.R = hash(`${this.name}${this.dob}${this.r}`);
+    this.R = hash(`${this.commitment}${this.r}`); // Use commitment instead of name & DOB
     return this.R;
   }
 
@@ -45,9 +43,9 @@ class Server {
     return this.c;
   }
 
-  // Step 4: Verify the proof
-  verifyProof(R, s, c, name, dob) {
-    const reconstructedR = hash(`${name}${dob}${s - c}`);
+  // Step 4: Verify the proof without using name & DOB
+  verifyProof(R, s, c) {
+    const reconstructedR = hash(`${this.commitment}${s - c}`);
     return R === reconstructedR;
   }
 }
@@ -71,5 +69,5 @@ const s = user.generateResponse(c);
 console.log("✅ Response generated:", s);
 
 // 🔹 Step 4: Server verifies the proof
-const isValid = server.verifyProof(R, s, c, name, dob);
+const isValid = server.verifyProof(R, s, c);
 console.log("✅ Proof is valid:", isValid); // Should print true
