@@ -26,3 +26,6 @@ artifacts/
 build/
 # Aiken's default documentation export
 docs/
+
+js/package-lock.json
+js/node_modules

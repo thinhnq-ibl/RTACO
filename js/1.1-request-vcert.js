@@ -2,9 +2,12 @@ async function reqVcert() {
   // Convert step-by-step
 }
 
-def req_v_cert():
+def req_vcert():
     vcert_title = input("Enter the Vcert you want to request : ")
+
+    // CREATE TABLE IF NOT EXISTS certifiers (ID serial PRIMARY KEY NOT NULL, NAME TEXT, TITLE TEXT, REQ_IP TEXT, REQ_PORT TEXT, OPEN_IP TEXT, OPEN_PORT TEXT, DEPENDENCY TEXT[], PARAMS BYTEA, PK BYTEA, SCHEMA BYTEA);
     query = "SELECT * from certifiers;"
+
     d = fetch_data_all(connection, query)
     depen = []
     req_ip = None
@@ -42,7 +45,6 @@ def req_v_cert():
                         print("This is the required vcerdts")
                         print(requiredVcerts[i])
                         title = requiredVcerts[i]["title"]
-                        # path = self.title_to_path(title)
                         schema, params, pk = self.downloadPublicInformation(title)
                         prevParams.append(params)
                         prevVcerts.append((requiredVcerts[i]["commit"], requiredVcerts[i]["signature"]))
