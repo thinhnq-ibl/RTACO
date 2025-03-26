@@ -21,6 +21,8 @@ async function blsAggregate() {
   // const messages = [msg1, msg2];
   const valid = bls.verify(aggregated, msg1, aggregatedPubs);
   console.log("Aggregate verification:", valid);
+  const valid2 = bls.verifyBatch(aggregated, [msg1, msg1], [pub1, pub2]);
+  console.log("Aggregate verification by separate pub keys:", valid2);
 }
 
 blsAggregate();
