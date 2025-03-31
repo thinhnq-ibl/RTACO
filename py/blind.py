@@ -10,9 +10,11 @@ def to_binary256(data):
         data = str(data).encode()
     return sha256(data).digest()
 
-def hash_to_scalar(msg):
-    """Hash a message to a scalar in the curve order"""
-    return int.from_bytes(to_binary256(msg), "big") % curve_order
+def hash_to_G1(msg):
+    """Simple hash-to-curve (for demo purposes - use proper hash_to_curve in production)"""
+    h = sha256(msg).digest()
+    x = int.from_bytes(h, 'big') % curve_order
+    return multiply(G1, x)
 
 def generate_keypair():
     """Generate signer's key pair"""
@@ -23,20 +25,20 @@ def generate_keypair():
 def blind_message( message):
     """User blinds the message before sending to signer"""
     # Hash the message
-    h = hash_to_scalar(message)
+    h = hash_to_G1(message)
     
-    # Generate blinding factor
-    r = secrets.randbelow(curve_order - 1) + 1
+    # Generate blinding factor int
+    r = secrets.randbelow(curve_order - 1) + 1 % curve_order
     
-    # Compute blinded message
-    blinded_msg = (h * r) % curve_order
+    # Compute blinded message point
+    blinded_msg = multiply(h, r)
     return blinded_msg, r
 
 def blind_sign(sk, blinded_msg):
     """Signer creates a blind signature"""
     # Simple blind signature: s = sk * blinded_msg
-    s = (sk * blinded_msg) % curve_order
-    return multiply(G1, s)  # Return signature in G1
+    s = multiply(blinded_msg, sk)
+    return s  # Return signature in G1
 
 def unblind_signature(blind_sig, r):
     """User unblinds the signature"""
@@ -49,12 +51,9 @@ def unblind_signature(blind_sig, r):
 
 def verify_signature(pk, message, signature):
     """Verify the unblinded signature"""
-    # Hash the message
-    h = hash_to_scalar(message)
-    
     # Compute required pairings
     # e(signature, g2) == e(g1^h, pk)
-    g1_h = multiply(G1, h)
+    g1_h = hash_to_G1(message)
     pairing1 = pairing(G2, signature)
     pairing2 = pairing(pk, g1_h)
     
