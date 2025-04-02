@@ -6,11 +6,19 @@ import secrets
 import json
 from datetime import datetime
 
-def hash_to_scalar(data):
-    """Hash data to a scalar in the curve order"""
-    if isinstance(data, dict):
-        data = json.dumps(data, sort_keys=True).encode()
-    return int.from_bytes(sha256(data).digest(), "big") % curve_order
+# def hash_to_scalar(data):
+#     """Hash data to a scalar in the curve order"""
+#     if isinstance(data, dict):
+#         data = json.dumps(data, sort_keys=True).encode()
+#     return int.from_bytes(sha256(data).digest(), "big") % curve_order
+
+def hash_to_G1(msg):
+    """Simple hash-to-curve (for demo purposes - use proper hash_to_curve in production)"""
+    if isinstance(msg, dict):
+      msg = json.dumps(msg, sort_keys=True).encode()
+    h = sha256(msg).digest()
+    x = int.from_bytes(h, 'big') % curve_order
+    return multiply(G1, x)
 
 def generate_issuer_keys():
     """Generate issuer's key pair"""
@@ -25,10 +33,10 @@ def create_certificate(issuer_sk, user_data):
     """
     # Convert data to structured format
     assert 'name' in user_data and 'dob' in user_data
-    data_hash = hash_to_scalar(user_data)
+    data_hash = hash_to_G1(user_data)
     
     # Create signature (certificate)
-    signature = multiply(G1, (issuer_sk * data_hash) % curve_order)
+    signature = multiply(data_hash, issuer_sk)
     
     return {
         'user_data': user_data,
@@ -44,8 +52,7 @@ def verify_certificate(certificate):
     issuer_pk = certificate['issuer_pk']
     
     # Recompute hash
-    data_hash = hash_to_scalar(user_data)
-    g1_data = multiply(G1, data_hash)
+    g1_data = hash_to_G1(user_data)
     
     # Verify pairing: e(signature, G2) == e(g1_data, issuer_pk)
     pairing1 = pairing(G2, signature)
