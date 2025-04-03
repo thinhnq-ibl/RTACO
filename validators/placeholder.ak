@@ -1,6 +1,8 @@
+use aiken/crypto.{sha2_256}
 use aiken/crypto/bls12_381/g1 as g1
 use aiken/crypto/bls12_381/g2 as g2
 use aiken/crypto/bls12_381/scalar.{new}
+use aiken/primitive/bytearray
 use cardano/address.{Credential}
 use cardano/assets.{PolicyId}
 use cardano/certificate.{Certificate}
@@ -37,6 +39,47 @@ test gen_pubkey_1() {
   expect
     pubkey == g2.decompress(
       #"94329fc3fdf14a35bb328ac04298597890cad71a4b5034e154b44974883b5633c1ea29cf00a654b617aa9aea174e96f601d0b6083604e73343f7193a842ef3911bd7227c70736290bdb2306b104ee7145643d1fe6c1cbba0ceae689786a14b3d",
+    )
+}
+
+type UserData {
+  name: String,
+  dob: String,
+}
+
+type MyCert {
+  user_data: UserData,
+  signature: G1Element,
+  issuer_pk: G2Element,
+}
+
+fn create_certificate(priv_key: Int, user_data: UserData) -> MyCert {
+  // Create a verifiable certificate for user data
+  // user_data should contain 'name' and 'dob' fields
+  let data_hash =
+    g1.hash_to_group(
+      bytearray.concat(
+        bytearray.from_string(user_data.name),
+        bytearray.from_string(user_data.dob),
+      ),
+      "user_data",
+    )
+  // Create signature (certificate)
+  expect Some(issuer_sk) = new(priv_key)
+  let signature = g1.scale(data_hash, issuer_sk)
+  MyCert { user_data, signature, issuer_pk: g2.scale(g2.generator, issuer_sk) }
+}
+
+test create_certificate_1() {
+  // This is a test function to demonstrate the use of the `create_certificate` function.
+  // It creates a certificate for user data and verifies its correctness.
+  let priv_key = 988888888
+  let user_data = UserData { name: @"Alice", dob: @"1990-01-01" }
+  let cert = create_certificate(priv_key, user_data)
+  trace @"Certificate sig: ": cert.signature
+  expect
+    cert.signature == g1.decompress(
+      #"95ead086ae9eb126e453034cf24b64b3249c31b39946e77a7cf90bfb7cfa3c73c2f29249048a7d2f2559eecd4c87e872",
     )
 }
 
