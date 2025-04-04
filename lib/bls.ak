@@ -135,3 +135,11 @@ test verify_1() {
   let pk = g1.decompress(pk1)
   expect verify(pk, msg1, sig)
 }
+
+test blind_sign_1() {
+  let blind_factor =
+    #"1234567890123456789012345678901234567890123456789012345678901234"
+  let blind_sig = blind_sign(sk1, blind_message(msg1, blind_factor))
+  let unblind_sig = unblind_signature(blind_sig, blind_factor)
+  expect sg1 == g2.compress(unblind_sig)
+}
