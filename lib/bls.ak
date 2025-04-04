@@ -15,6 +15,7 @@ use aiken/builtin.{
 use aiken/collection/list.{foldl, length}
 use aiken/crypto/bls12_381/g1 as g1
 use aiken/crypto/bls12_381/g2 as g2
+use aiken/crypto/bls12_381/scalar as scalar
 
 /// DSTs - The domain separation tags for the hash-to-curve function.
 pub const dst_basic_G1 = "BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_"
@@ -76,6 +77,36 @@ pub fn verify(pk: G1Element, message: ByteArray, signature: G2Element) -> Bool {
   let c1 = group_pairing(pk, q)
   let c2 = group_pairing(g1.generator, signature)
   bls12_381_final_verify(c1, c2)
+}
+
+pub fn blind_message(message: ByteArray, blind_factor: ByteArray) -> G2Element {
+  let r = bytearray_to_integer(True, blind_factor)
+  // Hash the message to a point
+  let h = bls12_381_g2_hash_to_group(message, dst_basic_G2)
+  // Compute blinded message point
+  bls12_381_g2_scalar_mul(r, h)
+}
+
+pub fn blind_sign(sk: ByteArray, blinded_msg: G2Element) -> G2Element {
+  let s = bytearray_to_integer(True, sk)
+
+  // Simple blind signature: s = sk * blinded_msg
+  bls12_381_g2_scalar_mul(s, blinded_msg)
+}
+
+pub fn unblind_signature(
+  blind_sig: G2Element,
+  blind_factor: ByteArray,
+) -> G2Element {
+  let s = bytearray_to_integer(True, blind_factor)
+  expect Some(scalar_s) = scalar.new(s)
+  expect Some(scalar_one) = scalar.new(1)
+  // Compute r^-1 mod curve_order
+  let scalar_r_inv = scalar.div(scalar_one, scalar_s)
+  expect Some(r_inv_int) = scalar_r_inv
+  // Unblind the signature
+  let r_inv = scalar.to_int(r_inv_int)
+  bls12_381_g2_scalar_mul(r_inv, blind_sig)
 }
 
 /// Test
