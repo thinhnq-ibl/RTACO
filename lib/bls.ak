@@ -57,6 +57,7 @@ pub fn sign(sk: ByteArray, message: ByteArray) -> G2Element {
   let s = bytearray_to_integer(True, sk)
 
   let hash = bls12_381_g2_hash_to_group(message, dst_basic_G2)
+  trace hash
   bls12_381_g2_scalar_mul(s, hash)
 }
 
@@ -113,6 +114,9 @@ pub fn unblind_signature(
 
 /// Test
 const sk1 = #"6284b61a07c6bd3e632beb6294dfc780ad04489c8c31b73b0aef73608f3d1231"
+
+const hash =
+  #"b8ee5db274e4ed884d6acae616b1c292004bb3df5c150e7eee66d6aed86ce3481300cdfe037651d9e01af95f539bf63a13d14cbc4ff1c45149ece6777e6c5b2860c0ec14253b9667200ea5bb6c2d11bf1315c552da7a7d60092d7010da158a2f"
 
 const pk1 =
   #"82cbde4e4fc6a56b6f84f2ceabb191ed7d4402835f8caa1e166554e7d7a925fe2cab59f113b78c91a4b37001d2a9c75f"
