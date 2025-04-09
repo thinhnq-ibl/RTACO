@@ -5,6 +5,8 @@
 ////
 //// The module assumes that the public keys and messages are provided as byte arrays, and it uses the [aiken/prelude/builtin](https://aiken-lang.github.io/prelude/aiken/builtin.html) module for the underlying cryptographic operations.
 
+// https://github.com/ilap/bls/blob/main/lib/bls/core.ak
+
 use aiken/builtin.{
   bls12_381_final_verify, bls12_381_g1_add, bls12_381_g1_compress,
   bls12_381_g1_scalar_mul, bls12_381_g1_uncompress, bls12_381_g2_add,

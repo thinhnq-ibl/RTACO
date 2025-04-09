@@ -64,7 +64,7 @@ def verify_signature(pk, message, signature):
 if __name__ == "__main__":
     # 1. Key Generation
     sk, pk = generate_keypair()
-    print("Key generation complete")
+    print("Key generation complete", pk)
     
     # 2. User prepares message
     message = b"Hello, blind signature world!"
