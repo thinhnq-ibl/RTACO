@@ -108,3 +108,73 @@ def VerifyZKPoK(params, encoded_attr, comm, ZKPoK):
     # Generate challenge and verify
 	element_list = [g] + Aw + [comm] + hs
 	return (c == toChallenge(element_list) % o)
+
+def SignCommitment(params, sk, comm):
+	G, g, o, hs= params
+	digest = SHA256(comm)
+	sign = do_ecdsa_sign(sk, digest)
+	return sign
+
+def do_ecdsa_sign(sk, digest):
+	r = 0
+	s = 0
+	o = int(curve_order)
+	int_digest = int.from_bytes(digest, "big") % o
+	while r == 0 or s==0 :
+		k = random.randint(2, o)
+		p1 = multiply(G1, k)
+		r = p1[0].n
+		s = (modInverse(k, o) * (int_digest + ((sk * r) % o)) ) %o
+	return (r, s)
+
+def do_ecdsa_verify(pk, sign, digest):
+	(r, s) = sign
+	o = int(curve_order)
+	int_digest = int.from_bytes(digest, "big") % o
+	s1 = modInverse(s, o)
+	x1 = (int_digest * s1) % o
+	x2 = (r * s1) % o
+	pt1 = multiply(G1, x1)
+	pt2 = multiply(pk, x2)
+	_r = add(pt1, pt2)
+	return r == _r[0].n
+
+def modInverse(a, m):
+    m0 = m
+    y = 0
+    x = 1
+ 
+    if (m == 1):
+        return 0
+ 
+    while (a > 1):
+ 
+        # q is quotient
+        q = a // m
+ 
+        t = m
+ 
+        # m is remainder now, process
+        # same as Euclid's algo
+        m = a % m
+        a = t
+        t = y
+ 
+        # Update x and y
+        y = x - q * y
+        x = t
+ 
+    # Make x positive
+    if (x < 0):
+        x = x + m0
+ 
+    return x
+
+def ttpKeyGen(params):
+	_, g, o, hs = params
+	sk = random.randint(2, o)
+	pk = multiply(g, sk)
+	return pk, sk
+
+def VerifyVcerts(params, pk, sign, digest):
+	return do_ecdsa_verify(pk, sign, digest)

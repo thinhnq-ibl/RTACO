@@ -59,23 +59,14 @@ zkpok = GenZKPoK(params, encoded_attribute, commit)
 result  = VerifyZKPoK(params, encoded_attribute, commit, zkpok)
 print("ZKPoK verification result: ", result)
 
-	# 	requestJSON = jsonpickle.encode((prevCombination, prevVcerts, attributes, commit, zkpok))
-	# 	s.send(requestJSON.encode())
-	# 	issueVcertJSON = s.recv(8192).decode()
+pubCP, mskCP = ttpKeyGen(params)
+signature = SignCommitment(params, mskCP, commit)
+issueVcert = (commit, signature)
+print("Signature: ", signature)
 
-	# 	issueVcert = jsonpickle.decode(issueVcertJSON)
-	# 	_commit, signature = issueVcert
-
-	# 	if commit != _commit:
-	# 		print("Request is corrupted.")
-	# 	elif VerifyVcerts(params, pk, signature, SHA256(commit)) == True:
-	# 		vcert["attributes"] = attributes
-	# 		vcert["commit"] = commit
-	# 		vcert["signature"] = signature
-	# 	else:
-	# 		print("Request is corrupted.")
-	# except Exception as e:
-	# 	print(e)
-	# finally:
-	# 	s.close()
-	# return vcert
+if(VerifyVcerts(params, pubCP, signature, SHA256(commit)) == True):
+    vcert["attributes"] = attributes
+    vcert["commit"] = commit
+    vcert["signature"] = signature
+        
+print(vcert)
