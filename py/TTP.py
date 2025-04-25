@@ -388,3 +388,39 @@ def make_pi_o(params, cm, C, r, s, aggr_vk, opk):
     rr = [(wr[i] - c[i]*r[i]) % o for i in range(len(wr))] 
     rs = [[(ws[i][j] - c[i]*s[i][j])% o for j in range(len(s[i]))] for i in range(len(s))]
     return (Aw, Bw, (c, rr, rs))
+
+def BlindSignAttr(params, sk, Lambda, public_m=[]):
+    (G, o, g1, hs, g2, e) = params
+    (x, y) = sk
+    (cm, commitments) = Lambda
+    assert (len(commitments)+len(public_m)) <= len(hs)
+    # verify proof of correctness
+    # assert verify_pi_s(params, commitments, cm, all_vcerts, pi_s)
+    #work from here in thr afternoon.
+    # assert verify_pi_o(params, commitments, C, cm, hidden_P, h_r, b_o, aggr_vk, opk, pi_o)
+    # issue signature
+    h = hashG1(to_binary256(cm))
+    print(public_m)
+    t1 = [multiply(h, mi) for mi in public_m]
+    t2 = add(multiply(h, x), ec_sum([multiply(bi, yi) for yi,bi in zip(y, commitments+t1)]))
+    sigma_tilde = (h, t2)
+    return sigma_tilde
+
+def Unblind(params, aggr_vk, sigma_tilde, os):
+    _, _, g1_beta, _ = aggr_vk
+    (h, c_tilde) = sigma_tilde
+    sigma = (h, add(c_tilde, neg(ec_sum([multiply(g1_beta[j], os[j]) for j in range(len(os))]))))
+    return sigma
+
+def AggCred(params, sigs):
+    (G, o, g1, hs, g2, e) = params
+    # filter missing credentials (in the threshold setting)
+    filter = [sigs[i] for i in range(len(sigs)) if sigs[i] is not None]
+    indexes = [i+1 for i in range(len(sigs)) if sigs[i] is not None]
+    # evaluate all lagrange basis polynomials
+    l = lagrange_basis(indexes,o)
+    # aggregate sigature
+    (h, s) = zip(*filter)
+    aggr_s = ec_sum([multiply(s[i], l[i]) for i in range(len(filter))])
+    aggr_sigma = (h[0], aggr_s)
+    return aggr_sigma

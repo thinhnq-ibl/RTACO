@@ -72,7 +72,7 @@ if(VerifyVcerts(ca_params, pubCP, signature, SHA256(commit)) == True):
 print(vcert)
 
 ac_title = "Loan Credential"
-
+credential = {"title": ac_title, "attributes" : attributes, "credential": None}
 params = setup(q, ac_title)
 (sk, vk) = ttp_keygen(params, 1, 1)
 aggregate_vk = agg_key(params, vk)
@@ -123,6 +123,80 @@ pi_s = tuple(pi_s)
 
 print("sending for verification")
 public_m = []
-public_m.append(vcert["attributes"][key3])
-public_m.append(vcert["attributes"][key4])
+public_m.append(encoded_attribute[1])
+public_m.append(encoded_attribute[2])
 str_public_m = [str(public_m[i]) for i in range(len(public_m))]
+
+# validator 
+Lambda2 = (cm, commitments)
+print("sk", sk)
+blind_sig = BlindSignAttr(params, sk[0], Lambda2, public_m)
+
+send_h = [blind_sig[0][0].n, blind_sig[0][1].n]
+send_t = [blind_sig[1][0].n, blind_sig[1][1].n]
+
+print("send_h: ", send_h)
+print("send_t: ", send_t)
+
+blind_sig = (send_h, send_t)
+sigma = Unblind(params, aggregate_vk, blind_sig, os)
+print("sigma: ", sigma)
+signs = []
+signs.append(sigma)
+
+aggr_sig = AggCred(params, signs)
+
+credential["credential"] = aggr_sig
+
+# RequestService
+
+# title = credential["title"]
+# print("The available policies are : ")
+# 	total_policies = verify_contract.functions.gettotalPolicies(title).call()
+# 	for i in range(total_policies):
+# 		policy = verify_contract.functions.getPolicy(title, i+1).call()
+# 		print("choose "+str(i+1)+" for : ", str(policy))
+# 	policy_id = int(input("Choose any policy : "))
+# 	disclose_index = verify_contract.functions.getPolicy(title, policy_id).call()
+
+# 	ac_encode_str = []
+# 	private_m = []
+# 	schema = downloadSchema(title)
+# 	schemaOrder = downloadSchemaOrder(title)
+# 	encoding = downloadEncoding(title)
+# 	for key in schemaOrder:
+# 		if schema[key]['visibility'] == 'private':
+# 			private_m.append(credential["attributes"][key])
+# 			ac_encode_str.append(encoding[key])
+# 	disclose_attr = [private_m[i] for i in range(len(private_m)) if disclose_index[i]==1]
+# 	str_disclose_attr = [str(disclose_attr[i]) for i in range(len(disclose_attr))]
+
+# 	params = downloadACParams(title)
+# 	_, o, _, _, _, _ = params
+
+# 	encoded_private_m = encode_attributes(private_m, ac_encode_str)
+# 	encoded_disclose_attr = [encoded_private_m[i] for i in range(len(encoded_private_m)) if disclose_index[i]==1]
+# 	disclose_attr_enc = [ac_encode_str[i] for i in range(len(ac_encode_str)) if disclose_index[i]==1]
+
+# 	public_m = []
+# 	public_m_encoding = []
+# 	for key in schemaOrder:
+# 		if schema[key]['visibility'] == 'public':
+# 			public_m.append(credential["attributes"][key])
+# 			public_m_encoding.append(schema[key]["type"])
+# 	encoded_public_m = []
+# 	for i in range(len(public_m)):
+# 		if public_m_encoding[i] == 1:
+# 			encoded_public_m.append(int.from_bytes(sha256(public_m[i].encode("utf8").strip()).digest(), "big") % o)
+# 		else:
+# 			encoded_public_m.append(public_m[i])
+
+# 	aggregate_vk = getAggregateVerificationKey(title)
+
+# 	# proving the possession of AC (Off-chain by user) private_m, disclose_index, disclose_attr, disclose_attr_enc, public_m
+# 	Theta, aggr = ProveCred(params, aggregate_vk, aggr_sig, encoded_private_m, disclose_index, disclose_attr, disclose_attr_enc, encoded_public_m)
+# 	(kappa, nu, rand_sig, proof, Aw, _timestamp) = Theta
+# 	# Aw, _timestamp, proof = proof_v
+# 	encoded_disclosed_attr = encode_attributes(disclose_attr, disclose_attr_enc)
+# 	#Sending to SP_verify for verifying the proof. 
+# 	SP_RequestService(credential, user_addr,disclose_index,aggr_sig,Theta,encoded_disclosed_attr,encoded_public_m,aggregate_vk)
