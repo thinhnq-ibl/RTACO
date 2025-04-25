@@ -1,6 +1,10 @@
 from TTP import *
 import datetime
 
+##################################
+## create vcert
+##################################
+
 msk = genRandom()
 user_addr = "0x1A1684c3027eA12046155013BfC5518C65dD5943"
 
@@ -54,21 +58,21 @@ commit = GenCommitment(ca_params, encoded_attribute)
 zkpok = GenZKPoK(ca_params, [], [], [encoded_attribute], commit)
 
 # send for CA do verify
-
-result  = VerifyZKPoK(ca_params, [], [], encoded_attribute, commit, zkpok)
+encoded_attribute_verify = [encoded_attribute[1], encoded_attribute[2]]
+result  = VerifyZKPoK(ca_params, [], [], encoded_attribute_verify, commit, zkpok)
 print("ZKPoK verification result: ", result)
 
 pubCP, mskCP = ttpKeyGen(ca_params)
 signature = SignCommitment(ca_params, mskCP, commit)
 issueVcert = (commit, signature)
-print("Signature: ", signature)
+# print("Signature: ", signature)
 
 if(VerifyVcerts(ca_params, pubCP, signature, SHA256(commit)) == True):
     vcert["attributes"] = attributes
     vcert["commit"] = commit
     vcert["signature"] = signature
         
-print(vcert)
+print("vcert", vcert)
 
 # Income Certificate
 vcert_title_income = "Income Certificate"
@@ -109,8 +113,33 @@ prevParams = [ca_params]
 prevVcerts = [(vcert["commit"], vcert["signature"])]
 prevAttributes = [encoded_attribute]
 
+ca_params_income = ttp_setup(q_income-1, vcert_title_income) # exclude r.
 
-# create credential
+commit_income = GenCommitment(ca_params_income, encoded_attribute_income)
+prevAttributes.append([attribute_income[0], attribute_income[-1]])
+
+zkpok_income = GenZKPoK(ca_params_income, prevParams, prevVcerts, prevAttributes, commit_income)
+
+# send for CA do verify income
+encoded_attribute_income_verify = [encoded_attribute_income[1]]
+result_income = VerifyZKPoK(ca_params_income, prevParams, prevVcerts, encoded_attribute_income_verify, commit_income, zkpok_income)
+print("ZKPoK verification income result: ", result_income)
+
+pubCP, mskCP = ttpKeyGen(ca_params)
+signature_income = SignCommitment(ca_params, mskCP, commit_income)
+issueVcertIncome = (commit_income, signature_income)
+# print("Signature: ", signature_income)
+
+if(VerifyVcerts(ca_params, pubCP, signature_income, SHA256(commit_income)) == True):
+    vcert_income["attributes"] = attributes_income
+    vcert_income["commit"] = commit_income
+    vcert_income["signature"] = signature_income
+        
+print("vcert_income", vcert_income)
+
+######################################
+## create credential
+######################################
 
 ac_title = "Loan Credential"
 credential = {"title": ac_title, "attributes" : attributes, "credential": None}
