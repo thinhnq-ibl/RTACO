@@ -138,13 +138,17 @@ send_t = [blind_sig[1][0].n, blind_sig[1][1].n]
 print("send_h: ", send_h)
 print("send_t: ", send_t)
 
-blind_sig = (send_h, send_t)
+h = (FQ(send_h[0]), FQ(send_h[1]))
+t = (FQ(send_t[0]), FQ(send_t[1]))
+
+blind_sig = (h, t)
 sigma = Unblind(params, aggregate_vk, blind_sig, os)
 print("sigma: ", sigma)
 signs = []
 signs.append(sigma)
 
 aggr_sig = AggCred(params, signs)
+print("aggr_sig: ", aggr_sig)
 
 credential["credential"] = aggr_sig
 
@@ -159,8 +163,8 @@ credential["credential"] = aggr_sig
 # 	policy_id = int(input("Choose any policy : "))
 # 	disclose_index = verify_contract.functions.getPolicy(title, policy_id).call()
 
-# 	ac_encode_str = []
-# 	private_m = []
+ac_encode_str = []
+private_m = []
 # 	schema = downloadSchema(title)
 # 	schemaOrder = downloadSchemaOrder(title)
 # 	encoding = downloadEncoding(title)
@@ -171,10 +175,19 @@ credential["credential"] = aggr_sig
 # 	disclose_attr = [private_m[i] for i in range(len(private_m)) if disclose_index[i]==1]
 # 	str_disclose_attr = [str(disclose_attr[i]) for i in range(len(disclose_attr))]
 
+private_m.append(vcert["attributes"][key1])
+private_m.append(vcert["attributes"][key2])
+
+ac_encode_str.append(2)
+ac_encode_str.append(2)
+
 # 	params = downloadACParams(title)
-# 	_, o, _, _, _, _ = params
+_, o, _, _, _, _ = params
 
 # 	encoded_private_m = encode_attributes(private_m, ac_encode_str)
+encoded_private_m = []
+encoded_private_m.append(encoded_attribute[0])
+encoded_private_m.append(encoded_attribute[3])
 # 	encoded_disclose_attr = [encoded_private_m[i] for i in range(len(encoded_private_m)) if disclose_index[i]==1]
 # 	disclose_attr_enc = [ac_encode_str[i] for i in range(len(ac_encode_str)) if disclose_index[i]==1]
 
@@ -193,10 +206,19 @@ credential["credential"] = aggr_sig
 
 # 	aggregate_vk = getAggregateVerificationKey(title)
 
-# 	# proving the possession of AC (Off-chain by user) private_m, disclose_index, disclose_attr, disclose_attr_enc, public_m
-# 	Theta, aggr = ProveCred(params, aggregate_vk, aggr_sig, encoded_private_m, disclose_index, disclose_attr, disclose_attr_enc, encoded_public_m)
-# 	(kappa, nu, rand_sig, proof, Aw, _timestamp) = Theta
-# 	# Aw, _timestamp, proof = proof_v
-# 	encoded_disclosed_attr = encode_attributes(disclose_attr, disclose_attr_enc)
-# 	#Sending to SP_verify for verifying the proof. 
-# 	SP_RequestService(credential, user_addr,disclose_index,aggr_sig,Theta,encoded_disclosed_attr,encoded_public_m,aggregate_vk)
+encoded_public_m = []
+encoded_public_m.append(encoded_attribute[1])
+encoded_public_m.append(encoded_attribute[2])
+disclose_index = [1, 1]
+disclose_attr = [private_m[i] for i in range(len(private_m)) if disclose_index[i]==1]
+disclose_attr_enc = [ac_encode_str[i] for i in range(len(ac_encode_str)) if disclose_index[i]==1]
+# proving the possession of AC (Off-chain by user) private_m, disclose_index, disclose_attr, disclose_attr_enc, public_m
+Theta, aggr = ProveCred(params, aggregate_vk, aggr_sig, encoded_private_m, disclose_index, disclose_attr, disclose_attr_enc, encoded_public_m)
+(kappa, nu, rand_sig, proof, Aw, _timestamp) = Theta
+# Aw, _timestamp, proof = proof_v
+encoded_disclosed_attr = encode_attributes(disclose_attr, disclose_attr_enc)
+#Sending to SP_verify for verifying the proof. 
+# SP_RequestService(credential, user_addr,disclose_index,aggr_sig,Theta,encoded_disclosed_attr,encoded_public_m,aggregate_vk)
+tf = VerifyCred(params, aggregate_vk, Theta, disclose_index, encoded_disclosed_attr, encoded_public_m)
+print("Verify Cred : ")
+print(tf)

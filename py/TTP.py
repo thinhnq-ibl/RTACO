@@ -1,6 +1,7 @@
 from py_ecc.bn128 import * 
 from hashlib import sha256
 import random
+import time
 
 def genRandom():
 	o = int(curve_order)
@@ -424,3 +425,84 @@ def AggCred(params, sigs):
     aggr_s = ec_sum([multiply(s[i], l[i]) for i in range(len(filter))])
     aggr_sigma = (h[0], aggr_s)
     return aggr_sigma
+
+def ProveCred(params, aggr_vk, sigma, private_m, disclose_index, disclose_attr, disclose_attr_enc, public_m):
+    assert len(private_m) > 0
+    (G, o, g1, hs, g2, e) = params
+    (g2, alpha, _, beta) = aggr_vk
+    (h, s) = sigma
+    assert len(private_m) <= len(beta)
+    r_prime = random.randint(2, o)
+    print("h", h, "s", s)
+    (h_prime , s_prime) = (multiply(h, r_prime), multiply(s, r_prime))
+    sigma_prime =(h_prime, s_prime)
+    r = random.randint(2, o)
+    kappa = ec_sum([multiply(g2, r), alpha, ec_sum([multiply(beta[i], int(private_m[i])) for i in range(len(private_m))])])
+    nu = multiply(h_prime, r)
+    Aw, timestamp, pi_v = make_pi_v(params, aggr_vk, sigma_prime, private_m, disclose_index, disclose_attr, disclose_attr_enc, kappa, public_m, r)
+    Theta = (kappa, nu, sigma_prime, pi_v, Aw, timestamp)
+
+    aggr = None
+    if len(public_m) != 0:
+        aggr = ec_sum([multiply(beta[i+len(private_m)], public_m[i]) for i in range(len(public_m))])
+    return (Theta, aggr)
+
+def make_pi_v(params, aggr_vk, sigma, private_m, disclose_index, disclose_attr, disclose_attr_enc, kappa, public_m, t):
+    """ prove correctness of kappa and nu """
+    (G, o, g1, hs, g2, e) = params
+    (g2, alpha, _, beta) = aggr_vk
+    (h, s) = sigma
+    # create the witnesses
+    wm = [random.randint(2, o) for i in range(len(private_m))]
+    wt = random.randint(2, o)
+    # compute the witnesses commitments
+    Aw = add(add(multiply(g2, wt), alpha), ec_sum([multiply(beta[i], wm[i]) for i in range(len(private_m)) if disclose_index[i]!=1]))
+    Bw = multiply(h, wt)
+    # create the challenge
+    _timestamp = int(time.time())
+    c = to_challenge([g1, g2, alpha, Aw, Bw, kappa]+ hs + beta + encode_attributes(disclose_attr, disclose_attr_enc) + [_timestamp])
+    # create responses
+    rm = [(wm[i] - c*int(private_m[i])) % o for i in range(len(private_m)) if disclose_index[i]!=1]
+    rt = (wt - c*t) % o
+    return (Aw, _timestamp, (c, rm, rt))
+
+def VerifyCred(params, aggr_vk, Theta, disclose_index, disclose_attr, public_m=[]):
+    (G, o, g1, hs, g2, e) = params
+    (g2, _, _, beta) = aggr_vk
+    (kappa, nu, sigma, pi_v, _, timestamp) = Theta
+    (h, s) = sigma
+    assert len(public_m)+len(disclose_index) <= len(beta)
+    # verify proof of correctness
+
+    assert verify_pi_v(params, aggr_vk, sigma, kappa, nu, pi_v, disclose_index, disclose_attr, timestamp)
+    # add clear text messages
+    aggr = None
+    if len(public_m) != 0:
+        aggr = ec_sum([multiply(beta[i+len(disclose_index)], public_m[i]) for i in range(len(public_m))])
+    return not is_inf(h) and e(add(kappa, aggr), h) == e(g2, add(s, nu))
+
+def verify_pi_v(params, aggr_vk, sigma, kappa, nu, proof, disclose_index, disclose_attr, timestamp):
+    (G, o, g1, hs, g2, e) = params
+    (g2, alpha, _, beta) = aggr_vk
+    (h, s) = sigma
+    (c, rm, rt) = proof
+    # re-compute witnesses commitments
+    new_kappa = kappa
+    # encoded_disclosed_attr = encode_attributes(disclose_attr, disclose_attr_enc)
+    k = 0
+    for i in range(len(disclose_index)):
+        if disclose_index[i] == 1:
+            new_kappa = add(new_kappa, neg(multiply(beta[i], disclose_attr[k])))
+            k += 1
+    k = 0
+    undisclosed_sum = None
+    for i in range(len(disclose_index)):
+        if disclose_index[i] == 0:
+            undisclosed_sum = add(undisclosed_sum, multiply(beta[i], rm[k]))
+            k += 1
+
+    Aw = add(add(multiply(new_kappa, c), multiply(g2, rt)), add(multiply(alpha, (o - c + 1)%o), undisclosed_sum))
+    Bw = add(multiply(nu, c), multiply(h, rt))
+
+    # compute the challenge prime
+    return c == to_challenge([g1, g2, alpha, Aw, Bw, kappa]+ hs + beta + disclose_attr + [timestamp])
