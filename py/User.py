@@ -4,9 +4,9 @@ import datetime
 msk = genRandom()
 user_addr = "0x1A1684c3027eA12046155013BfC5518C65dD5943"
 
+# Identity Certificate
 vcert_title = "Identity Certificate"
 
-# RequestVcert(title, requiredVcerts = []):
 vcert = {"title":vcert_title, "attributes" : None, "commit": None, "signature": None}
 attributes = {}
 key1 = "msk"
@@ -21,7 +21,6 @@ attributes.setdefault(key3, value3)
 key4 = "dob"
 value4 = "1998-05-12"
 attributes.setdefault(key4, value4)
-
 			
 attribute = []
 encode_str = []
@@ -52,11 +51,11 @@ ca_params = ttp_setup(q-1, vcert_title) # exclude r.
 
 commit = GenCommitment(ca_params, encoded_attribute)
 
-zkpok = GenZKPoK(ca_params, encoded_attribute, commit)
+zkpok = GenZKPoK(ca_params, [], [], [encoded_attribute], commit)
 
 # send for CA do verify
 
-result  = VerifyZKPoK(ca_params, encoded_attribute, commit, zkpok)
+result  = VerifyZKPoK(ca_params, [], [], encoded_attribute, commit, zkpok)
 print("ZKPoK verification result: ", result)
 
 pubCP, mskCP = ttpKeyGen(ca_params)
@@ -70,6 +69,48 @@ if(VerifyVcerts(ca_params, pubCP, signature, SHA256(commit)) == True):
     vcert["signature"] = signature
         
 print(vcert)
+
+# Income Certificate
+vcert_title_income = "Income Certificate"
+
+vcert_income = {"title":vcert_title_income, "attributes" : None, "commit": None, "signature": None}
+attributes_income = {}
+key1 = "msk"
+value1 = msk
+attributes_income.setdefault(key1, value1)
+key2 = "r"
+value2 = genRandom()
+attributes_income.setdefault(key2, value2)
+key5 = "salary"
+value5 = 100000
+attributes_income.setdefault(key5, value5)
+
+attribute_income = []
+encode_str_income = []
+
+# make order for schema order
+schemaOrder_income = ["msk", "salary", "r"]
+# encode type 1: string, 2: int, 3: datetime
+# prv key
+attribute_income.append(attributes_income[key1])
+encode_str_income.append(2) # int
+# salary
+attribute_income.append(attributes_income[key5])
+encode_str_income.append(2) # int
+# r
+attribute_income.append(attributes_income[key2])
+encode_str_income.append(2) # int
+
+encoded_attribute_income = encode_attributes(attribute_income, encode_str_income)
+q_income = len(schemaOrder_income)
+
+prevCombination = [vcert["title"]]
+prevParams = [ca_params]
+prevVcerts = [(vcert["commit"], vcert["signature"])]
+prevAttributes = [encoded_attribute]
+
+
+# create credential
 
 ac_title = "Loan Credential"
 credential = {"title": ac_title, "attributes" : attributes, "credential": None}

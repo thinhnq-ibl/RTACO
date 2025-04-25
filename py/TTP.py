@@ -58,56 +58,65 @@ def toChallenge(element_list):
 def SHA256(element):
 	return sha256((element[0].n).to_bytes(32, 'big') + (element[1].n).to_bytes(32, 'big')).digest()
 
-def GenZKPoK(params, all_enc_attr, comm):
-	_, g, o, hs = params
-    # Generate random witnesses for the proof
-	total_wm = [random.randint(2, o) for _ in range(len(all_enc_attr))]
-	
-    # Compute commitments (Aw) using the witnesses
+
+def GenZKPoK(params, prev_params, prev_vcerts, all_enc_attr, comm):
+	_, g, o, hs= params
+	total_wm = [[random.randint(2, o) for _ in range(len(all_enc_attr[i]))] for i in range(len(all_enc_attr))]
+	for i in range(1, len(total_wm)):
+		total_wm[i][0] = total_wm[0][0]
 	Aw = []
-	
-	# Compute commitment: g^{wm[-1]} * product(hs[j]^{wm[j]})
-	commitment = multiply(g, total_wm[-1])
-	for j in range(len(total_wm) - 1):
-		commitment = add(commitment, multiply(hs[j], total_wm[j]))
-	Aw.append(commitment)
-    
-    # Include the main commitment in the proof
-	comm_list = [comm]
-    
-    # Generate challenge using all relevant elements
-	element_list = [g] + Aw + comm_list + hs
+	comm_list = []
+	for i in range(len(prev_vcerts)):
+		(_, ttp_g, _, ttp_hs) = prev_params[i]
+		tmp = multiply(ttp_g, total_wm[i][-1])
+		for j in range(len(total_wm[i]) - 1):
+			tmp = add(tmp, multiply(ttp_hs[j], total_wm[i][j]))
+		Aw.append(tmp)
+		comm_list.append(prev_vcerts[i][0])
+
+	_tmp = multiply(g, total_wm[len(prev_vcerts)][-1])
+	_tmp = add(_tmp, multiply(hs[0], total_wm[len(prev_vcerts)][0]))
+	Aw.append(_tmp)
+	comm_list.append(comm)
+
+	element_list = [g] + Aw + comm_list + hs 
 	c = toChallenge(element_list) % o
-    
-    # Compute responses
-	total_rm = []
-	for wm, attr in zip(total_wm, all_enc_attr):
-		total_rm.append((wm - c * attr) % o)
-    # print(total_wm)
+	total_rm = [[(total_wm[i][j] - c*all_enc_attr[i][j]) % o for j in range(len(total_wm[i]))] for i in range(len(total_wm))]
 	return (c, total_rm)
 
-def VerifyZKPoK(params, encoded_attr, comm, ZKPoK):
+def VerifyZKPoK(params, prev_params, prev_vcerts, encoded_attr, comm, ZKPoK):
 	c, total_rm = ZKPoK
+	for i in range(1, len(total_rm)):
+		if total_rm[0][0] != total_rm[i][0]:
+			return False
 
-    # Check that all first responses are equal (if multiple attribute sets)
-	_, g, o, hs = params
-    
-    # Reconstruct the blinded commitment (tmp_comm)
+	_, g, o, hs= params
+
 	tmp_comm = multiply(hs[1], encoded_attr[0])
+
 	for i in range(2, len(hs)):
 		tmp_comm = add(tmp_comm, multiply(hs[i], encoded_attr[i-1]))
-	tmp_comm = add(comm, neg(tmp_comm))  # comm - (sum hs[j] * attr[j])
-    
-    # Reconstruct Aw (commitments using responses)
+	tmp_comm = add(comm, neg(tmp_comm))
+
+	comm_list = []
 	Aw = []
-	commitment = multiply(g, total_rm[-1])
-	for j in range(len(total_rm) - 1):
-		commitment = add(commitment, multiply(hs[j], total_rm[j]))
-	commitment = add(commitment, multiply(comm, c))
-	Aw.append(commitment)
-    
-    # Generate challenge and verify
-	element_list = [g] + Aw + [comm] + hs
+	for i in range(len(prev_vcerts)):
+		(_, ttp_g, _, ttp_hs) = prev_params[i]
+		tmp = multiply(ttp_g, total_rm[i][-1])
+		for j in range(len(total_rm[i]) - 1):
+			tmp = add(tmp, multiply(ttp_hs[j], total_rm[i][j]))
+		tmp = add(tmp, multiply(prev_vcerts[i][0], c))
+		Aw.append(tmp)
+		comm_list.append(prev_vcerts[i][0])
+
+	_, g, o, hs= params
+	_tmp = multiply(g, total_rm[len(prev_vcerts)][-1])
+	_tmp = add(_tmp, multiply(hs[0], total_rm[len(prev_vcerts)][0]))
+	_tmp = add(_tmp, multiply(tmp_comm,c))
+	Aw.append(_tmp)
+	comm_list.append(comm)
+
+	element_list = [g]+ Aw + comm_list + hs
 	return (c == toChallenge(element_list) % o)
 
 def SignCommitment(params, sk, comm):
