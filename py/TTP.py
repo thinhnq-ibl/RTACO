@@ -58,56 +58,65 @@ def toChallenge(element_list):
 def SHA256(element):
 	return sha256((element[0].n).to_bytes(32, 'big') + (element[1].n).to_bytes(32, 'big')).digest()
 
-def GenZKPoK(params, all_enc_attr, comm):
-	_, g, o, hs = params
-    # Generate random witnesses for the proof
-	total_wm = [random.randint(2, o) for _ in range(len(all_enc_attr))]
-	
-    # Compute commitments (Aw) using the witnesses
+
+def GenZKPoK(params, prev_params, prev_vcerts, all_enc_attr, comm):
+	_, g, o, hs= params
+	total_wm = [[random.randint(2, o) for _ in range(len(all_enc_attr[i]))] for i in range(len(all_enc_attr))]
+	for i in range(1, len(total_wm)):
+		total_wm[i][0] = total_wm[0][0]
 	Aw = []
-	
-	# Compute commitment: g^{wm[-1]} * product(hs[j]^{wm[j]})
-	commitment = multiply(g, total_wm[-1])
-	for j in range(len(total_wm) - 1):
-		commitment = add(commitment, multiply(hs[j], total_wm[j]))
-	Aw.append(commitment)
-    
-    # Include the main commitment in the proof
-	comm_list = [comm]
-    
-    # Generate challenge using all relevant elements
-	element_list = [g] + Aw + comm_list + hs
+	comm_list = []
+	for i in range(len(prev_vcerts)):
+		(_, ttp_g, _, ttp_hs) = prev_params[i]
+		tmp = multiply(ttp_g, total_wm[i][-1])
+		for j in range(len(total_wm[i]) - 1):
+			tmp = add(tmp, multiply(ttp_hs[j], total_wm[i][j]))
+		Aw.append(tmp)
+		comm_list.append(prev_vcerts[i][0])
+
+	_tmp = multiply(g, total_wm[len(prev_vcerts)][-1])
+	_tmp = add(_tmp, multiply(hs[0], total_wm[len(prev_vcerts)][0]))
+	Aw.append(_tmp)
+	comm_list.append(comm)
+
+	element_list = [g] + Aw + comm_list + hs 
 	c = toChallenge(element_list) % o
-    
-    # Compute responses
-	total_rm = []
-	for wm, attr in zip(total_wm, all_enc_attr):
-		total_rm.append((wm - c * attr) % o)
-    # print(total_wm)
+	total_rm = [[(total_wm[i][j] - c*all_enc_attr[i][j]) % o for j in range(len(total_wm[i]))] for i in range(len(total_wm))]
 	return (c, total_rm)
 
-def VerifyZKPoK(params, encoded_attr, comm, ZKPoK):
+def VerifyZKPoK(params, prev_params, prev_vcerts, encoded_attr, comm, ZKPoK):
 	c, total_rm = ZKPoK
+	for i in range(1, len(total_rm)):
+		if total_rm[0][0] != total_rm[i][0]:
+			return False
 
-    # Check that all first responses are equal (if multiple attribute sets)
-	_, g, o, hs = params
-    
-    # Reconstruct the blinded commitment (tmp_comm)
+	_, g, o, hs= params
+
 	tmp_comm = multiply(hs[1], encoded_attr[0])
+
 	for i in range(2, len(hs)):
 		tmp_comm = add(tmp_comm, multiply(hs[i], encoded_attr[i-1]))
-	tmp_comm = add(comm, neg(tmp_comm))  # comm - (sum hs[j] * attr[j])
-    
-    # Reconstruct Aw (commitments using responses)
+	tmp_comm = add(comm, neg(tmp_comm))
+
+	comm_list = []
 	Aw = []
-	commitment = multiply(g, total_rm[-1])
-	for j in range(len(total_rm) - 1):
-		commitment = add(commitment, multiply(hs[j], total_rm[j]))
-	commitment = add(commitment, multiply(comm, c))
-	Aw.append(commitment)
-    
-    # Generate challenge and verify
-	element_list = [g] + Aw + [comm] + hs
+	for i in range(len(prev_vcerts)):
+		(_, ttp_g, _, ttp_hs) = prev_params[i]
+		tmp = multiply(ttp_g, total_rm[i][-1])
+		for j in range(len(total_rm[i]) - 1):
+			tmp = add(tmp, multiply(ttp_hs[j], total_rm[i][j]))
+		tmp = add(tmp, multiply(prev_vcerts[i][0], c))
+		Aw.append(tmp)
+		comm_list.append(prev_vcerts[i][0])
+
+	_, g, o, hs= params
+	_tmp = multiply(g, total_rm[len(prev_vcerts)][-1])
+	_tmp = add(_tmp, multiply(hs[0], total_rm[len(prev_vcerts)][0]))
+	_tmp = add(_tmp, multiply(tmp_comm,c))
+	Aw.append(_tmp)
+	comm_list.append(comm)
+
+	element_list = [g]+ Aw + comm_list + hs
 	return (c == toChallenge(element_list) % o)
 
 def SignCommitment(params, sk, comm):
@@ -252,14 +261,11 @@ def encodeG2(g2):
 
 def PrepareCredRequest(params, aggr_vk, to, no, opk, prevParams, all_attr, include_indexes, public_m=[]):
     private_m = []
-    # for i in range(len(all_attr)):
-    #     for j in range(len(all_attr[i])):
-    #         if include_indexes[i][j] == 1:
-    #             private_m.append(int(all_attr[i][j]))
-    private_m.append(all_attr[0][0])
-    private_m.append(all_attr[0][3])
-    public_m.append(all_attr[0][1])
-    public_m.append(all_attr[0][2])
+    for i in range(len(all_attr)):
+        for j in range(len(all_attr[i])):
+            if include_indexes[i][j] == 1:
+                private_m.append(int(all_attr[i][j]))
+
     assert len(private_m) > 0
     (G, o, g1, hs, g2, e) = params
     attributes = private_m + public_m
@@ -287,7 +293,6 @@ def PrepareCredRequest(params, aggr_vk, to, no, opk, prevParams, all_attr, inclu
     _, _, _, beta = aggr_vk
     r = [random.randint(2, o) for _ in range(no)]
     C = [(multiply(g2, r[i]), (add(multiply(opk[i], r[i]), ec_sum([multiply(beta[j], s[i][j]) for j in range(len(private_m))])))) for i in range(no)]
-    
     Aw, Bw, pi_o = make_pi_o(params, cm, C, r, s, aggr_vk, opk)
     
     h_r = [multiply(h, ri) for ri in r]
@@ -295,6 +300,7 @@ def PrepareCredRequest(params, aggr_vk, to, no, opk, prevParams, all_attr, inclu
 
     Lambda = (cm, commitments, pi_s, hidden_P, C, pi_o, Aw, Bw, h_r, b_o)
     return Lambda, os
+
 
 def to_binary256(point) :
     if isinstance(point, str):
@@ -401,7 +407,6 @@ def BlindSignAttr(params, sk, Lambda, public_m=[]):
     # assert verify_pi_o(params, commitments, C, cm, hidden_P, h_r, b_o, aggr_vk, opk, pi_o)
     # issue signature
     h = hashG1(to_binary256(cm))
-    print(public_m)
     t1 = [multiply(h, mi) for mi in public_m]
     t2 = add(multiply(h, x), ec_sum([multiply(bi, yi) for yi,bi in zip(y, commitments+t1)]))
     sigma_tilde = (h, t2)
@@ -433,7 +438,6 @@ def ProveCred(params, aggr_vk, sigma, private_m, disclose_index, disclose_attr, 
     (h, s) = sigma
     assert len(private_m) <= len(beta)
     r_prime = random.randint(2, o)
-    print("h", h, "s", s)
     (h_prime , s_prime) = (multiply(h, r_prime), multiply(s, r_prime))
     sigma_prime =(h_prime, s_prime)
     r = random.randint(2, o)
