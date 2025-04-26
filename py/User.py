@@ -143,27 +143,36 @@ print("vcert_income", vcert_income)
 
 ac_title = "Loan Credential"
 credential = {"title": ac_title, "attributes" : attributes, "credential": None}
+q = 4 + 3 # schemaOrder = ["msk", "name", "dob", "r", "salary"], schemaOrderIncome = ["msk", "salary", "r"]
 params = setup(q, ac_title)
-(sk, vk) = ttp_keygen(params, 1, 1)
+nv = 3 #getTotalValidators(args.title)
+tv = 2 #getThresholdValidators(args.title)
+#q = getTotalAttributes(args.title)
+(sk, vk) = ttp_keygen(params, tv, nv)
+# print("sk, vk", sk, vk)
 aggregate_vk = agg_key(params, vk)
-to = 1
-no = 1
+to = 2 #getThresholdOpeners(args.title) 
+no = 3 #getTotalOpeners(args.title)
 (opk, osk) = opener_keygen(params)
-opks = [opk]
-prevVcerts = []	
-prevParams = []
+(opk1, osk1) = opener_keygen(params)
+(opk2, osk2) = opener_keygen(params)
+opks = [opk, opk1, opk2]
+
+prevVcerts = [(vcert["commit"], vcert["signature"]),(vcert_income["commit"], vcert_income["signature"])]	
+prevParams = [ca_params, ca_params_income]
 all_encoded_attr = []
 prevParams.append(ca_params)
 prevVcerts.append((vcert["commit"], vcert["signature"]))
 all_encoded_attr.append(encoded_attribute)
+all_encoded_attr.append(encoded_attribute_income)
 
-combination = ["Identity Certificate"]
-include_indexes = [[1,0,0,1]]
+combination = ["Identity Certificate,Income Certificate"]
+include_indexes = [[1,0,0,1],[1,0,1]]
 
 Lambda, os = PrepareCredRequest(params, aggregate_vk, to, no, opks, prevParams, all_encoded_attr, include_indexes, public_m=[])
 	
-print("Lambda: ", Lambda)
-print("os: ", os)
+# print("Lambda: ", Lambda)
+# print("os: ", os)
 
 (cm, commitments, pi_s, hp, C, pi_o, Dw, Ew, hr, bo) = Lambda
 #anything with "send" appended is making that particular variable as SC compatible.
@@ -179,6 +188,8 @@ private_m = []
 #         private_m.append(credential["attributes"][key])
 private_m.append(vcert["attributes"][key1])
 private_m.append(vcert["attributes"][key2])
+private_m.append(vcert_income["attributes"][key1])
+private_m.append(vcert_income["attributes"][key2])
 send_hp =  [[(hp[i][j-1][0].n, hp[i][j-1][1].n) for j in range(1, to)] for i in range(len(private_m))]
 send_hr = [(hr[i][0].n, hr[i][1].n) for i in range(len(hr))]
 send_bo = [([bo[i][0].coeffs[1].n,bo[i][0].coeffs[0].n],[bo[i][1].coeffs[1].n,bo[i][1].coeffs[0].n]) for i in range(len(bo))]
@@ -195,27 +206,48 @@ print("sending for verification")
 public_m = []
 public_m.append(encoded_attribute[1])
 public_m.append(encoded_attribute[2])
+public_m.append(encoded_attribute_income[1])
 str_public_m = [str(public_m[i]) for i in range(len(public_m))]
 
-# validator 
+# validator 1
 Lambda2 = (cm, commitments)
-print("sk", sk)
+# print("sk", sk)
 blind_sig = BlindSignAttr(params, sk[0], Lambda2, public_m)
 
 send_h = [blind_sig[0][0].n, blind_sig[0][1].n]
 send_t = [blind_sig[1][0].n, blind_sig[1][1].n]
 
-print("send_h: ", send_h)
-print("send_t: ", send_t)
+# print("send_h: ", send_h)
+# print("send_t: ", send_t)
 
 h = (FQ(send_h[0]), FQ(send_h[1]))
 t = (FQ(send_t[0]), FQ(send_t[1]))
 
 blind_sig = (h, t)
 sigma = Unblind(params, aggregate_vk, blind_sig, os)
-print("sigma: ", sigma)
+# print("sigma: ", sigma)
+
+# validator 2
+# Lambda2 = (cm, commitments)
+# print("sk", sk)
+blind_sig2 = BlindSignAttr(params, sk[1], Lambda2, public_m)
+
+send_h2 = [blind_sig2[0][0].n, blind_sig2[0][1].n]
+send_t2 = [blind_sig2[1][0].n, blind_sig2[1][1].n]
+
+# print("send_h: ", send_h2)
+# print("send_t: ", send_t2)
+
+h2 = (FQ(send_h2[0]), FQ(send_h2[1]))
+t2 = (FQ(send_t2[0]), FQ(send_t2[1]))
+
+blind_sig2 = (h2, t2)
+sigma2 = Unblind(params, aggregate_vk, blind_sig2, os)
+# print("sigma: ", sigma)
+
 signs = []
 signs.append(sigma)
+signs.append(sigma2)
 
 aggr_sig = AggCred(params, signs)
 print("aggr_sig: ", aggr_sig)
@@ -247,7 +279,11 @@ private_m = []
 
 private_m.append(vcert["attributes"][key1])
 private_m.append(vcert["attributes"][key2])
+private_m.append(vcert_income["attributes"][key1])
+private_m.append(vcert_income["attributes"][key2])
 
+ac_encode_str.append(2)
+ac_encode_str.append(2)
 ac_encode_str.append(2)
 ac_encode_str.append(2)
 
@@ -258,6 +294,8 @@ _, o, _, _, _, _ = params
 encoded_private_m = []
 encoded_private_m.append(encoded_attribute[0])
 encoded_private_m.append(encoded_attribute[3])
+encoded_private_m.append(encoded_attribute_income[0])
+encoded_private_m.append(encoded_attribute_income[2])
 # 	encoded_disclose_attr = [encoded_private_m[i] for i in range(len(encoded_private_m)) if disclose_index[i]==1]
 # 	disclose_attr_enc = [ac_encode_str[i] for i in range(len(ac_encode_str)) if disclose_index[i]==1]
 
@@ -279,7 +317,8 @@ encoded_private_m.append(encoded_attribute[3])
 encoded_public_m = []
 encoded_public_m.append(encoded_attribute[1])
 encoded_public_m.append(encoded_attribute[2])
-disclose_index = [1, 1]
+encoded_public_m.append(encoded_attribute_income[1])
+disclose_index = [1, 1,1,1]
 disclose_attr = [private_m[i] for i in range(len(private_m)) if disclose_index[i]==1]
 disclose_attr_enc = [ac_encode_str[i] for i in range(len(ac_encode_str)) if disclose_index[i]==1]
 # proving the possession of AC (Off-chain by user) private_m, disclose_index, disclose_attr, disclose_attr_enc, public_m

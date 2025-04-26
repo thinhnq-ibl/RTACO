@@ -261,14 +261,11 @@ def encodeG2(g2):
 
 def PrepareCredRequest(params, aggr_vk, to, no, opk, prevParams, all_attr, include_indexes, public_m=[]):
     private_m = []
-    # for i in range(len(all_attr)):
-    #     for j in range(len(all_attr[i])):
-    #         if include_indexes[i][j] == 1:
-    #             private_m.append(int(all_attr[i][j]))
-    private_m.append(all_attr[0][0])
-    private_m.append(all_attr[0][3])
-    public_m.append(all_attr[0][1])
-    public_m.append(all_attr[0][2])
+    for i in range(len(all_attr)):
+        for j in range(len(all_attr[i])):
+            if include_indexes[i][j] == 1:
+                private_m.append(int(all_attr[i][j]))
+
     assert len(private_m) > 0
     (G, o, g1, hs, g2, e) = params
     attributes = private_m + public_m
@@ -296,7 +293,6 @@ def PrepareCredRequest(params, aggr_vk, to, no, opk, prevParams, all_attr, inclu
     _, _, _, beta = aggr_vk
     r = [random.randint(2, o) for _ in range(no)]
     C = [(multiply(g2, r[i]), (add(multiply(opk[i], r[i]), ec_sum([multiply(beta[j], s[i][j]) for j in range(len(private_m))])))) for i in range(no)]
-    
     Aw, Bw, pi_o = make_pi_o(params, cm, C, r, s, aggr_vk, opk)
     
     h_r = [multiply(h, ri) for ri in r]
@@ -304,6 +300,7 @@ def PrepareCredRequest(params, aggr_vk, to, no, opk, prevParams, all_attr, inclu
 
     Lambda = (cm, commitments, pi_s, hidden_P, C, pi_o, Aw, Bw, h_r, b_o)
     return Lambda, os
+
 
 def to_binary256(point) :
     if isinstance(point, str):
@@ -410,7 +407,6 @@ def BlindSignAttr(params, sk, Lambda, public_m=[]):
     # assert verify_pi_o(params, commitments, C, cm, hidden_P, h_r, b_o, aggr_vk, opk, pi_o)
     # issue signature
     h = hashG1(to_binary256(cm))
-    print(public_m)
     t1 = [multiply(h, mi) for mi in public_m]
     t2 = add(multiply(h, x), ec_sum([multiply(bi, yi) for yi,bi in zip(y, commitments+t1)]))
     sigma_tilde = (h, t2)
@@ -442,7 +438,6 @@ def ProveCred(params, aggr_vk, sigma, private_m, disclose_index, disclose_attr, 
     (h, s) = sigma
     assert len(private_m) <= len(beta)
     r_prime = random.randint(2, o)
-    print("h", h, "s", s)
     (h_prime , s_prime) = (multiply(h, r_prime), multiply(s, r_prime))
     sigma_prime =(h_prime, s_prime)
     r = random.randint(2, o)
