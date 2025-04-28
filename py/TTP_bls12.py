@@ -4,23 +4,19 @@ import random
 import time
 
 def genRandom():
-	o = int(curve_order)
-	return random.randint(2, o)
+    o = int(curve_order)
+    print("Random number: %s", o)
+    return random.randint(2, o)
 
 def FindYforX(x) :
-    beta = (pow(x, 3, field_modulus) + 3) % field_modulus
+    beta = (pow(x, 3, field_modulus) + 4) % field_modulus
     y = pow(beta, (field_modulus + 1) //4, field_modulus)
     return (beta, y)
 
 def hashG1(byte_string):
-    beta = 0
-    y = 0
-    x = int.from_bytes(byte_string, "big") % curve_order
-    while True :
-        (beta, y) = FindYforX(x)
-        if beta == pow(y, 2, field_modulus) :
-            return (FQ(x), FQ(y))
-        x = (x + 1) % field_modulus
+    h = sha256(byte_string).digest()
+    x = int.from_bytes(h, 'big') % curve_order
+    return multiply(G1, x)
 
 def encode_attributes(attr, encode_str):
 	o = int(curve_order)
@@ -35,12 +31,16 @@ def encode_attributes(attr, encode_str):
 	return encoded_attr
 
 def GenCommitment(params, encoded_attr):
-	_, g, o, hs = params 
-	Aw = [multiply(hs[i], encoded_attr[i]) for i in range(len(hs))]
-	comm = multiply(g, encoded_attr[len(hs)])
-	for i in range(0, len(Aw)):
-		comm = add(comm, Aw[i])
-	return comm
+    _, g, o, hs = params
+    print(hs)
+    # attr * hs
+    Aw = [multiply(hs[i], encoded_attr[i]) for i in range(len(hs))]
+    # G * r
+    comm = multiply(g, encoded_attr[len(hs)])
+    # sum all
+    for i in range(0, len(Aw)):
+        comm = add(comm, Aw[i])
+    return comm
 
 def ttp_setup(q, ttp):
 	assert q > 0
@@ -53,38 +53,40 @@ def toChallenge(element_list):
 	for i in range(1, len(element_list)):
 		Cstring += SHA256(element_list[i])
 	Chash = sha256(Cstring).digest()
-	return (int.from_bytes(Chash, "big"))
+	return (int.from_bytes(Chash, "big") % int(curve_order))
 
 def SHA256(element):
     print(element[0].n)
-    return sha256((element[0].n).to_bytes(32, 'big') + (element[1].n).to_bytes(32, 'big')).digest()
+    return sha256((element[0].n).to_bytes(48, 'big') + (element[1].n).to_bytes(48, 'big')).digest()
 
 
 def GenZKPoK(params, prev_params, prev_vcerts, all_enc_attr, comm):
-	_, g, o, hs= params
-	total_wm = [[random.randint(2, o) for _ in range(len(all_enc_attr[i]))] for i in range(len(all_enc_attr))]
-	for i in range(1, len(total_wm)):
-		total_wm[i][0] = total_wm[0][0]
-	Aw = []
-	comm_list = []
-	for i in range(len(prev_vcerts)):
-		(_, ttp_g, _, ttp_hs) = prev_params[i]
-		tmp = multiply(ttp_g, total_wm[i][-1])
-		for j in range(len(total_wm[i]) - 1):
-			tmp = add(tmp, multiply(ttp_hs[j], total_wm[i][j]))
-		Aw.append(tmp)
-		comm_list.append(prev_vcerts[i][0])
+    _, g, o, hs = params
+    total_wm = [[random.randint(2, o) for _ in range(len(all_enc_attr[i]))] for i in range(len(all_enc_attr))]
+    for i in range(1, len(total_wm)):
+        total_wm[i][0] = total_wm[0][0]
+    Aw = []
+    comm_list = []
+    for i in range(len(prev_vcerts)):
+        (_, ttp_g, _, ttp_hs) = prev_params[i]
+        tmp = multiply(ttp_g, total_wm[i][-1])
+        for j in range(len(total_wm[i]) - 1):
+            tmp = add(tmp, multiply(ttp_hs[j], total_wm[i][j]))
+        Aw.append(tmp)
+        comm_list.append(prev_vcerts[i][0])
+    print("comlidt", comm_list)
 
-	_tmp = multiply(g, total_wm[len(prev_vcerts)][-1])
-	_tmp = add(_tmp, multiply(hs[0], total_wm[len(prev_vcerts)][0]))
-	Aw.append(_tmp)
-	comm_list.append(comm)
-
-	element_list = [g] + Aw + comm_list + hs 
+    _tmp = multiply(g, total_wm[len(prev_vcerts)][-1])
+    _tmp = add(_tmp, multiply(hs[0], total_wm[len(prev_vcerts)][0]))
+    Aw.append(_tmp)
+    comm_list.append(comm)
+    
+    element_list = [g] + Aw + comm_list + hs 
+    print("comlidt", [g], Aw, comm_list, hs, len(element_list))
      
-	c = toChallenge(element_list) % o
-	total_rm = [[(total_wm[i][j] - c*all_enc_attr[i][j]) % o for j in range(len(total_wm[i]))] for i in range(len(total_wm))]
-	return (c, total_rm)
+    c = toChallenge(element_list) % o
+    total_rm = [[(total_wm[i][j] - c*all_enc_attr[i][j]) % o for j in range(len(total_wm[i]))] for i in range(len(total_wm))]
+    return (c, total_rm)
 
 def VerifyZKPoK(params, prev_params, prev_vcerts, encoded_attr, comm, ZKPoK):
 	c, total_rm = ZKPoK
@@ -308,14 +310,14 @@ def to_binary256(point) :
     if isinstance(point, str):
         return sha256(point.encode("utf8").strip()).digest()
     if isinstance(point, int):
-        return point.to_bytes(32, 'big')
+        return point.to_bytes(48, 'big')
     if isinstance(point[0], FQ):
-        point1 = point[0].n.to_bytes(32, 'big')
-        point2 = point[1].n.to_bytes(32, 'big')
+        point1 = point[0].n.to_bytes(48, 'big')
+        point2 = point[1].n.to_bytes(48, 'big')
         return sha256(point1+point2).digest()
     if isinstance(point[0], FQ2):
-        point1 = point[0].coeffs[0].n.to_bytes(32, 'big') + point[0].coeffs[1].n.to_bytes(32, 'big')
-        point2 = point[1].coeffs[0].n.to_bytes(32, 'big') + point[1].coeffs[1].n.to_bytes(32, 'big')
+        point1 = point[0].coeffs[0].n.to_bytes(48, 'big') + point[0].coeffs[1].n.to_bytes(48, 'big')
+        point2 = point[1].coeffs[0].n.to_bytes(48, 'big') + point[1].coeffs[1].n.to_bytes(48, 'big')
         return sha256(point1+point2).digest()
 
 def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, prevParams, include_indexes):
