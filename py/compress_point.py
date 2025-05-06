@@ -8,7 +8,16 @@ from py_ecc.bls.point_compression import (
     decompress_G1,
     compress_G2,
     decompress_G2,
+    G1Uncompressed
 )
+
+from py_ecc.fields import (
+    optimized_bls12_381_FQ as FQO,
+    optimized_bls12_381_FQ2 as FQO2,
+    optimized_bls12_381_FQ12 as FQO12,
+    optimized_bls12_381_FQP as FQPO,
+)
+
 import hashlib
 import os
 from py_ecc.bls.hash import (
@@ -58,7 +67,10 @@ def main():
     # print("Match:", normalize(pubkey) == normalize(decompressed))
 
     prv = "6284b61a07c6bd3e632beb6294dfc780ad04489c8c31b73b0aef73608f3d1231"
-    pubkey = get_public_key(int.from_bytes(bytes.fromhex(prv), 'big'))
+    # pubkey = get_public_key(int.from_bytes(bytes.fromhex(prv), 'big'))
+    pubkey: G1Uncompressed = (FQO(3269738153309571450714394264030262776973204406823995144230683521590333770248416559499546637727379823385026562495637),
+                              FQO( 2683600539795682083209673554465384968512937233268668186083001842704041096992949667318245869852157686156313520412367), 
+                              FQO(1))
     print(f"Private Key: {prv}")
     print(f"Public Key: {pubkey}") 
     print(f"Compressed (hex): {i2osp(compress_pubkey(pubkey), 48).hex()}")

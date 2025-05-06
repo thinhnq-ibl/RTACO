@@ -183,3 +183,40 @@ test mod_inverse_works() {
   // 3 * 9 ≡ 1 mod 26
   mod_inverse(3, 26) == 9
 }
+
+pub type Sign {
+  r: Int,
+  s: Int,
+  r_g1: G1Element,
+}
+
+pub fn do_ecdsa_verify(pk: G1Element, sign: Sign, digest: Int) -> Bool {
+  let r = sign.r
+  let s = sign.s
+  let o = scalar.field_prime
+  let int_digest = digest % o
+  let s1 = mod_inverse(s, o)
+  let x1 = int_digest * s1 % o
+  let x2 = r * s1 % o
+  expect Some(x1_) = scalar.new(x1)
+  let pt1 = g1.scale(g1.generator, x1_)
+  expect Some(x2_) = scalar.new(x2)
+  let pt2 = g1.scale(pk, x2_)
+  let r_check = g1.add(pt1, pt2)
+  g1.equal(sign.r_g1, r_check)
+}
+// int_digest 8307708028707314087875157079437070406822079392388542905404831256202054257370
+
+test do_ecdsa_verify_test() {
+  let pk = g1.decompress(
+    #"0x0a2b3c4d5e6f708192a3b4c5d6e7f809a0b1c2d3e4f50617283949596979899a0b1c2d3e4f50617283949596979899"
+  )
+  let sign = Sign(
+    r: 3209377023408108385945846743457804895859532328861808589978759456222742628052810983755733003179598650422349394156259,
+    s: 35958758540729200417492901908177512833394982375587341972283760012201651423083,
+    r_g1: g1.decompress(
+      #"0x0a2b3c4d5e6f708192a3b4c5d6e7f809a0b1c2d3e4f50617283949596979899"
+    ),
+  )
+  expect do_ecdsa_verify(pk, sign, 8307708028707314087875157079437070406822079392388542905404831256202054257370)
+}

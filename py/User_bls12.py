@@ -9,6 +9,7 @@ from py_ecc.bls.point_compression import (
     decompress_G1,
     compress_G2,
     decompress_G2,
+    G1Uncompressed
 )
 from py_ecc.fields import (
     optimized_bls12_381_FQ as FQO,
@@ -76,20 +77,26 @@ zkpok = GenZKPoK(ca_params, [], [], [encoded_attribute], commit)
 # send for CA do verify
 encoded_attribute_verify = [encoded_attribute[1], encoded_attribute[2]]
 result  = VerifyZKPoK(ca_params, [], [], encoded_attribute_verify, commit, zkpok)
-print("ZKPoK verification result: ", result)
+#print("ZKPoK verification result: ", result)
 
 
 pubCP, mskCP = ttpKeyGen(ca_params)
 signature = SignCommitment(ca_params, mskCP, commit)
 issueVcert = (commit, signature)
-# print("Signature: ", signature)
+print("pubCP: ", pubCP)
+pubkeyUncompress: G1Uncompressed = (FQO(pubCP[0].n),
+                              FQO(pubCP[1].n), 
+                              FQO(1))
+# compress_G1(point3D)
+print(i2osp(compress_G1(pubkeyUncompress),48).hex())
+# end
 
 if(VerifyVcerts(ca_params, pubCP, signature, SHA256(commit)) == True):
     vcert["attributes"] = attributes
     vcert["commit"] = commit
     vcert["signature"] = signature
         
-print("vcert", vcert)
+#print("vcert", vcert)
 
 # Income Certificate
 vcert_title_income = "Income Certificate"
@@ -133,7 +140,7 @@ prevAttributes = [encoded_attribute]
 ca_params_income = ttp_setup(q_income-1, vcert_title_income) # exclude r.
 
 commit_income = GenCommitment(ca_params_income, encoded_attribute_income)
-print("commit_income", commit_income)
+#print("commit_income", commit_income)
 prevAttributes.append([attribute_income[0], attribute_income[-1]])
 
 zkpok_income = GenZKPoK(ca_params_income, prevParams, prevVcerts, prevAttributes, commit_income)
@@ -141,20 +148,20 @@ zkpok_income = GenZKPoK(ca_params_income, prevParams, prevVcerts, prevAttributes
 # send for CA do verify income
 encoded_attribute_income_verify = [encoded_attribute_income[1]]
 result_income = VerifyZKPoK(ca_params_income, prevParams, prevVcerts, encoded_attribute_income_verify, commit_income, zkpok_income)
-print("ZKPoK verification income result: ", result_income)
+#print("ZKPoK verification income result: ", result_income)
 
 pubCP, mskCP = ttpKeyGen(ca_params)
 signature_income = SignCommitment(ca_params, mskCP, commit_income)
-print("signature_income", signature_income)
+#print("signature_income", signature_income)
 issueVcertIncome = (commit_income, signature_income)
-# print("Signature: ", signature_income)
+# #print("Signature: ", signature_income)
 
 if(VerifyVcerts(ca_params, pubCP, signature_income, SHA256(commit_income)) == True):
     vcert_income["attributes"] = attributes_income
     vcert_income["commit"] = commit_income
     vcert_income["signature"] = signature_income
         
-# print("vcert_income", vcert_income)
+# #print("vcert_income", vcert_income)
 
 ######################################
 ## create credential
@@ -168,7 +175,7 @@ nv = 3 #getTotalValidators(args.title)
 tv = 2 #getThresholdValidators(args.title)
 #q = getTotalAttributes(args.title)
 (sk, vk) = ttp_keygen(params, tv, nv)
-# print("sk, vk", sk, vk)
+# #print("sk, vk", sk, vk)
 aggregate_vk = agg_key(params, vk)
 to = 2 #getThresholdOpeners(args.title) 
 no = 3 #getTotalOpeners(args.title)
@@ -190,8 +197,8 @@ include_indexes = [[1,0,0,1],[1,0,1]]
 
 Lambda, os = PrepareCredRequest(params, aggregate_vk, to, no, opks, prevParams, all_encoded_attr, include_indexes, public_m=[])
 	
-# print("Lambda: ", Lambda)
-# print("os: ", os)
+# #print("Lambda: ", Lambda)
+# #print("os: ", os)
 
 (cm, commitments, pi_s, hp, C, pi_o, Dw, Ew, hr, bo) = Lambda
 #anything with "send" appended is making that particular variable as SC compatible.
@@ -221,62 +228,62 @@ pi_s = list(pi_s)
 pi_s.append(combination)
 pi_s = tuple(pi_s)
 
-# print("sending for verification", pi_s)
+# #print("sending for verification", pi_s)
 public_m = []
 public_m.append(encoded_attribute[1])
 public_m.append(encoded_attribute[2])
 public_m.append(encoded_attribute_income[1])
 str_public_m = [str(public_m[i]) for i in range(len(public_m))]
 # tx_hash = request_contract.functions.RequestCred(title, send_vcerts, send_cm, send_compressed_cipher, send_hp, send_hr, send_bo, pi_s, pi_o, send_compressed_G2Points, str_public_m).transact({'from':user_addr})
-print("cred req", ac_title, send_vcerts)
-print("send_vcerts[0][0]", send_vcerts[0][0])
+#print("cred req", ac_title, send_vcerts)
+#print("send_vcerts[0][0]", send_vcerts[0][0])
 compressCommitments = [i2osp(compress_G1((send_vcerts[i][0][0],send_vcerts[i][0][1], FQO(1))),48).hex() for i in range(len(send_vcerts))]
-print("compressed commitments", compressCommitments)
-print('iproof', pi_s)
+#print("compressed commitments", compressCommitments)
+#print('iproof', pi_s)
 
 #send_cm, send_compressed_cipher, send_hp, send_hr, send_bo, pi_s, pi_o, send_compressed_G2Points, str_public_m)
 # validator 1
 Lambda2 = (cm, commitments)
-# print("sk", sk)
+# #print("sk", sk)
 blind_sig = BlindSignAttr(params, sk[0], Lambda2, public_m)
 
 send_h = [blind_sig[0][0].n, blind_sig[0][1].n]
 send_t = [blind_sig[1][0].n, blind_sig[1][1].n]
 
-# print("send_h: ", send_h)
-# print("send_t: ", send_t)
+# #print("send_h: ", send_h)
+# #print("send_t: ", send_t)
 
 h = (FQ(send_h[0]), FQ(send_h[1]))
 t = (FQ(send_t[0]), FQ(send_t[1]))
 
 blind_sig = (h, t)
 sigma = Unblind(params, aggregate_vk, blind_sig, os)
-# print("sigma: ", sigma)
+# #print("sigma: ", sigma)
 
 # validator 2
 # Lambda2 = (cm, commitments)
-# print("sk", sk)
+# #print("sk", sk)
 blind_sig2 = BlindSignAttr(params, sk[1], Lambda2, public_m)
 
 send_h2 = [blind_sig2[0][0].n, blind_sig2[0][1].n]
 send_t2 = [blind_sig2[1][0].n, blind_sig2[1][1].n]
 
-# print("send_h: ", send_h2)
-# print("send_t: ", send_t2)
+# #print("send_h: ", send_h2)
+# #print("send_t: ", send_t2)
 
 h2 = (FQ(send_h2[0]), FQ(send_h2[1]))
 t2 = (FQ(send_t2[0]), FQ(send_t2[1]))
 
 blind_sig2 = (h2, t2)
 sigma2 = Unblind(params, aggregate_vk, blind_sig2, os)
-# print("sigma: ", sigma)
+# #print("sigma: ", sigma)
 
 signs = []
 signs.append(sigma)
 signs.append(sigma2)
 
 aggr_sig = AggCred(params, signs)
-# print("aggr_sig: ", aggr_sig)
+# #print("aggr_sig: ", aggr_sig)
 
 credential["credential"] = aggr_sig
 
@@ -285,11 +292,11 @@ credential["credential"] = aggr_sig
 ##############################################
 
 # title = credential["title"]
-# print("The available policies are : ")
+# #print("The available policies are : ")
 # 	total_policies = verify_contract.functions.gettotalPolicies(title).call()
 # 	for i in range(total_policies):
 # 		policy = verify_contract.functions.getPolicy(title, i+1).call()
-# 		print("choose "+str(i+1)+" for : ", str(policy))
+# 		#print("choose "+str(i+1)+" for : ", str(policy))
 # 	policy_id = int(input("Choose any policy : "))
 # 	disclose_index = verify_contract.functions.getPolicy(title, policy_id).call()
 
@@ -357,5 +364,5 @@ encoded_disclosed_attr = encode_attributes(disclose_attr, disclose_attr_enc)
 #Sending to SP_verify for verifying the proof. 
 # SP_RequestService(credential, user_addr,disclose_index,aggr_sig,Theta,encoded_disclosed_attr,encoded_public_m,aggregate_vk)
 tf = VerifyCred(params, aggregate_vk, Theta, disclose_index, encoded_disclosed_attr, encoded_public_m)
-print("Verify Cred : ",tf)
-# print(tf)
+#print("Verify Cred : ",tf)
+# #print(tf)

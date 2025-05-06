@@ -5,7 +5,7 @@ import time
 
 def genRandom():
     o = int(curve_order)
-    print("Random number: %s", o)
+    #print("Random number: %s", o)
     return random.randint(2, o)
 
 def FindYforX(x) :
@@ -32,7 +32,7 @@ def encode_attributes(attr, encode_str):
 
 def GenCommitment(params, encoded_attr):
     _, g, o, hs = params
-    print(hs)
+    #print(hs)
     # attr * hs
     Aw = [multiply(hs[i], encoded_attr[i]) for i in range(len(hs))]
     # G * r
@@ -56,7 +56,7 @@ def toChallenge(element_list):
 	return (int.from_bytes(Chash, "big") % int(curve_order))
 
 def SHA256(element):
-    print(element[0].n)
+    #print(element[0].n)
     return sha256((element[0].n).to_bytes(48, 'big') + (element[1].n).to_bytes(48, 'big')).digest()
 
 
@@ -74,7 +74,7 @@ def GenZKPoK(params, prev_params, prev_vcerts, all_enc_attr, comm):
             tmp = add(tmp, multiply(ttp_hs[j], total_wm[i][j]))
         Aw.append(tmp)
         comm_list.append(prev_vcerts[i][0])
-    print("comlidt", comm_list)
+    #print("comlidt", comm_list)
 
     _tmp = multiply(g, total_wm[len(prev_vcerts)][-1])
     _tmp = add(_tmp, multiply(hs[0], total_wm[len(prev_vcerts)][0]))
@@ -82,7 +82,7 @@ def GenZKPoK(params, prev_params, prev_vcerts, all_enc_attr, comm):
     comm_list.append(comm)
     
     element_list = [g] + Aw + comm_list + hs 
-    print("comlidt", [g], Aw, comm_list, hs, len(element_list))
+    #print("comlidt", [g], Aw, comm_list, hs, len(element_list))
      
     c = toChallenge(element_list) % o
     total_rm = [[(total_wm[i][j] - c*all_enc_attr[i][j]) % o for j in range(len(total_wm[i]))] for i in range(len(total_wm))]
@@ -124,10 +124,12 @@ def VerifyZKPoK(params, prev_params, prev_vcerts, encoded_attr, comm, ZKPoK):
 	return (c == toChallenge(element_list) % o)
 
 def SignCommitment(params, sk, comm):
-	G, g, o, hs= params
-	digest = SHA256(comm)
-	sign = do_ecdsa_sign(sk, digest)
-	return sign
+    G, g, o, hs = params
+    digest = SHA256(comm)
+    int_digest = int.from_bytes(digest, "big") % o
+    #print("int_digest", int_digest)
+    sign = do_ecdsa_sign(sk, digest)
+    return sign
 
 def do_ecdsa_sign(sk, digest):
 	r = 0
