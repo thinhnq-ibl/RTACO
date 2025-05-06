@@ -149,3 +149,37 @@ test blind_sign_1() {
   let unblind_sig = unblind_signature(blind_sig, blind_factor)
   expect sg1 == g2.compress(unblind_sig)
 }
+
+// Calculates the modular inverse of `a` modulo `m` using the Extended Euclidean Algorithm.
+// Returns 0 if the inverse does not exist.
+fn mod_inverse(a: Int, m: Int) -> Int {
+  if m == 1 {
+    0
+  } else {
+    go(a, m, 1, 0, m)
+  }
+}
+
+fn go(a: Int, m: Int, x: Int, y: Int, m0: Int) -> Int {
+  if a <= 1 {
+    if x < 0 {
+      x + m0
+    } else {
+      x
+    }
+  } else {
+    let q = a / m
+    let t = m
+    let r = a % m
+    let new_a = t
+    let new_m = r
+    let new_x = y
+    let new_y = x - q * y
+    go(new_a, new_m, new_x, new_y, m0)
+  }
+}
+
+test mod_inverse_works() {
+  // 3 * 9 ≡ 1 mod 26
+  mod_inverse(3, 26) == 9
+}

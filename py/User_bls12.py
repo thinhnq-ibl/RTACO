@@ -1,5 +1,21 @@
 from TTP_bls12 import *
 import datetime
+from py_ecc.bls.hash import (
+    i2osp,
+    os2ip
+)
+from py_ecc.bls.point_compression import (
+    compress_G1,
+    decompress_G1,
+    compress_G2,
+    decompress_G2,
+)
+from py_ecc.fields import (
+    optimized_bls12_381_FQ as FQO,
+    optimized_bls12_381_FQ2 as FQO2,
+    optimized_bls12_381_FQ12 as FQO12,
+    optimized_bls12_381_FQP as FQPO,
+)
 
 ##################################
 ## create vcert
@@ -117,6 +133,7 @@ prevAttributes = [encoded_attribute]
 ca_params_income = ttp_setup(q_income-1, vcert_title_income) # exclude r.
 
 commit_income = GenCommitment(ca_params_income, encoded_attribute_income)
+print("commit_income", commit_income)
 prevAttributes.append([attribute_income[0], attribute_income[-1]])
 
 zkpok_income = GenZKPoK(ca_params_income, prevParams, prevVcerts, prevAttributes, commit_income)
@@ -128,6 +145,7 @@ print("ZKPoK verification income result: ", result_income)
 
 pubCP, mskCP = ttpKeyGen(ca_params)
 signature_income = SignCommitment(ca_params, mskCP, commit_income)
+print("signature_income", signature_income)
 issueVcertIncome = (commit_income, signature_income)
 # print("Signature: ", signature_income)
 
@@ -136,7 +154,7 @@ if(VerifyVcerts(ca_params, pubCP, signature_income, SHA256(commit_income)) == Tr
     vcert_income["commit"] = commit_income
     vcert_income["signature"] = signature_income
         
-print("vcert_income", vcert_income)
+# print("vcert_income", vcert_income)
 
 ######################################
 ## create credential
@@ -159,11 +177,11 @@ no = 3 #getTotalOpeners(args.title)
 (opk2, osk2) = opener_keygen(params)
 opks = [opk, opk1, opk2]
 
-prevVcerts = [(vcert["commit"], vcert["signature"]),(vcert_income["commit"], vcert_income["signature"])]	
+prevVcerts = [(vcert["commit"], vcert["signature"])]	
 prevParams = [ca_params, ca_params_income]
 all_encoded_attr = []
 prevParams.append(ca_params)
-prevVcerts.append((vcert["commit"], vcert["signature"]))
+prevVcerts.append((vcert_income["commit"], vcert_income["signature"]))
 all_encoded_attr.append(encoded_attribute)
 all_encoded_attr.append(encoded_attribute_income)
 
@@ -203,13 +221,20 @@ pi_s = list(pi_s)
 pi_s.append(combination)
 pi_s = tuple(pi_s)
 
-print("sending for verification")
+# print("sending for verification", pi_s)
 public_m = []
 public_m.append(encoded_attribute[1])
 public_m.append(encoded_attribute[2])
 public_m.append(encoded_attribute_income[1])
 str_public_m = [str(public_m[i]) for i in range(len(public_m))]
+# tx_hash = request_contract.functions.RequestCred(title, send_vcerts, send_cm, send_compressed_cipher, send_hp, send_hr, send_bo, pi_s, pi_o, send_compressed_G2Points, str_public_m).transact({'from':user_addr})
+print("cred req", ac_title, send_vcerts)
+print("send_vcerts[0][0]", send_vcerts[0][0])
+compressCommitments = [i2osp(compress_G1((send_vcerts[i][0][0],send_vcerts[i][0][1], FQO(1))),48).hex() for i in range(len(send_vcerts))]
+print("compressed commitments", compressCommitments)
+print('iproof', pi_s)
 
+#send_cm, send_compressed_cipher, send_hp, send_hr, send_bo, pi_s, pi_o, send_compressed_G2Points, str_public_m)
 # validator 1
 Lambda2 = (cm, commitments)
 # print("sk", sk)
@@ -251,7 +276,7 @@ signs.append(sigma)
 signs.append(sigma2)
 
 aggr_sig = AggCred(params, signs)
-print("aggr_sig: ", aggr_sig)
+# print("aggr_sig: ", aggr_sig)
 
 credential["credential"] = aggr_sig
 
@@ -332,5 +357,5 @@ encoded_disclosed_attr = encode_attributes(disclose_attr, disclose_attr_enc)
 #Sending to SP_verify for verifying the proof. 
 # SP_RequestService(credential, user_addr,disclose_index,aggr_sig,Theta,encoded_disclosed_attr,encoded_public_m,aggregate_vk)
 tf = VerifyCred(params, aggregate_vk, Theta, disclose_index, encoded_disclosed_attr, encoded_public_m)
-print("Verify Cred : ")
-print(tf)
+print("Verify Cred : ",tf)
+# print(tf)

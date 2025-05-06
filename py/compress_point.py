@@ -24,6 +24,8 @@ def generate_private_key():
 
 def get_public_key(privkey):
     # G1 * privkey = pubkey
+    print(f"privkey: {privkey}")
+    print(f"G1: {G1}")
     return multiply(G1, privkey)
 
 def compress_pubkey(pubkey):
