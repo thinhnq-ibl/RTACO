@@ -131,6 +131,12 @@ def SignCommitment(params, sk, comm):
     sign = do_ecdsa_sign(sk, digest)
     return sign
 
+def get_int_digest(params, comm):
+    G, g, o, hs = params
+    digest = SHA256(comm)
+    int_digest = int.from_bytes(digest, "big") % o
+    return int_digest
+
 def do_ecdsa_sign(sk, digest):
 	r = 0
 	s = 0

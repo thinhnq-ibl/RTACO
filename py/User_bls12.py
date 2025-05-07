@@ -88,12 +88,13 @@ pubkeyUncompress: G1Uncompressed = (FQO(pubCP[0].n),
                               FQO(pubCP[1].n), 
                               FQO(1))
 # compress_G1(point3D)
+print("digest", get_int_digest(ca_params, commit))
 print("pubkeyUncompress", i2osp(compress_G1(pubkeyUncompress),48).hex())
 print("signature r, s", signature[0], signature[1])
 print("signatureCompress",i2osp(compress_G1((FQO(signature[0]),
                               FQO(signature[1]), 
                               FQO(1))),48).hex())
-# end
+end
 
 if(VerifyVcerts(ca_params, pubCP, signature, SHA256(commit)) == True):
     vcert["attributes"] = attributes

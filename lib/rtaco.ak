@@ -5,10 +5,12 @@ use aiken/builtin.{
   bls12_381_g2_uncompress, bls12_381_miller_loop,
   bls12_381_mul_miller_loop_result, bytearray_to_integer,
 }
-use aiken/collection/list.{foldl, length}
+use aiken/collection/list.{foldl, head, length, range, tail}
 use aiken/crypto/bls12_381/g1 as g1
 use aiken/crypto/bls12_381/g2 as g2
 use aiken/crypto/bls12_381/scalar as scalar
+use aiken/option.{is_none}
+use bls.{Sign, do_ecdsa_verify}
 
 //  function check_Vcerts(string memory name, Vcert[] memory vcerts, IssueProof memory iproof) private view returns(bool) {
 //         // require(isRequested(name, vcerts[0]), "Verifiable certificate already used.");
@@ -29,8 +31,8 @@ use aiken/crypto/bls12_381/scalar as scalar
 //     }
 
 pub type Vcert {
-  commit: G1Element,
-  signature: List<Int>,
+  digest: Int,
+  signature: Sign,
 }
 
 pub type IssueProof {
@@ -38,7 +40,7 @@ pub type IssueProof {
   rr: Int,
   ros: List<Int>,
   total_rm: List<List<Int>>,
-  combination: List<ByteArray>,
+  pubkeys: List<G1Element>,
 }
 
 // iproof (111028293681481776174710511636606709440469689910069175151354337820721184534253, 5050437177520903155847248449104124878646040665278897517070821451493842774601, [49744196328279248815796712426546829894584294309244497450305853101602225222529, 29782732702853354121904336237005215317539472786765989838419548536149186648559, 3986513954939188089344606671398402557201798092878666912131712831328580791987, 42926437779922011362364629289975177979465250943458230974890693324059432914956], [[28570405751608929143275229779994869610628602755456909429086846981825913832910, 13507742991005023007096234598351915058180043055507780815574349619528610865134, 26806696748710448407371037207606330670021875901994732626874438952060518010483, 14337009862152980476725691075380459026334552202534707298997180022700568755898], [28570405751608929143275229779994869610628602755456909429086846981825913832910, 45279309888158677857503732152612499548654948313017471839403896507493988578648, 18631698991280989165794156185809282554249027473066654851015905870822852378043], []], ['Identity Certificate,Income Certificate'])
@@ -73,14 +75,70 @@ const iproof =
       ],
       [],
     ],
-    combination: ["Identity Certificate", "Income Certificate"],
+    pubkeys: [
+      g1.decompress(
+        #"a97a5f594a6b748b8c6d2d67dc903c3eab4ceb4279a4446a15c38843d5cd4e225410ab42f2cf8a4af6e7266b0faee1fc",
+      ),
+      g1.decompress(
+        #"9346f954723e2a5187b19723ced977b60fe7735a66658a54d793726831f12045bdf02c2245e4f117aae2e1591076f825",
+      ),
+    ],
   }
 
-pub fn check_Vcerts(
-  name: String,
-  vcerts: List<Vcert>,
-  iproof: IssueProof,
-) -> bool {
-  todo
-  //   bls12_381_miller_loop(g1, g2)
+pub fn check_vcerts(iproof: IssueProof, vcerts: List<Vcert>) -> Bool {
+  let pks = iproof.pubkeys
+  check_vcert_item(vcerts, pks)
+}
+
+fn check_vcert_item(vcerts: List<Vcert>, pks: List<G1Element>) -> Bool {
+  let first_vcert = head(vcerts)
+  let first_pk = head(pks)
+
+  if is_none(first_vcert) {
+    True
+  } else {
+    expect Some(first_vcert_) = first_vcert
+    expect Some(first_pk_) = first_pk
+    let check_result =
+      do_ecdsa_verify(first_pk_, first_vcert_.signature, first_vcert_.digest)
+    if check_result == False {
+      False
+    } else {
+      let tail_vcerts = tail(vcerts)
+      let tail_pks = tail(pks)
+      expect Some(tail_vcerts_) = tail_vcerts
+      expect Some(tail_pks_) = tail_pks
+      check_vcert_item(tail_vcerts_, tail_pks_)
+    }
+  }
+}
+
+test check_vcerts_test() {
+  let sign: Sign =
+    Sign {
+      r: 375623204181131564384232636891274224719163034346976929078671100301321724912206927501074814069864503255653828330416,
+      s: 4190871304122129047938302829786181177367404154476248228043645863122779910507,
+      r_g1: g1.decompress(
+        #"8270c2da120b816d26cde159954af4cd667468c722964fd3d0b6c6c33d068091663afc3474cca588fbe1e9b9fe4503b0",
+      ),
+    }
+  let sign2: Sign =
+    Sign {
+      r: 53069975912445214050215695616701479853596799354883015796871181530363164854608641041070356293571570306619224515602,
+      s: 26507628581694775527381805327154649027276194953014903921776139946957702015013,
+      r_g1: g1.decompress(
+        #"805844fb8ca05e482618ccd1ae662b9d0e54a7558c98fce53075f6d0c356c98bc35b07742784322e321de7b0f91a6412",
+      ),
+    }
+  let digest: Int =
+    33686179265347631104135485729780674647189012683424630306299736641470524901886
+  let digest2: Int =
+    47808148471404873178441685237543336627116686220543009355073152549289178048716
+  check_vcerts(
+    iproof,
+    [
+      Vcert { digest, signature: sign },
+      Vcert { digest: digest2, signature: sign2 },
+    ],
+  ) == True
 }
