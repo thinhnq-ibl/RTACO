@@ -15,9 +15,11 @@ use aiken/builtin.{
   bls12_381_mul_miller_loop_result, bytearray_to_integer,
 }
 use aiken/collection/list.{foldl, length}
+use aiken/crypto.{sha2_256}
 use aiken/crypto/bls12_381/g1 as g1
 use aiken/crypto/bls12_381/g2 as g2
 use aiken/crypto/bls12_381/scalar as scalar
+use aiken/primitive/int.{from_bytearray_big_endian}
 
 /// DSTs - The domain separation tags for the hash-to-curve function.
 pub const dst_basic_G1 = "BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_"
@@ -222,4 +224,18 @@ test do_ecdsa_verify_test() {
   let digest =
     33686179265347631104135485729780674647189012683424630306299736641470524901886
   do_ecdsa_verify(pk, sign, digest)
+}
+
+// byte 1640ec7d49e120b3fc0af85d4780d7ca7a2842db2384b1243da395307c5095bf4c247bf86158fd415cf5f9608b138e4c0e866a62d122b21a863240dec6dc1f8f7d9ec1f463e334f86a8cf71a561d30be335367bd2dcc79d4e8b812d03dddc698
+// digest bec55a5a88c41b777d091822faf509a0c596034b48316458674278d4134f998c
+// int_digest 33852258525425321746310890315453146691709421431852632660276518292211947772299
+
+test run_sha256() {
+  let msg =
+    #"1640ec7d49e120b3fc0af85d4780d7ca7a2842db2384b1243da395307c5095bf4c247bf86158fd415cf5f9608b138e4c0e866a62d122b21a863240dec6dc1f8f7d9ec1f463e334f86a8cf71a561d30be335367bd2dcc79d4e8b812d03dddc698"
+  let digest =
+    #"bec55a5a88c41b777d091822faf509a0c596034b48316458674278d4134f998c"
+  expect digest == sha2_256(msg)
+  expect
+    from_bytearray_big_endian(digest) % scalar.field_prime == 33852258525425321746310890315453146691709421431852632660276518292211947772299
 }

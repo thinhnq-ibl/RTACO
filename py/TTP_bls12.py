@@ -56,7 +56,6 @@ def toChallenge(element_list):
 	return (int.from_bytes(Chash, "big") % int(curve_order))
 
 def SHA256(element):
-    #print(element[0].n)
     return sha256((element[0].n).to_bytes(48, 'big') + (element[1].n).to_bytes(48, 'big')).digest()
 
 
@@ -126,6 +125,8 @@ def VerifyZKPoK(params, prev_params, prev_vcerts, encoded_attr, comm, ZKPoK):
 def SignCommitment(params, sk, comm):
     G, g, o, hs = params
     digest = SHA256(comm)
+    print("byte" , ((comm[0].n).to_bytes(48, 'big') + (comm[1].n).to_bytes(48, 'big')).hex())
+    print("digest", digest.hex())
     int_digest = int.from_bytes(digest, "big") % o
     print("int_digest", int_digest)
     sign = do_ecdsa_sign(sk, digest)
