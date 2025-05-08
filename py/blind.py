@@ -10,22 +10,22 @@ def to_binary256(data):
         data = str(data).encode()
     return sha256(data).digest()
 
-def hash_to_G1(msg):
+def hash_to_G2(msg):
     """Simple hash-to-curve (for demo purposes - use proper hash_to_curve in production)"""
     h = sha256(msg).digest()
     x = int.from_bytes(h, 'big') % curve_order
-    return multiply(G1, x)
+    return multiply(G2, x)
 
 def generate_keypair():
     """Generate signer's key pair"""
     sk = secrets.randbelow(curve_order)
-    pk = multiply(G2, sk)  # Public key in G2
+    pk = multiply(G1, sk)  # Public key in G2
     return sk, pk
 
 def blind_message( message):
     """User blinds the message before sending to signer"""
     # Hash the message
-    h = hash_to_G1(message)
+    h = hash_to_G2(message)
     
     # Generate blinding factor int
     r = secrets.randbelow(curve_order - 1) + 1 % curve_order
@@ -53,9 +53,9 @@ def verify_signature(pk, message, signature):
     """Verify the unblinded signature"""
     # Compute required pairings
     # e(signature, g2) == e(g1^h, pk)
-    g1_h = hash_to_G1(message)
-    pairing1 = pairing(G2, signature)
-    pairing2 = pairing(pk, g1_h)
+    g2_h = hash_to_G2(message)
+    pairing1 = pairing(signature, G1)
+    pairing2 = pairing(g2_h, pk)
     
     # Final exponentiation and comparison
     return pairing1 == pairing2
@@ -64,7 +64,7 @@ def verify_signature(pk, message, signature):
 if __name__ == "__main__":
     # 1. Key Generation
     sk, pk = generate_keypair()
-    print("Key generation complete")
+    print("Key generation complete", pk)
     
     # 2. User prepares message
     message = b"Hello, blind signature world!"

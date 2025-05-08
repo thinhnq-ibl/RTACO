@@ -5,6 +5,8 @@
 ////
 //// The module assumes that the public keys and messages are provided as byte arrays, and it uses the [aiken/prelude/builtin](https://aiken-lang.github.io/prelude/aiken/builtin.html) module for the underlying cryptographic operations.
 
+// https://github.com/ilap/bls/blob/main/lib/bls/core.ak
+
 use aiken/builtin.{
   bls12_381_final_verify, bls12_381_g1_add, bls12_381_g1_compress,
   bls12_381_g1_scalar_mul, bls12_381_g1_uncompress, bls12_381_g2_add,
@@ -13,8 +15,11 @@ use aiken/builtin.{
   bls12_381_mul_miller_loop_result, bytearray_to_integer,
 }
 use aiken/collection/list.{foldl, length}
+use aiken/crypto.{sha2_256}
 use aiken/crypto/bls12_381/g1 as g1
 use aiken/crypto/bls12_381/g2 as g2
+use aiken/crypto/bls12_381/scalar as scalar
+use aiken/primitive/int.{from_bytearray_big_endian}
 
 /// DSTs - The domain separation tags for the hash-to-curve function.
 pub const dst_basic_G1 = "BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_"
@@ -54,6 +59,7 @@ pub fn sign(sk: ByteArray, message: ByteArray) -> G2Element {
   let s = bytearray_to_integer(True, sk)
 
   let hash = bls12_381_g2_hash_to_group(message, dst_basic_G2)
+  trace hash
   bls12_381_g2_scalar_mul(s, hash)
 }
 
@@ -78,8 +84,41 @@ pub fn verify(pk: G1Element, message: ByteArray, signature: G2Element) -> Bool {
   bls12_381_final_verify(c1, c2)
 }
 
+pub fn blind_message(message: ByteArray, blind_factor: ByteArray) -> G2Element {
+  let r = bytearray_to_integer(True, blind_factor)
+  // Hash the message to a point
+  let h = bls12_381_g2_hash_to_group(message, dst_basic_G2)
+  // Compute blinded message point
+  bls12_381_g2_scalar_mul(r, h)
+}
+
+pub fn blind_sign(sk: ByteArray, blinded_msg: G2Element) -> G2Element {
+  let s = bytearray_to_integer(True, sk)
+
+  // Simple blind signature: s = sk * blinded_msg
+  bls12_381_g2_scalar_mul(s, blinded_msg)
+}
+
+pub fn unblind_signature(
+  blind_sig: G2Element,
+  blind_factor: ByteArray,
+) -> G2Element {
+  let s = bytearray_to_integer(True, blind_factor)
+  expect Some(scalar_s) = scalar.new(s)
+  expect Some(scalar_one) = scalar.new(1)
+  // Compute r^-1 mod curve_order
+  let scalar_r_inv = scalar.div(scalar_one, scalar_s)
+  expect Some(r_inv_int) = scalar_r_inv
+  // Unblind the signature
+  let r_inv = scalar.to_int(r_inv_int)
+  bls12_381_g2_scalar_mul(r_inv, blind_sig)
+}
+
 /// Test
 const sk1 = #"6284b61a07c6bd3e632beb6294dfc780ad04489c8c31b73b0aef73608f3d1231"
+
+const hash =
+  #"b8ee5db274e4ed884d6acae616b1c292004bb3df5c150e7eee66d6aed86ce3481300cdfe037651d9e01af95f539bf63a13d14cbc4ff1c45149ece6777e6c5b2860c0ec14253b9667200ea5bb6c2d11bf1315c552da7a7d60092d7010da158a2f"
 
 const pk1 =
   #"82cbde4e4fc6a56b6f84f2ceabb191ed7d4402835f8caa1e166554e7d7a925fe2cab59f113b78c91a4b37001d2a9c75f"
@@ -103,4 +142,97 @@ test verify_1() {
   let sig = g2.decompress(sg1)
   let pk = g1.decompress(pk1)
   expect verify(pk, msg1, sig)
+}
+
+test blind_sign_1() {
+  let blind_factor =
+    #"1234567890123456789012345678901234567890123456789012345678901234"
+  let blind_sig = blind_sign(sk1, blind_message(msg1, blind_factor))
+  let unblind_sig = unblind_signature(blind_sig, blind_factor)
+  expect sg1 == g2.compress(unblind_sig)
+}
+
+// Calculates the modular inverse of `a` modulo `m` using the Extended Euclidean Algorithm.
+// Returns 0 if the inverse does not exist.
+fn mod_inverse(a: Int, m: Int) -> Int {
+  if m == 1 {
+    0
+  } else {
+    go(a, m, 1, 0, m)
+  }
+}
+
+fn go(a: Int, m: Int, x: Int, y: Int, m0: Int) -> Int {
+  if a <= 1 {
+    if x < 0 {
+      x + m0
+    } else {
+      x
+    }
+  } else {
+    let q = a / m
+    let t = m
+    let r = a % m
+    let new_a = t
+    let new_m = r
+    let new_x = y
+    let new_y = x - q * y
+    go(new_a, new_m, new_x, new_y, m0)
+  }
+}
+
+test mod_inverse_works() {
+  // 3 * 9 ≡ 1 mod 26
+  mod_inverse(3, 26) == 9
+}
+
+pub type Sign {
+  r: Int,
+  s: Int,
+  r_g1: G1Element,
+}
+
+pub fn do_ecdsa_verify(pk: G1Element, sign: Sign, commit: ByteArray) -> Bool {
+  let r = sign.r
+  let s = sign.s
+  let o = scalar.field_prime
+  let digest = sha2_256(commit)
+  let int_digest = from_bytearray_big_endian(digest) % o
+  let s1 = mod_inverse(s, o)
+  let x1 = int_digest * s1 % o
+  let x2 = r * s1 % o
+  expect Some(x1_) = scalar.new(x1)
+  let pt1 = g1.scale(g1.generator, x1_)
+  expect Some(x2_) = scalar.new(x2)
+  let pt2 = g1.scale(pk, x2_)
+  let r_check = g1.add(pt1, pt2)
+  g1.equal(sign.r_g1, r_check)
+}
+
+test do_ecdsa_verify_test() {
+  let pk =
+    g1.decompress(
+      #"968cc0fcd3879a0b7b1f1f70fe60a7c5ea3aa45fcbb2d4963c5dec7b9efa5ec23be6ebf59f285d904d734afdf2f0147e",
+    )
+  let sign =
+    Sign {
+      r: 1405393218543153634611558277146205543651389828460482046569307751654236783901042705626443752376987448075822652265738,
+      s: 38202479084295088188067894688129388712852808125955621239765113527621075572534,
+      r_g1: g1.decompress(
+        #"89218ac9d46dbef17651a764dd5e0ee7414b040221e3d0f188642129acfea1a17862de38851b2483095449c4732d150a",
+      ),
+    }
+  let commit =
+    #"1669f6cef337b4373a0f3e6307c6cdfb44517a36e125d7866ee9e838f4f5455cca63ce114d25b62ae4e597dc78c4db45170d8abb0611028477e44388db31dccbee44f308b8f5cd934727ede4202b807fe1e7ba3c0d7c0680c9213dd84a29576d"
+  do_ecdsa_verify(pk, sign, commit)
+}
+
+test run_sha256() {
+  let msg =
+    #"1640ec7d49e120b3fc0af85d4780d7ca7a2842db2384b1243da395307c5095bf4c247bf86158fd415cf5f9608b138e4c0e866a62d122b21a863240dec6dc1f8f7d9ec1f463e334f86a8cf71a561d30be335367bd2dcc79d4e8b812d03dddc698"
+  let digest =
+    #"bec55a5a88c41b777d091822faf509a0c596034b48316458674278d4134f998c"
+  expect digest == sha2_256(msg)
+  expect
+    from_bytearray_big_endian(digest) % scalar.field_prime == 33852258525425321746310890315453146691709421431852632660276518292211947772299
 }
