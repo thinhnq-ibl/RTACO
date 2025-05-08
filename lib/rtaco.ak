@@ -79,7 +79,7 @@ const iproof =
 
 pub fn check_vcerts(iproof: IssueProof, vcerts: List<Vcert>) -> Bool {
   let pks = iproof.pubkeys
-  check_vcert_item(vcerts, pks)
+  check_vcert_item(vcerts, pks) && check_sk(iproof)
 }
 
 fn check_vcert_item(vcerts: List<Vcert>, pks: List<G1Element>) -> Bool {
@@ -133,4 +133,31 @@ test check_vcerts_test() {
       Vcert { commit: commit2, signature: sign2 },
     ],
   ) == True
+}
+
+pub fn check_sk(proof: IssueProof) -> Bool {
+  let first_item = head(proof.total_rm)
+  expect Some(first_item_) = first_item
+  let first_item_index = head(first_item_)
+  expect Some(first_item_index_) = first_item_index
+  expect Some(tail_items) = tail(proof.total_rm)
+  check_sk_item(first_item_index_, tail_items)
+}
+
+fn check_sk_item(first_item_index: Int, total_rm: List<List<Int>>) -> Bool {
+  let first = head(total_rm)
+  if is_none(first) {
+    True
+  } else {
+    expect Some(first_) = first
+    let first_index = head(first_)
+    expect Some(first_index_) = first_index
+    if first_index_ != first_item_index {
+      False
+    } else {
+      let tail_rm = tail(total_rm)
+      expect Some(tail_rm_) = tail_rm
+      check_sk_item(first_item_index, tail_rm_)
+    }
+  }
 }
