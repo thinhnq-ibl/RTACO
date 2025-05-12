@@ -58,6 +58,17 @@ def toChallenge(element_list):
 def SHA256(element):
     return sha256((element[0].n).to_bytes(48, 'big') + (element[1].n).to_bytes(48, 'big')).digest()
 
+def get_g1_bytes(point):
+     return ((point[0].n).to_bytes(48, 'big') + (point[1].n).to_bytes(48, 'big')).hex()
+
+def get_g2_bytes(point):
+    return [((point[0].coeffs[0].n).to_bytes(48, 'big') + (point[0].coeffs[1].n).to_bytes(48, 'big')).hex() , ((point[1].coeffs[0].n).to_bytes(48, 'big') + (point[1].coeffs[1].n).to_bytes(48, 'big')).hex()]
+
+def get_list_g1_bytes(points):
+    ret = []
+    for point in points:
+        ret.append(((point[0].n).to_bytes(48, 'big') + (point[1].n).to_bytes(48, 'big')).hex())
+    return ret
 
 def GenZKPoK(params, prev_params, prev_vcerts, all_enc_attr, comm):
     _, g, o, hs = params
@@ -373,13 +384,16 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
     total_rm = [[(total_wm[i][j] - c*all_attr[i][j]) % o for j in range(len(total_wm[i]))] for i in range(len(total_wm) - 1)]
     total_rm.append([(total_wm[-1][i] - c*public_m[i]) % o for i in range(len(total_wm[-1]))])
     # rm = [(wm[i] - c*attributes[i]) % o for i in range(len(wm))]
-    print("Aw", Aw)
-    print("Bw", Bw),
-    print("Cw", Cw)
-    print("g1", g1, "g2", g2),
-    print("cm", cm, "h", h) 
-    print("hs", hs)
-    print("c", c, rr, ros, total_rm)
+    print("Aw", get_list_g1_bytes(Aw))
+    print("Bw", get_g1_bytes(Bw)),
+    print("Cw", get_list_g1_bytes(Cw))
+    print("g1", get_g1_bytes(g1)), 
+    print("g2", get_g2_bytes(g2)),
+    print("cm", get_g1_bytes(cm)), 
+    print("h", get_g1_bytes(h)) ,
+    print("hs", get_list_g1_bytes(hs))
+    print("c", c)
+    # , rr, ros, total_rm)
     return (c, rr, ros, total_rm)
 
 

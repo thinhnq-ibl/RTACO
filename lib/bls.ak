@@ -239,6 +239,11 @@ test run_sha256() {
     from_bytearray_big_endian(digest) % scalar.field_prime == 33852258525425321746310890315453146691709421431852632660276518292211947772299
 }
 
+pub fn bytearray_big_endian_to_int(bytearray: ByteArray) -> Int {
+  let number = from_bytearray_big_endian(bytearray)
+  number % scalar.field_prime
+}
+
 pub fn g1_to_binary256(g1: ByteArray) -> ByteArray {
   sha2_256(g1)
 }
