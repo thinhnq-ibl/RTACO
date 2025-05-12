@@ -236,3 +236,7 @@ test run_sha256() {
   expect
     from_bytearray_big_endian(digest) % scalar.field_prime == 33852258525425321746310890315453146691709421431852632660276518292211947772299
 }
+
+pub fn g1_to_binary256(g1: ByteArray) -> ByteArray {
+  sha2_256(g1)
+}

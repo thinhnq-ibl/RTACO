@@ -366,12 +366,20 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
         Cw.append(tmp)
     # create the challenge
     c = to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw)
+   
     # create responses
     rr = (wr - c * r) % o
     ros = [(wos[i] - c*os[i]) % o for i in range(len(wos))]
     total_rm = [[(total_wm[i][j] - c*all_attr[i][j]) % o for j in range(len(total_wm[i]))] for i in range(len(total_wm) - 1)]
     total_rm.append([(total_wm[-1][i] - c*public_m[i]) % o for i in range(len(total_wm[-1]))])
     # rm = [(wm[i] - c*attributes[i]) % o for i in range(len(wm))]
+    print("Aw", Aw)
+    print("Bw", Bw),
+    print("Cw", Cw)
+    print("g1", g1, "g2", g2),
+    print("cm", cm, "h", h) 
+    print("hs", hs)
+    print("c", c, rr, ros, total_rm)
     return (c, rr, ros, total_rm)
 
 
