@@ -12,7 +12,9 @@ use aiken/crypto/bls12_381/g2 as g2
 use aiken/crypto/bls12_381/scalar as scalar
 use aiken/option.{is_none}
 use aiken/primitive/bytearray.{concat}
-use bls.{Sign, do_ecdsa_verify, g1_to_binary256}
+use bls.{
+  Sign, do_ecdsa_verify, g1_to_binary256, g2_to_binary256, list_g1_to_binary256,
+}
 
 pub type Vcert {
   commit: ByteArray,
@@ -228,7 +230,7 @@ pub fn calculate_Aw(proof: IssueProof) -> List<G1Element> {
 
 pub fn to_challenge_issue(
   g1: ByteArray,
-  g2: ByteArray,
+  g2: List<ByteArray>,
   cm: ByteArray,
   h: ByteArray,
   bw: ByteArray,
@@ -237,6 +239,25 @@ pub fn to_challenge_issue(
   cw: List<ByteArray>,
 ) -> ByteArray {
   let g1_bytes = g1_to_binary256(g1)
+  let g2_first = head(g2)
+  let g2_tail = tail(g2)
+  expect Some(g2_tail_) = g2_tail
+  let g2_second = head(g2_tail_)
+  expect Some(g2_first_) = g2_first
+  expect Some(g2_second_) = g2_second
+  let g2_bytes = g2_to_binary256(g2_first_, g2_second_)
   let cm_bytes = g1_to_binary256(cm)
-  sha2_256(concat(g1_bytes, cm_bytes))
+  let h_bytes = g1_to_binary256(h)
+  let bw_bytes = g1_to_binary256(bw)
+  let hs_bytes = list_g1_to_binary256(hs)
+  let aw_bytes = list_g1_to_binary256(aw)
+  let cw_bytes = list_g1_to_binary256(cw)
+  let first_c = concat(g1_bytes, g2_bytes)
+  let second_c = concat(first_c, cm_bytes)
+  let third_c = concat(second_c, h_bytes)
+  let fourth_c = concat(third_c, bw_bytes)
+  let fifth_c = concat(fourth_c, hs_bytes)
+  let sixth_c = concat(fifth_c, aw_bytes)
+  let seventh_c = concat(sixth_c, cw_bytes)
+  sha2_256(seventh_c)
 }

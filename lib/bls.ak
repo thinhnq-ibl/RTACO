@@ -14,11 +14,13 @@ use aiken/builtin.{
   bls12_381_g2_uncompress, bls12_381_miller_loop,
   bls12_381_mul_miller_loop_result, bytearray_to_integer,
 }
-use aiken/collection/list.{foldl, length}
+use aiken/collection/list.{foldl, head, length, tail}
 use aiken/crypto.{sha2_256}
 use aiken/crypto/bls12_381/g1 as g1
 use aiken/crypto/bls12_381/g2 as g2
 use aiken/crypto/bls12_381/scalar as scalar
+use aiken/option.{is_none}
+use aiken/primitive/bytearray.{concat}
 use aiken/primitive/int.{from_bytearray_big_endian}
 
 /// DSTs - The domain separation tags for the hash-to-curve function.
@@ -239,4 +241,22 @@ test run_sha256() {
 
 pub fn g1_to_binary256(g1: ByteArray) -> ByteArray {
   sha2_256(g1)
+}
+
+pub fn g2_to_binary256(g2_1: ByteArray, g2_2: ByteArray) -> ByteArray {
+  sha2_256(concat(g2_1, g2_2))
+}
+
+pub fn list_g1_to_binary256(g1_list: List<ByteArray>) -> ByteArray {
+  let first = head(g1_list)
+  if is_none(first) {
+    #""
+  } else {
+    expect Some(first_) = first
+    let first_bytes = g1_to_binary256(first_)
+    let tail = tail(g1_list)
+    expect Some(tail_) = tail
+    let tail_bytes = list_g1_to_binary256(tail_)
+    concat(first_bytes, tail_bytes)
+  }
 }
