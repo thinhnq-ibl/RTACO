@@ -376,6 +376,7 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
             tmp = add(tmp, multiply(ttp_hs[j], total_wm[i][j]))
         Cw.append(tmp)
     # create the challenge
+    print("start")
     c = to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw)
    
     # create responses
@@ -399,10 +400,13 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
 
 def to_challenge(elements):
     _list = [to_binary256(x) for x in elements]
+    for i in range(0, len(_list)):
+        print("elements", _list[i].hex())
     Cstring = _list[0]
     for i in range(1, len(_list)):
         Cstring += _list[i]
     Chash =  sha256(Cstring).digest()
+    print("Chash", Chash.hex())
     return int.from_bytes(Chash, "big", signed=False)
 
 def make_pi_o(params, cm, C, r, s, aggr_vk, opk):
