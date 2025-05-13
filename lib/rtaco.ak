@@ -1,6 +1,7 @@
 use aiken/collection/list.{head, tail}
 use aiken/crypto.{sha2_256}
 use aiken/crypto/bls12_381/g1 as g1
+use aiken/crypto/bls12_381/scalar
 use aiken/option.{is_none}
 use aiken/primitive/bytearray.{concat}
 use aiken/primitive/int.{from_bytearray_big_endian}
@@ -179,10 +180,57 @@ pub fn request_cred() {
   todo
 }
 
-pub fn calculate_Aw(proof: IssueProof) -> List<G1Element> {
-  let ros = proof.ros
-  let total_rm = proof.total_rm
-  todo
+//  Aw = [add(multiply(commitments[i], c), add(multiply(g1, ros[i]), multiply(h, rm[i])))for i in range(len(commitments))]
+
+pub fn calculate_Aw(
+  commitments: List<ByteArray>,
+  c: Int,
+  g1_bytes: ByteArray,
+  ros: List<Int>,
+  h: ByteArray,
+  rm: List<Int>,
+) -> List<G1Element> {
+  calculate_Aw_item(commitments, c, g1_bytes, ros, h, rm)
+}
+
+pub fn calculate_Aw_item(
+  commitments: List<ByteArray>,
+  c: Int,
+  g1_bytes: ByteArray,
+  ros: List<Int>,
+  h: ByteArray,
+  rm: List<Int>,
+) -> List<G1Element> {
+  let head_commitments = head(commitments)
+  if is_none(head_commitments) {
+    []
+  } else {
+    expect Some(head_commitments_) = head_commitments
+    let commitment = g1.decompress(head_commitments_)
+    let head_ros = head(ros)
+    expect Some(head_ros_) = head_ros
+    let g1_point = g1.decompress(g1_bytes)
+    let head_rm = head(rm)
+    expect Some(head_rm_) = head_rm
+    expect Some(c_scar) = scalar.new(c)
+    expect Some(ros_scar) = scalar.new(head_ros_)
+    let cal_ro = g1.scale(g1_point, ros_scar)
+    let h_point = g1.decompress(h)
+    let head_rm_ = head(rm)
+    expect Some(head_rm_) = head_rm_
+    expect Some(rm_scar) = scalar.new(head_rm_)
+    let cal_rm = g1.scale(h_point, rm_scar)
+    let aw_item = g1.add(g1.scale(commitment, c_scar), g1.add(cal_ro, cal_rm))
+    let tail_commitments = tail(commitments)
+    let tail_ros = tail(ros)
+    let tail_rm = tail(rm)
+    expect Some(tail_commitments_) = tail_commitments
+    expect Some(tail_ros_) = tail_ros
+    expect Some(tail_rm_) = tail_rm
+    let tail_result =
+      calculate_Aw_item(tail_commitments_, c, g1_bytes, tail_ros_, h, tail_rm_)
+    list.push(tail_result, aw_item)
+  }
 }
 
 pub fn to_challenge_issue(
