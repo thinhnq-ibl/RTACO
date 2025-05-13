@@ -140,12 +140,24 @@ fn check_sk_item(first_item_index: Int, total_rm: List<List<Int>>) -> Bool {
   }
 }
 
-pub fn check_issue_proof() {
+pub fn check_issue_proof(
+  g1: ByteArray,
+  g2: List<ByteArray>,
+  cm: ByteArray,
+  h: ByteArray,
+  bw: ByteArray,
+  hs: List<ByteArray>,
+  aw: List<ByteArray>,
+  cw: List<ByteArray>,
+  proof: IssueProof,
+) {
   // G.G1Point[] memory Aw = calculate_Aw(name, proof.combination, compressed_params.commitments, cm, proof);
   //     G.G1Point memory Bw = calculate_Bw(name, proof.combination, cm, proof);
   //     G.G1Point[] memory Cw = calculate_Cw(proof.combination, vcerts, proof); 
   //     return (proof.c == ToChallengeIssue(cm, G.HashToPoint(uint256(G.G1_to_binary256(cm))), Bw, params.get_hs(name), Aw, Cw));
-  todo
+  proof.c == from_bytearray_big_endian(
+    to_challenge_issue(g1, g2, cm, h, bw, hs, aw, cw),
+  )
 }
 
 pub fn check_open_proof() {
