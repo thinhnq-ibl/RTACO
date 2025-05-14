@@ -142,7 +142,7 @@ fn check_sk_item(first_item_index: Int, total_rm: List<List<Int>>) -> Bool {
 }
 
 pub fn check_issue_proof(
-  g1: ByteArray,
+  g1_bytes: ByteArray,
   g2: List<ByteArray>,
   cm: ByteArray,
   h: ByteArray,
@@ -157,7 +157,7 @@ pub fn check_issue_proof(
   //     G.G1Point[] memory Cw = calculate_Cw(proof.combination, vcerts, proof); 
   //     return (proof.c == ToChallengeIssue(cm, G.HashToPoint(uint256(G.G1_to_binary256(cm))), Bw, params.get_hs(name), Aw, Cw));
   proof.c == from_bytearray_big_endian(
-    to_challenge_issue(g1, g2, cm, h, bw, hs, aw, cw),
+    to_challenge_issue(g1_bytes, g2, cm, h, bw, hs, aw, cw),
   )
 }
 
@@ -235,33 +235,6 @@ test calculate_Aw_test() {
   False
 }
 
-// function calculate_Bw(string memory name, string[] memory combination, G.G1Point memory cm, IssueProof memory proof) private view returns (G.G1Point memory) {
-//         uint256 c = proof.c;
-//         uint256 rr = proof.rr;
-//         uint256[][] memory total_rm = proof.total_rm;
-//         uint256[] memory rm = new uint256[](proof.ros.length + total_rm[total_rm.length-1].length);
-//         uint256 k = 0;
-//         uint256[][] memory include_indexes = params.get_include_indexes(name, combination);
-//         for (uint256 i = 0; i < total_rm.length - 1; i++) {
-//             for (uint256 j = 0; j < total_rm[i].length; j++) {
-//                 if (include_indexes[i][j] == 1){
-//                     rm[k] = total_rm[i][j];
-//                     k = k+1;
-//                 }
-//             }
-//         }
-//         for (uint256 i=0; i< total_rm[total_rm.length-1].length; i++) {
-//             rm[k] =  total_rm[total_rm.length-1][i];
-//             k = k+1;
-//         }
-//         G.G1Point[] memory hs = params.get_hs(name);
-//         G.G1Point memory Bw = G.g1add(G.g1mul(cm, c), G.g1mul(G.P1(), rr));
-//         for(uint256 i=0; i< rm.length; i++) {
-//             Bw = G.g1add(Bw, G.g1mul(hs[i], rm[i]));
-//         }
-//         return Bw;
-//     }
-
 pub fn calculate_Bw(
   g1: ByteArray,
   c: Int,
@@ -301,8 +274,76 @@ pub fn calculate_Bw_item(
   }
 }
 
-pub fn to_challenge_issue(
+pub fn calculate_Cw(
+  total_rm: List<List<Int>>,
   g1: ByteArray,
+  commits: List<G1Element>,
+  c: Int,
+  hs: List<G1Element>,
+) -> List<G1Element> {
+  calculate_Cw_item(total_rm, g1, commits, c, hs)
+}
+
+pub fn calculate_Cw_item(
+  total_rm: List<List<Int>>,
+  g1_bytes: ByteArray,
+  commits: List<G1Element>,
+  c: Int,
+  hs: List<G1Element>,
+) -> List<G1Element> {
+  let first = head(total_rm)
+  if is_none(first) {
+    []
+  } else {
+    expect Some(first_) = first
+    let first_index = head(first_)
+    // expect Some(first_index_) = first_index
+    let commit_index = head(commits)
+    expect Some(commit_index_) = commit_index
+    expect Some(c_scar) = scalar.new(c)
+    let tmp = g1.scale(commit_index_, c_scar)
+    let last_first = list.last(first_)
+    expect Some(last_first_) = last_first
+    let init_first = list.init(first_)
+    expect Some(init_first_) = init_first
+    expect Some(last_first_scalar) = scalar.new(last_first_)
+    let updated_tmp =
+      g1.add(tmp, g1.scale(g1.decompress(g1_bytes), last_first_scalar))
+    let first_item = calculate_Cw_hs(updated_tmp, hs, init_first_)
+    let tail_rm = tail(total_rm)
+    let tail_commits = tail(commits)
+    expect Some(tail_rm_) = tail_rm
+    expect Some(tail_commits_) = tail_commits
+    let tail_result =
+      calculate_Cw_item(tail_rm_, g1_bytes, tail_commits_, c, hs)
+    list.push(tail_result, first_item)
+  }
+}
+
+pub fn calculate_Cw_hs(
+  tmp: G1Element,
+  hs: List<G1Element>,
+  total_rm_elemnt: List<Int>,
+) -> G1Element {
+  let first = head(total_rm_elemnt)
+  if is_none(first) {
+    tmp
+  } else {
+    expect Some(first_) = first
+    let first_hs = head(hs)
+    expect Some(first_hs_) = first_hs
+    expect Some(first_hs_scar) = scalar.new(first_)
+    let sum_f = g1.add(tmp, g1.scale(first_hs_, first_hs_scar))
+    let tail_rm = tail(total_rm_elemnt)
+    let tail_hs = tail(hs)
+    expect Some(tail_rm_) = tail_rm
+    expect Some(tail_hs_) = tail_hs
+    calculate_Cw_hs(sum_f, tail_hs_, tail_rm_)
+  }
+}
+
+pub fn to_challenge_issue(
+  g1_bytes: ByteArray,
   g2: List<ByteArray>,
   cm: ByteArray,
   h: ByteArray,
@@ -311,7 +352,7 @@ pub fn to_challenge_issue(
   aw: List<ByteArray>,
   cw: List<ByteArray>,
 ) -> ByteArray {
-  let g1_bytes = g1_to_binary256(g1)
+  let g1_bytes = g1_to_binary256(g1_bytes)
   trace g1_bytes
   let g2_first = head(g2)
   let g2_tail = tail(g2)
