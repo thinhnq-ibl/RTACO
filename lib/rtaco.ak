@@ -216,8 +216,6 @@ pub fn calculate_Aw_item(
     expect Some(ros_scar) = scalar.new(head_ros_)
     let cal_ro = g1.scale(g1_point, ros_scar)
     let h_point = g1.decompress(h)
-    let head_rm_ = head(rm)
-    expect Some(head_rm_) = head_rm_
     expect Some(rm_scar) = scalar.new(head_rm_)
     let cal_rm = g1.scale(h_point, rm_scar)
     let aw_item = g1.add(g1.scale(commitment, c_scar), g1.add(cal_ro, cal_rm))
@@ -230,6 +228,76 @@ pub fn calculate_Aw_item(
     let tail_result =
       calculate_Aw_item(tail_commitments_, c, g1_bytes, tail_ros_, h, tail_rm_)
     list.push(tail_result, aw_item)
+  }
+}
+
+test calculate_Aw_test() {
+  False
+}
+
+// function calculate_Bw(string memory name, string[] memory combination, G.G1Point memory cm, IssueProof memory proof) private view returns (G.G1Point memory) {
+//         uint256 c = proof.c;
+//         uint256 rr = proof.rr;
+//         uint256[][] memory total_rm = proof.total_rm;
+//         uint256[] memory rm = new uint256[](proof.ros.length + total_rm[total_rm.length-1].length);
+//         uint256 k = 0;
+//         uint256[][] memory include_indexes = params.get_include_indexes(name, combination);
+//         for (uint256 i = 0; i < total_rm.length - 1; i++) {
+//             for (uint256 j = 0; j < total_rm[i].length; j++) {
+//                 if (include_indexes[i][j] == 1){
+//                     rm[k] = total_rm[i][j];
+//                     k = k+1;
+//                 }
+//             }
+//         }
+//         for (uint256 i=0; i< total_rm[total_rm.length-1].length; i++) {
+//             rm[k] =  total_rm[total_rm.length-1][i];
+//             k = k+1;
+//         }
+//         G.G1Point[] memory hs = params.get_hs(name);
+//         G.G1Point memory Bw = G.g1add(G.g1mul(cm, c), G.g1mul(G.P1(), rr));
+//         for(uint256 i=0; i< rm.length; i++) {
+//             Bw = G.g1add(Bw, G.g1mul(hs[i], rm[i]));
+//         }
+//         return Bw;
+//     }
+
+pub fn calculate_Bw(
+  g1: ByteArray,
+  c: Int,
+  rr: Int,
+  rm: List<Int>,
+  cm: ByteArray,
+  hs: List<ByteArray>,
+) -> G1Element {
+  let g1_point = g1.decompress(g1)
+  let cm_point = g1.decompress(cm)
+  expect Some(c_scar) = scalar.new(c)
+  expect Some(rr_scar) = scalar.new(rr)
+  let bw = g1.add(g1.scale(cm_point, c_scar), g1.scale(g1_point, rr_scar))
+  calculate_Bw_item(bw, rm, hs)
+}
+
+pub fn calculate_Bw_item(
+  bw: G1Element,
+  rm: List<Int>,
+  hs: List<ByteArray>,
+) -> G1Element {
+  let head_rm = head(rm)
+  if is_none(head_rm) {
+    bw
+  } else {
+    expect Some(head_rm_) = head_rm
+    let head_hs = head(hs)
+    expect Some(head_hs_) = head_hs
+    let h_point = g1.decompress(head_hs_)
+    expect Some(rm_scar) = scalar.new(head_rm_)
+    let cal_rm = g1.scale(h_point, rm_scar)
+    let tail_rm = tail(rm)
+    let tail_hs = tail(hs)
+    expect Some(tail_rm_) = tail_rm
+    expect Some(tail_hs_) = tail_hs
+    calculate_Bw_item(g1.add(bw, cal_rm), tail_rm_, tail_hs_)
   }
 }
 

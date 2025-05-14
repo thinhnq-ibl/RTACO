@@ -366,6 +366,12 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
     # compute h
     h = hashG1(to_binary256(cm))
     # compute the witnesses commitments
+    print("waaaaaaaaa")
+    print("g1", g1, i2osp(compress_G1(g1), 48).hex())
+    print("wos", wos)
+    print("h", h,  i2osp(compress_G1(h), 48).hex())
+    print("wm", wm)
+    print("private_m", private_m)
     Aw = [add(multiply(g1, wos[i]), multiply(h, wm[i])) for i in range(len(private_m))]
     Bw = add(multiply(g1, wr), ec_sum([multiply(hs[i], wm[i]) for i in range(len(attributes))]))
     Cw = []
