@@ -143,8 +143,6 @@ fn check_sk_item(first_item_index: Int, total_rm: List<List<Int>>) -> Bool {
 }
 
 pub fn check_issue_proof(
-  g1_compressed: ByteArray,
-  g2_compressed: ByteArray,
   cm_compressed: ByteArray,
   h_compressed: ByteArray,
   hs: List<ByteArray>,
@@ -159,34 +157,22 @@ pub fn check_issue_proof(
   //     return (proof.c == ToChallengeIssue(cm, G.HashToPoint(uint256(G.G1_to_binary256(cm))), Bw, params.get_hs(name), Aw, Cw));
   let aw =
     calculate_Aw(
-      commits,
+      list_bytearray_to_g1(commits),
       proof.c,
-      g1.decompress(g1_compressed),
       proof.ros,
       g1.decompress(h_compressed),
       rm,
     )
-  let bw =
-    calculate_Bw(
-      g1.decompress(g1_compressed),
-      proof.c,
-      proof.rr,
-      rm,
-      g1.decompress(cm_compressed),
-      hs,
-    )
+  let bw = calculate_Bw(proof.c, proof.rr, rm, g1.decompress(cm_compressed), hs)
   let cw =
     calculate_Cw(
       proof.total_rm,
-      g1.decompress(g1_compressed),
       list_bytearray_to_g1(commits),
       proof.c,
       list_bytearray_to_g1(hs),
     )
   proof.c == from_bytearray_big_endian(
     to_challenge_issue(
-      g1.decompress(g1_compressed),
-      g2.decompress(g2_compressed),
       g1.decompress(cm_compressed),
       g1.decompress(h_compressed),
       bw,
@@ -233,20 +219,18 @@ pub fn request_cred() {
 //  Aw = [add(multiply(commitments[i], c), add(multiply(g1, ros[i]), multiply(h, rm[i])))for i in range(len(commitments))]
 
 pub fn calculate_Aw(
-  commitments: List<ByteArray>,
+  commitments: List<G1Element>,
   c: Int,
-  g1_point: G1Element,
   ros: List<Int>,
   h_point: G1Element,
   rm: List<Int>,
 ) -> List<G1Element> {
-  calculate_Aw_item(commitments, c, g1_point, ros, h_point, rm)
+  calculate_Aw_item(commitments, c, ros, h_point, rm)
 }
 
 pub fn calculate_Aw_item(
-  commitments: List<ByteArray>,
+  commitments: List<G1Element>,
   c: Int,
-  g1_point: G1Element,
   ros: List<Int>,
   h_point: G1Element,
   rm: List<Int>,
@@ -255,15 +239,14 @@ pub fn calculate_Aw_item(
   if is_none(head_commitments) {
     []
   } else {
-    expect Some(head_commitments_) = head_commitments
-    let commitment = g1.decompress(head_commitments_)
+    expect Some(commitment) = head_commitments
     let head_ros = head(ros)
     expect Some(head_ros_) = head_ros
     let head_rm = head(rm)
     expect Some(head_rm_) = head_rm
     expect Some(c_scar) = scalar.new(c)
     expect Some(ros_scar) = scalar.new(head_ros_)
-    let cal_ro = g1.scale(g1_point, ros_scar)
+    let cal_ro = g1.scale(g1.generator, ros_scar)
     expect Some(rm_scar) = scalar.new(head_rm_)
     let cal_rm = g1.scale(h_point, rm_scar)
     let aw_item = g1.add(g1.scale(commitment, c_scar), g1.add(cal_ro, cal_rm))
@@ -274,14 +257,7 @@ pub fn calculate_Aw_item(
     expect Some(tail_ros_) = tail_ros
     expect Some(tail_rm_) = tail_rm
     let tail_result =
-      calculate_Aw_item(
-        tail_commitments_,
-        c,
-        g1_point,
-        tail_ros_,
-        h_point,
-        tail_rm_,
-      )
+      calculate_Aw_item(tail_commitments_, c, tail_ros_, h_point, tail_rm_)
     list.push(tail_result, aw_item)
   }
 }
@@ -291,7 +267,6 @@ test calculate_Aw_test() {
 }
 
 pub fn calculate_Bw(
-  g1_point: G1Element,
   c: Int,
   rr: Int,
   rm: List<Int>,
@@ -300,7 +275,7 @@ pub fn calculate_Bw(
 ) -> G1Element {
   expect Some(c_scar) = scalar.new(c)
   expect Some(rr_scar) = scalar.new(rr)
-  let bw = g1.add(g1.scale(cm_point, c_scar), g1.scale(g1_point, rr_scar))
+  let bw = g1.add(g1.scale(cm_point, c_scar), g1.scale(g1.generator, rr_scar))
   calculate_Bw_item(bw, rm, hs)
 }
 
@@ -329,17 +304,15 @@ pub fn calculate_Bw_item(
 
 pub fn calculate_Cw(
   total_rm: List<List<Int>>,
-  g1_point: G1Element,
   commits: List<G1Element>,
   c: Int,
   hs: List<G1Element>,
 ) -> List<G1Element> {
-  calculate_Cw_item(total_rm, g1_point, commits, c, hs)
+  calculate_Cw_item(total_rm, commits, c, hs)
 }
 
 pub fn calculate_Cw_item(
   total_rm: List<List<Int>>,
-  g1_point: G1Element,
   commits: List<G1Element>,
   c: Int,
   hs: List<G1Element>,
@@ -358,14 +331,13 @@ pub fn calculate_Cw_item(
     let init_first = list.init(first_)
     expect Some(init_first_) = init_first
     expect Some(last_first_scalar) = scalar.new(last_first_)
-    let updated_tmp = g1.add(tmp, g1.scale(g1_point, last_first_scalar))
+    let updated_tmp = g1.add(tmp, g1.scale(g1.generator, last_first_scalar))
     let first_item = calculate_Cw_hs(updated_tmp, hs, init_first_)
     let tail_rm = tail(total_rm)
     let tail_commits = tail(commits)
     expect Some(tail_rm_) = tail_rm
     expect Some(tail_commits_) = tail_commits
-    let tail_result =
-      calculate_Cw_item(tail_rm_, g1_point, tail_commits_, c, hs)
+    let tail_result = calculate_Cw_item(tail_rm_, tail_commits_, c, hs)
     list.push(tail_result, first_item)
   }
 }
@@ -393,8 +365,6 @@ pub fn calculate_Cw_hs(
 }
 
 pub fn to_challenge_issue(
-  g1_point: G1Element,
-  g2_point: G2Element,
   cm: G1Element,
   h: G1Element,
   bw: G1Element,
@@ -402,8 +372,8 @@ pub fn to_challenge_issue(
   aw: List<G1Element>,
   cw: List<G1Element>,
 ) -> ByteArray {
-  let g1_bytes = g1_to_binary256(g1_point)
-  let g2_bytes = g2_to_binary256(g2_point)
+  let g1_bytes = g1_to_binary256(g1.generator)
+  let g2_bytes = g2_to_binary256(g2.generator)
   let cm_bytes = g1_to_binary256(cm)
   let h_bytes = g1_to_binary256(h)
   let bw_bytes = g1_to_binary256(bw)
