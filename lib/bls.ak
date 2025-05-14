@@ -241,15 +241,15 @@ pub fn bytearray_big_endian_to_int(bytearray: ByteArray) -> Int {
   number % scalar.field_prime
 }
 
-pub fn g1_to_binary256(g1: ByteArray) -> ByteArray {
-  sha2_256(g1)
+pub fn g1_to_binary256(g1_point: G1Element) -> ByteArray {
+  sha2_256(g1.compress(g1_point))
 }
 
-pub fn g2_to_binary256(g2_1: ByteArray, g2_2: ByteArray) -> ByteArray {
-  sha2_256(concat(g2_1, g2_2))
+pub fn g2_to_binary256(g2_point: G2Element) -> ByteArray {
+  sha2_256(g2.compress(g2_point))
 }
 
-pub fn list_g1_to_binary256(g1_list: List<ByteArray>) -> ByteArray {
+pub fn list_g1_to_binary256(g1_list: List<G1Element>) -> ByteArray {
   let first = head(g1_list)
   if is_none(first) {
     #""
