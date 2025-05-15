@@ -322,3 +322,17 @@ test test_g1_hash_2() {
   expect
     g1_hash == #"b95e27b84bcc547b495e0b233aecb9b7b3e4cd5be806ed8315bc50c3a8dd9a24"
 }
+
+pub fn list_bytearray_to_g1(list: List<ByteArray>) -> List<G1Element> {
+  let first = head(list)
+  if is_none(first) {
+    []
+  } else {
+    expect Some(first_) = first
+    let g1_point = g1.decompress(first_)
+    let tail = tail(list)
+    expect Some(tail_) = tail
+    let tail_result = list_bytearray_to_g1(tail_)
+    list.push(tail_result, g1_point)
+  }
+}

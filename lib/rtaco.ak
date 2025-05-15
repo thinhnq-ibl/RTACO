@@ -7,11 +7,14 @@ use aiken/option.{is_none}
 use aiken/primitive/bytearray.{concat}
 use aiken/primitive/int.{from_bytearray_big_endian}
 use bls.{
-  Sign, do_ecdsa_verify, g1_to_binary256, g2_to_binary256, list_g1_to_binary256,
+  Sign, do_ecdsa_verify, g1_to_binary256, g2_to_binary256, list_bytearray_to_g1,
+  list_g1_to_binary256,
 }
 
 pub type Vcert {
+  // G1 point
   commit: ByteArray,
+  // G1 point
   signature: Sign,
 }
 
@@ -151,10 +154,6 @@ pub fn check_issue_proof(
   rm: List<Int>,
 ) {
   // rm come from proof.total_rm
-  // G.G1Point[] memory Aw = calculate_Aw(name, proof.combination, compressed_params.commitments, cm, proof);
-  //     G.G1Point memory Bw = calculate_Bw(name, proof.combination, cm, proof);
-  //     G.G1Point[] memory Cw = calculate_Cw(proof.combination, vcerts, proof); 
-  //     return (proof.c == ToChallengeIssue(cm, G.HashToPoint(uint256(G.G1_to_binary256(cm))), Bw, params.get_hs(name), Aw, Cw));
   let aw =
     calculate_Aw(
       list_bytearray_to_g1(commits),
@@ -183,40 +182,47 @@ pub fn check_issue_proof(
   )
 }
 
-pub fn list_bytearray_to_g1(list: List<ByteArray>) -> List<G1Element> {
-  let first = head(list)
-  if is_none(first) {
-    []
-  } else {
-    expect Some(first_) = first
-    let g1_point = g1.decompress(first_)
-    let tail = tail(list)
-    expect Some(tail_) = tail
-    let tail_result = list_bytearray_to_g1(tail_)
-    list.push(tail_result, g1_point)
-  }
-}
+// function check_open_proof(string memory name, OpenProof memory proof, G.G1Point memory cm, Compresser memory compressed_params,  G2PointCompresser memory compressedG2points, G.G1Point[][] memory hidden_p, G.G1Point[] memory hr, G.G2Point[] memory bo) private view returns (bool) {
+//         assert(verify_Dw(compressedG2points.Dw, compressed_params.ciphershares, proof));
+//         assert(verify_Ew(name, compressedG2points.Ew, compressed_params.commitments, compressed_params.ciphershares, proof));
+//         G.G1Point memory h = G.HashToPoint(uint256(G.G1_to_binary256(cm)));
+//         G.G1Point[] memory hs = params.get_hs(name);
+//         for(uint256 i=0; i<proof.rr.length; i++) {
+//             if(proof.c[i] != ToChallengeOpen(h, compressedG2points.Dw[i], compressedG2points.Ew[i], hs)) {
+//                 return false;
+//             }
+//         }
+//         return (check_hr_bo(name, compressed_params.commitments, compressed_params.ciphershares, h, hidden_p, hr, bo));
+//     }
 
-pub fn check_open_proof(
-  g1: ByteArray,
-  g2: List<ByteArray>,
-  h: ByteArray,
-  aw: List<ByteArray>,
-  bw: ByteArray,
+// pub fn check_open_proof(
+//   g1: ByteArray,
+//   g2: List<ByteArray>,
+//   h: ByteArray,
+//   aw: List<ByteArray>,
+//   bw: ByteArray,
+//   hs: List<ByteArray>,
+// ) {
+//   // to_challenge_open(g1, g2, h, aw, bw, hs)
+//   todo
+// }
+
+pub fn request_cred(
+  iproof: IssueProof,
+  vcerts: List<Vcert>,
+  cm_compressed: ByteArray,
+  h_compressed: ByteArray,
   hs: List<ByteArray>,
+  commits: List<ByteArray>,
+  proof: IssueProof,
+  rm: List<Int>,
 ) {
-  // to_challenge_open(g1, g2, h, aw, bw, hs)
-  todo
-}
-
-pub fn request_cred() {
-  // check_vcerts
-  // check_issue_proof
+  let result1 = check_vcerts(iproof, vcerts)
+  let result2 =
+    check_issue_proof(cm_compressed, h_compressed, hs, commits, proof, rm)
   // check_open_proof
-  todo
+  result1 && result2
 }
-
-//  Aw = [add(multiply(commitments[i], c), add(multiply(g1, ros[i]), multiply(h, rm[i])))for i in range(len(commitments))]
 
 pub fn calculate_Aw(
   commitments: List<G1Element>,

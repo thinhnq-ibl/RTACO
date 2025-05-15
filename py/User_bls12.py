@@ -70,6 +70,7 @@ q = len(schemaOrder)
 
 ca_params = ttp_setup(q-1, vcert_title) # exclude r.
 
+# commit is G1 point
 commit = GenCommitment(ca_params, encoded_attribute)
 
 zkpok = GenZKPoK(ca_params, [], [], [encoded_attribute], commit)
