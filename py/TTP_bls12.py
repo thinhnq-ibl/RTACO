@@ -2,6 +2,24 @@ from py_ecc.bls12_381 import *
 from hashlib import sha256
 import random
 import time
+from py_ecc.bls.point_compression import (
+    compress_G1,
+    decompress_G1,
+    compress_G2,
+    decompress_G2,
+    G1Uncompressed
+)
+from py_ecc.fields import (
+    optimized_bls12_381_FQ as FQO,
+    optimized_bls12_381_FQ2 as FQO2,
+    optimized_bls12_381_FQ12 as FQO12,
+    optimized_bls12_381_FQP as FQPO,
+)
+
+from py_ecc.bls.hash import (
+    i2osp,
+    os2ip
+)
 
 def genRandom():
     o = int(curve_order)
@@ -56,8 +74,9 @@ def toChallenge(element_list):
 	return (int.from_bytes(Chash, "big") % int(curve_order))
 
 def SHA256(element):
-    return sha256((element[0].n).to_bytes(48, 'big') + (element[1].n).to_bytes(48, 'big')).digest()
-
+    # return sha256((element[0].n).to_bytes(48, 'big') + (element[1].n).to_bytes(48, 'big')).digest()
+    g1_point: G1Uncompressed = (FQO(element[0].n),FQO(element[1].n), FQO(1))
+    return sha256(i2osp(compress_G1(g1_point),48)).digest()
 def get_g1_bytes(point):
      return ((point[0].n).to_bytes(48, 'big') + (point[1].n).to_bytes(48, 'big')).hex()
 
@@ -332,13 +351,21 @@ def to_binary256(point) :
     if isinstance(point, int):
         return point.to_bytes(48, 'big')
     if isinstance(point[0], FQ):
-        point1 = point[0].n.to_bytes(48, 'big')
-        point2 = point[1].n.to_bytes(48, 'big')
-        return sha256(point1+point2).digest()
+        # point1 = point[0].n.to_bytes(48, 'big')
+        # point2 = point[1].n.to_bytes(48, 'big')
+        # return sha256(point1+point2).digest()
+        g1_point: G1Uncompressed = (FQO(point[0].n),FQO(point[1].n), FQO(1))
+        return sha256(i2osp(compress_G1(g1_point),48)).digest()
     if isinstance(point[0], FQ2):
-        point1 = point[0].coeffs[0].n.to_bytes(48, 'big') + point[0].coeffs[1].n.to_bytes(48, 'big')
-        point2 = point[1].coeffs[0].n.to_bytes(48, 'big') + point[1].coeffs[1].n.to_bytes(48, 'big')
-        return sha256(point1+point2).digest()
+        # point1 = point[0].coeffs[0].n.to_bytes(48, 'big') + point[0].coeffs[1].n.to_bytes(48, 'big')
+        # point2 = point[1].coeffs[0].n.to_bytes(48, 'big') + point[1].coeffs[1].n.to_bytes(48, 'big')
+        # return sha256(point1+point2).digest()
+        g2_point: G2Uncompressed = (FQO2((point[0].coeffs[0].n, point[0].coeffs[1].n)), 
+              FQO2((point[1].coeffs[0].n, point[1].coeffs[1].n)),
+              FQO2.one()
+              )
+        g2_point_compressed = compress_G2(g2_point)
+        return sha256(i2osp(g2_point_compressed[0],48)+i2osp(g2_point_compressed[1],48)).digest()
 
 def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, prevParams, include_indexes):
     """ prove correctness of ciphertext and cm """
@@ -367,9 +394,9 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
     h = hashG1(to_binary256(cm))
     # compute the witnesses commitments
     print("waaaaaaaaa")
-    print("g1", g1, i2osp(compress_G1(g1), 48).hex())
+    # print("g1", g1, i2osp(compress_G1(g1), 48).hex())
     print("wos", wos)
-    print("h", h,  i2osp(compress_G1(h), 48).hex())
+    # print("h", h,  i2osp(compress_G1(h), 48).hex())
     print("wm", wm)
     print("private_m", private_m)
     Aw = [add(multiply(g1, wos[i]), multiply(h, wm[i])) for i in range(len(private_m))]
@@ -391,28 +418,28 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
     total_rm = [[(total_wm[i][j] - c*all_attr[i][j]) % o for j in range(len(total_wm[i]))] for i in range(len(total_wm) - 1)]
     total_rm.append([(total_wm[-1][i] - c*public_m[i]) % o for i in range(len(total_wm[-1]))])
     # rm = [(wm[i] - c*attributes[i]) % o for i in range(len(wm))]
-    print("Aw", get_list_g1_bytes(Aw))
-    print("Bw", get_g1_bytes(Bw)),
-    print("Cw", get_list_g1_bytes(Cw))
-    print("g1", get_g1_bytes(g1)), 
-    print("g2", get_g2_bytes(g2)),
-    print("cm", get_g1_bytes(cm)), 
-    print("h", get_g1_bytes(h)) ,
-    print("hs", get_list_g1_bytes(hs))
-    print("c", c)
+    # print("Aw", get_list_g1_bytes(Aw))
+    # print("Bw", get_g1_bytes(Bw)),
+    # print("Cw", get_list_g1_bytes(Cw))
+    # print("g1", get_g1_bytes(g1)), 
+    # print("g2", get_g2_bytes(g2)),
+    # print("cm", get_g1_bytes(cm)), 
+    # print("h", get_g1_bytes(h)) ,
+    # print("hs", get_list_g1_bytes(hs))
+    # print("c", c)
     # , rr, ros, total_rm)
     return (c, rr, ros, total_rm)
 
 
 def to_challenge(elements):
     _list = [to_binary256(x) for x in elements]
-    for i in range(0, len(_list)):
-        print("elements", _list[i].hex())
+    # for i in range(0, len(_list)):
+    #     print("elements", _list[i].hex())
     Cstring = _list[0]
     for i in range(1, len(_list)):
         Cstring += _list[i]
     Chash =  sha256(Cstring).digest()
-    print("Chash", Chash.hex())
+    # print("Chash", Chash.hex())
     return int.from_bytes(Chash, "big", signed=False)
 
 def make_pi_o(params, cm, C, r, s, aggr_vk, opk):

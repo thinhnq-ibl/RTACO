@@ -369,5 +369,5 @@ encoded_disclosed_attr = encode_attributes(disclose_attr, disclose_attr_enc)
 #Sending to SP_verify for verifying the proof. 
 # SP_RequestService(credential, user_addr,disclose_index,aggr_sig,Theta,encoded_disclosed_attr,encoded_public_m,aggregate_vk)
 tf = VerifyCred(params, aggregate_vk, Theta, disclose_index, encoded_disclosed_attr, encoded_public_m)
-#print("Verify Cred : ",tf)
-# #print(tf)
+print("Verify Cred : ",tf)
+print(tf)
