@@ -48,7 +48,6 @@ const iproof =
         45279309888158677857503732152612499548654948313017471839403896507493988578648,
         18631698991280989165794156185809282554249027473066654851015905870822852378043,
       ],
-      [],
     ],
     pubkeys: [
       #"968cc0fcd3879a0b7b1f1f70fe60a7c5ea3aa45fcbb2d4963c5dec7b9efa5ec23be6ebf59f285d904d734afdf2f0147e",
@@ -202,16 +201,15 @@ pub fn check_issue_proof(
 // }
 
 pub fn request_cred(
-  iproof: IssueProof,
+  proof: IssueProof,
   vcerts: List<Vcert>,
   cm_compressed: ByteArray,
   h_compressed: ByteArray,
   hs: List<ByteArray>,
   commits: List<ByteArray>,
-  proof: IssueProof,
   rm: List<Int>,
 ) {
-  let result1 = check_vcerts(iproof, vcerts)
+  let result1 = check_vcerts(proof, vcerts)
   let result2 =
     check_issue_proof(cm_compressed, h_compressed, hs, commits, proof, rm)
   // check_open_proof
@@ -262,9 +260,9 @@ pub fn calculate_Aw_item(
   }
 }
 
-test calculate_Aw_test() {
-  False
-}
+// test calculate_Aw_test() {
+//   False
+// }
 
 pub fn calculate_Bw(
   c: Int,

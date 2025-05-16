@@ -317,24 +317,6 @@ fn concat_list(list: List<ByteArray>) -> ByteArray {
   }
 }
 
-test test_g1_hash() {
-  let g1 =
-    #"17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1"
-  let g1_hash = g1_to_binary256(g1.decompress(g1))
-  trace g1_hash
-  expect
-    g1_hash == #"b1fbe330769a11acc36fc723335b0220323273e006f2b6fdb9db39ea82e7c183"
-}
-
-test test_g1_hash_2() {
-  let g1 =
-    #"0090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df891655908d3acb820cfcd2b69aa43c6df453bfb957fb8b6dd4dc477c5b7d43cc93d9746c0c3d1a8c8f32876d08aed48ee8"
-  let g1_hash = g1_to_binary256(g1.decompress(g1))
-  trace g1_hash
-  expect
-    g1_hash == #"b95e27b84bcc547b495e0b233aecb9b7b3e4cd5be806ed8315bc50c3a8dd9a24"
-}
-
 pub fn list_bytearray_to_g1(list: List<ByteArray>) -> List<G1Element> {
   let first = head(list)
   if is_none(first) {

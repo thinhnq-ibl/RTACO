@@ -1,4 +1,3 @@
-use aiken/crypto/bls12_381/g1 as g1
 use bls.{Sign}
 use cardano/transaction.{OutputReference, Transaction, placeholder}
 use rtaco.{IssueProof, Vcert, check_vcerts}
