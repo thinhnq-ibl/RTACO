@@ -169,16 +169,20 @@ def get_int_digest(params, comm):
     return int_digest
 
 def do_ecdsa_sign(sk, digest):
-	r = 0
-	s = 0
-	o = int(curve_order)
-	int_digest = int.from_bytes(digest, "big") % o
-	while r == 0 or s==0 :
-		k = random.randint(2, o)
-		p1 = multiply(G1, k)
-		r = p1[0].n
-		s = (modInverse(k, o) * (int_digest + ((sk * r) % o)) ) %o
-	return (r, s)
+    r1 = 0
+    r = 0
+    s = 0
+    o = int(curve_order)
+    int_digest = int.from_bytes(digest, "big") % o
+    while r == 0 or s==0 :
+        k = random.randint(2, o)
+        p1 = multiply(G1, k)
+        r = p1[0].n
+        r1 = p1[1].n
+        s = (modInverse(k, o) * (int_digest + ((sk * r) % o)) ) %o
+    print("r1", r1)
+    print("r", r)
+    return (r, s)
 
 def do_ecdsa_verify(pk, sign, digest):
 	(r, s) = sign

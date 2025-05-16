@@ -188,7 +188,7 @@ test mod_inverse_works() {
 pub type Sign {
   r: Int,
   s: Int,
-  r_g1: G1Element,
+  r_g1: ByteArray,
 }
 
 pub fn do_ecdsa_verify(pk: G1Element, sign: Sign, commit: ByteArray) -> Bool {
@@ -205,7 +205,7 @@ pub fn do_ecdsa_verify(pk: G1Element, sign: Sign, commit: ByteArray) -> Bool {
   expect Some(x2_) = scalar.new(x2)
   let pt2 = g1.scale(pk, x2_)
   let r_check = g1.add(pt1, pt2)
-  g1.equal(sign.r_g1, r_check)
+  g1.equal(g1.decompress(sign.r_g1), r_check)
 }
 
 test do_ecdsa_verify_test() {
@@ -217,9 +217,7 @@ test do_ecdsa_verify_test() {
     Sign {
       r: 1405393218543153634611558277146205543651389828460482046569307751654236783901042705626443752376987448075822652265738,
       s: 38202479084295088188067894688129388712852808125955621239765113527621075572534,
-      r_g1: g1.decompress(
-        #"89218ac9d46dbef17651a764dd5e0ee7414b040221e3d0f188642129acfea1a17862de38851b2483095449c4732d150a",
-      ),
+      r_g1: #"89218ac9d46dbef17651a764dd5e0ee7414b040221e3d0f188642129acfea1a17862de38851b2483095449c4732d150a",
     }
   let commit =
     #"1669f6cef337b4373a0f3e6307c6cdfb44517a36e125d7866ee9e838f4f5455cca63ce114d25b62ae4e597dc78c4db45170d8abb0611028477e44388db31dccbee44f308b8f5cd934727ede4202b807fe1e7ba3c0d7c0680c9213dd84a29576d"
