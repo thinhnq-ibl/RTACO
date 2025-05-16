@@ -263,6 +263,20 @@ pub fn list_g1_to_binary256(g1_list: List<G1Element>) -> ByteArray {
   }
 }
 
+pub fn list_compressed_to_g1(list: List<ByteArray>) -> List<G1Element> {
+  let first = head(list)
+  if is_none(first) {
+    []
+  } else {
+    expect Some(first_) = first
+    let g1_point = g1.decompress(first_)
+    let tail = tail(list)
+    expect Some(tail_) = tail
+    let tail_result = list_compressed_to_g1(tail_)
+    list.push(tail_result, g1_point)
+  }
+}
+
 test test_gen_challage() {
   let g1_list =
     [

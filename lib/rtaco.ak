@@ -8,7 +8,7 @@ use aiken/primitive/bytearray.{concat}
 use aiken/primitive/int.{from_bytearray_big_endian}
 use bls.{
   Sign, do_ecdsa_verify, g1_to_binary256, g2_to_binary256, list_bytearray_to_g1,
-  list_g1_to_binary256,
+  list_compressed_to_g1, list_g1_to_binary256,
 }
 
 pub type Vcert {
@@ -23,7 +23,7 @@ pub type IssueProof {
   rr: Int,
   ros: List<Int>,
   total_rm: List<List<Int>>,
-  pubkeys: List<G1Element>,
+  pubkeys: List<ByteArray>,
 }
 
 const iproof =
@@ -51,18 +51,15 @@ const iproof =
       [],
     ],
     pubkeys: [
-      g1.decompress(
-        #"968cc0fcd3879a0b7b1f1f70fe60a7c5ea3aa45fcbb2d4963c5dec7b9efa5ec23be6ebf59f285d904d734afdf2f0147e",
-      ),
-      g1.decompress(
-        #"896b2e6fab0e737e1e299da5ea2cf9046883aaea3b4271bc0463f6cbe964be5b54f09325ee02caa704f7e71c03cd392a",
-      ),
+      #"968cc0fcd3879a0b7b1f1f70fe60a7c5ea3aa45fcbb2d4963c5dec7b9efa5ec23be6ebf59f285d904d734afdf2f0147e",
+      #"896b2e6fab0e737e1e299da5ea2cf9046883aaea3b4271bc0463f6cbe964be5b54f09325ee02caa704f7e71c03cd392a",
     ],
   }
 
 pub fn check_vcerts(iproof: IssueProof, vcerts: List<Vcert>) -> Bool {
   let pks = iproof.pubkeys
-  check_vcert_item(vcerts, pks) && check_sk(iproof)
+  let decompress_pks = list_compressed_to_g1(pks)
+  check_vcert_item(vcerts, decompress_pks) && check_sk(iproof)
 }
 
 fn check_vcert_item(vcerts: List<Vcert>, pks: List<G1Element>) -> Bool {
