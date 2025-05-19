@@ -26,6 +26,14 @@ pub type IssueProof {
   pubkeys: List<ByteArray>,
 }
 
+pub type OpenProof {
+  aw: List<ByteArray>,
+  bw: ByteArray,
+  c: Int,
+  rr: Int,
+  rs: List<Int>,
+}
+
 const iproof =
   IssueProof {
     c: 111028293681481776174710511636606709440469689910069175151354337820721184534253,
@@ -138,6 +146,12 @@ fn check_sk_item(first_item_index: Int, total_rm: List<List<Int>>) -> Bool {
   }
 }
 
+//  rm = []
+//     for i in range(len(total_rm)):
+//         for j in range(len(total_rm[i])):
+//             if include_indexes[i][j] == 1:
+//                 rm.append(int(total_rm[i][j]))
+//     rm = rm + total_rm[-1]
 pub fn check_issue_proof(
   cm_compressed: ByteArray,
   h_compressed: ByteArray,
@@ -200,6 +214,46 @@ pub fn check_issue_proof(
 //   todo
 // }
 
+pub fn get_rm(
+  total_rm: List<List<Int>>,
+  include_indexes: List<List<Int>>,
+) -> List<Int> {
+  let first = head(total_rm)
+  if is_none(first) {
+    []
+  } else {
+    expect Some(first_) = first
+    expect Some(first_include_indexes_) = head(include_indexes)
+    expect Some(tail_rm) = tail(total_rm)
+    expect Some(tail_include_indexes) = tail(include_indexes)
+    list.concat(
+      get_rm_inner_item(first_, first_include_indexes_),
+      get_rm(tail_rm, tail_include_indexes),
+    )
+  }
+}
+
+pub fn get_rm_inner_item(
+  total_rm_inner_item: List<Int>,
+  include_indexes_inner_item: List<Int>,
+) -> List<Int> {
+  let first = head(total_rm_inner_item)
+  if is_none(first) {
+    []
+  } else {
+    expect Some(first_) = first
+    expect Some(first_included_) = head(include_indexes_inner_item)
+    // tail
+    expect Some(tail_rm) = tail(total_rm_inner_item)
+    expect Some(tail_include_indexes) = tail(include_indexes_inner_item)
+    if first_included_ == 1 {
+      list.push(get_rm_inner_item(tail_rm, tail_include_indexes), first_)
+    } else {
+      get_rm_inner_item(tail_rm, tail_include_indexes)
+    }
+  }
+}
+
 pub fn request_cred(
   proof: IssueProof,
   vcerts: List<Vcert>,
@@ -207,11 +261,13 @@ pub fn request_cred(
   h_compressed: ByteArray,
   hs: List<ByteArray>,
   commits: List<ByteArray>,
-  rm: List<Int>,
+  include_indexes: List<List<Int>>,
 ) {
+  let rm = get_rm(proof.total_rm, include_indexes)
   let result1 = check_vcerts(proof, vcerts)
   let result2 =
     check_issue_proof(cm_compressed, h_compressed, hs, commits, proof, rm)
+  // todo 
   // check_open_proof
   result1 && result2
 }
@@ -455,3 +511,66 @@ pub fn to_challenge_open(
   let fifth_c = concat(fourth_c, hs_bytes)
   sha2_256(fifth_c)
 }
+// function verify_Dw(G.G2Point[] memory Dw, Ciphershare[] memory ciphershares, OpenProof memory proof) private view returns(bool) {
+//         // Dw and rr should be same length
+//         G.G1Point[] memory AA = new G.G1Point[](3);
+//         G.G2Point[] memory AB = new G.G2Point[](3);
+//         for(uint256 i=0; i< Dw.length; i++) {
+//             AA[0] = G.g1mul(G.P1(), proof.c[i]);
+//             AA[1] = G.g1mul(G.P1(), proof.rr[i]);
+//             AA[2] = G.g1neg(G.P1());
+//             AB[0] = ciphershares[i].X[0];
+//             AB[1] = G.P2();
+//             AB[2] = Dw[i];
+//             if (!G.pairing(AA, AB)) {
+//                 return false;
+//             }
+//         }
+//         return true;
+//     }
+
+// pub fn verify_Dw(
+//   dw: List<G2Element>,
+//   ciphershares: List<ByteArray>,
+//   proof: OpenProof,
+// ) -> Bool {
+//   let first = head(dw)
+//   if is_none(first) {
+//     True
+//   } else {
+//     expect Some(first_) = first
+//     let first_ciphershare = head(ciphershares)
+//     expect Some(first_ciphershare_) = first_ciphershare
+//     let first_item = head(proof.total_rm)
+//     expect Some(first_item_) = first_item
+//     let first_index = head(first_item_)
+//     expect Some(first_index_) = first_index
+//     let result =
+//       verify_Dw_item(
+//         g1.scale(g1.generator, proof.c),
+//         g1.scale(g1.generator, proof.rr),
+//         g1.decompress(first_ciphershare_),
+//         g1.decompress(first_),
+//       )
+//     if result == False {
+//       False
+//     } else {
+//       let tail_Dw = tail(Dw)
+//       let tail_ciphershares = tail(ciphershares)
+//       expect Some(tail_Dw_) = tail_Dw
+//       expect Some(tail_ciphershares_) = tail_ciphershares
+//       verify_Dw(tail_Dw_, tail_ciphershares_, proof)
+//     }
+//   }
+// }
+
+// pub fn verify_Dw_item(
+//   AA: G1Element,
+//   AB: G1Element,
+//   ciphershare: G1Element,
+//   dw: G2Element,
+// ) -> Bool {
+//   let first = g1.add(AA, g1.neg(AB))
+//   let second = g2.add(ciphershare, g2.neg(Dw))
+//   g1.pairing(first, second)
+// }
