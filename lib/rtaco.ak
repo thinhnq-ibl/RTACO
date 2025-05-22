@@ -262,7 +262,7 @@ pub fn request_cred(
   hs: List<ByteArray>,
   commits: List<ByteArray>,
   include_indexes: List<List<Int>>,
-) {
+) {  
   let rm = get_rm(proof.total_rm, include_indexes)
   let result1 = check_vcerts(proof, vcerts)
   let result2 =

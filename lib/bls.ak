@@ -5,11 +5,10 @@
 ////
 //// The module assumes that the public keys and messages are provided as byte arrays, and it uses the [aiken/prelude/builtin](https://aiken-lang.github.io/prelude/aiken/builtin.html) module for the underlying cryptographic operations.
 
-// https://github.com/ilap/bls/blob/main/lib/bls/core.ak
-
 use aiken/builtin.{
-  bls12_381_final_verify, bls12_381_g1_scalar_mul, bls12_381_g2_hash_to_group,
-  bls12_381_g2_scalar_mul, bls12_381_miller_loop, bytearray_to_integer,
+  bls12_381_final_verify, bls12_381_g1_neg, bls12_381_g1_scalar_mul,
+  bls12_381_g2_hash_to_group, bls12_381_g2_scalar_mul, bls12_381_miller_loop,
+  bls12_381_mul_miller_loop_result, bytearray_to_integer,
 }
 use aiken/collection/list.{head, tail}
 use aiken/crypto.{sha2_256}
@@ -18,6 +17,8 @@ use aiken/crypto/bls12_381/g2 as g2
 use aiken/crypto/bls12_381/scalar as scalar
 use aiken/option.{is_none}
 use aiken/primitive/bytearray.{concat}
+// https://github.com/ilap/bls/blob/main/lib/bls/core.ak
+
 use aiken/primitive/int.{from_bytearray_big_endian}
 
 /// DSTs - The domain separation tags for the hash-to-curve function.
@@ -116,8 +117,8 @@ pub fn unblind_signature(
 /// Test
 const sk1 = #"6284b61a07c6bd3e632beb6294dfc780ad04489c8c31b73b0aef73608f3d1231"
 
-const hash =
-  #"b8ee5db274e4ed884d6acae616b1c292004bb3df5c150e7eee66d6aed86ce3481300cdfe037651d9e01af95f539bf63a13d14cbc4ff1c45149ece6777e6c5b2860c0ec14253b9667200ea5bb6c2d11bf1315c552da7a7d60092d7010da158a2f"
+// const hash =
+//   #"b8ee5db274e4ed884d6acae616b1c292004bb3df5c150e7eee66d6aed86ce3481300cdfe037651d9e01af95f539bf63a13d14cbc4ff1c45149ece6777e6c5b2860c0ec14253b9667200ea5bb6c2d11bf1315c552da7a7d60092d7010da158a2f"
 
 const pk1 =
   #"82cbde4e4fc6a56b6f84f2ceabb191ed7d4402835f8caa1e166554e7d7a925fe2cab59f113b78c91a4b37001d2a9c75f"
@@ -329,4 +330,27 @@ pub fn list_bytearray_to_g1(list: List<ByteArray>) -> List<G1Element> {
     let tail_result = list_bytearray_to_g1(tail_)
     list.push(tail_result, g1_point)
   }
+}
+
+pub fn get_miller_unit() -> MillerLoopResult {
+  let p1 = g1.generator
+  let neg_p1 = bls12_381_g1_neg(g1.generator)
+  let p2 = g2.generator
+  let pair1 = group_pairing(p1, p2)
+  let pair2 = group_pairing(neg_p1, p2)
+  bls12_381_mul_miller_loop_result(pair1, pair2)
+}
+
+test check_group_pairing() {
+  let p1 = g1.generator
+  let neg_p1 = bls12_381_g1_neg(g1.generator)
+  let p2 = g2.generator
+  let valid = get_miller_unit()
+  expect Some(two_scalar) = scalar.new(2)
+  let neg_pp1 = g1.scale(neg_p1, two_scalar)
+  let pp1 = g1.scale(p1, two_scalar)
+  let pair3 = group_pairing(neg_pp1, p2)
+  let pair4 = group_pairing(pp1, p2)
+  let valid2 = bls12_381_mul_miller_loop_result(pair3, pair4)
+  expect bls12_381_final_verify(valid, valid2)
 }
