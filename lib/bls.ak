@@ -341,16 +341,45 @@ pub fn get_miller_unit() -> MillerLoopResult {
   bls12_381_mul_miller_loop_result(pair1, pair2)
 }
 
-test check_group_pairing() {
+pub fn check_group_pairing(g1s: List<G1Element>, g2s: List<G2Element>) -> Bool {
+  let mul = mul_groug_pairing(g1s, g2s)
+  let valid = get_miller_unit()
+  bls12_381_final_verify(valid, mul)
+}
+
+pub fn mul_groug_pairing(
+  g1s: List<G1Element>,
+  g2s: List<G2Element>,
+) -> MillerLoopResult {
+  if list.length(g1s) == 1 {
+    let g1e = head(g1s)
+    expect Some(g1e_) = g1e
+    let g2e = head(g2s)
+    expect Some(g2e_) = g2e
+    group_pairing(g1e_, g2e_)
+  } else {
+    let g1e = head(g1s)
+    expect Some(g1e_) = g1e
+    let g2e = head(g2s)
+    expect Some(g2e_) = g2e
+    let pair1 = group_pairing(g1e_, g2e_)
+    expect Some(tail_g1s) = tail(g1s)
+    expect Some(tail_g2s) = tail(g2s)
+    bls12_381_mul_miller_loop_result(
+      pair1,
+      mul_groug_pairing(tail_g1s, tail_g2s),
+    )
+  }
+}
+
+test check_group_pairing_test() {
   let p1 = g1.generator
   let neg_p1 = bls12_381_g1_neg(g1.generator)
   let p2 = g2.generator
-  let valid = get_miller_unit()
   expect Some(two_scalar) = scalar.new(2)
   let neg_pp1 = g1.scale(neg_p1, two_scalar)
   let pp1 = g1.scale(p1, two_scalar)
-  let pair3 = group_pairing(neg_pp1, p2)
-  let pair4 = group_pairing(pp1, p2)
-  let valid2 = bls12_381_mul_miller_loop_result(pair3, pair4)
-  expect bls12_381_final_verify(valid, valid2)
+  let g1s = [pp1, neg_pp1]
+  let g2s = [p2, p2]
+  expect check_group_pairing(g1s, g2s) == True
 }
