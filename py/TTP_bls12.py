@@ -155,10 +155,7 @@ def VerifyZKPoK(params, prev_params, prev_vcerts, encoded_attr, comm, ZKPoK):
 def SignCommitment(params, sk, comm):
     G, g, o, hs = params
     digest = SHA256(comm)
-    print("byte" , ((comm[0].n).to_bytes(48, 'big') + (comm[1].n).to_bytes(48, 'big')).hex())
-    print("digest", digest.hex())
     int_digest = int.from_bytes(digest, "big") % o
-    print("int_digest", int_digest)
     sign = do_ecdsa_sign(sk, digest)
     return sign
 
@@ -169,7 +166,6 @@ def get_int_digest(params, comm):
     return int_digest
 
 def do_ecdsa_sign(sk, digest):
-    r1 = 0
     r = 0
     s = 0
     o = int(curve_order)
@@ -178,10 +174,7 @@ def do_ecdsa_sign(sk, digest):
         k = random.randint(2, o)
         p1 = multiply(G1, k)
         r = p1[0].n
-        r1 = p1[1].n
         s = (modInverse(k, o) * (int_digest + ((sk * r) % o)) ) %o
-    print("r1", r1)
-    print("r", r)
     return (r, s)
 
 def do_ecdsa_verify(pk, sign, digest):
@@ -397,12 +390,12 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
     # compute h
     h = hashG1(to_binary256(cm))
     # compute the witnesses commitments
-    print("waaaaaaaaa")
+    # print("waaaaaaaaa")
     # print("g1", g1, i2osp(compress_G1(g1), 48).hex())
-    print("wos", wos)
+    # print("wos", wos)
     # print("h", h,  i2osp(compress_G1(h), 48).hex())
-    print("wm", wm)
-    print("private_m", private_m)
+    # print("wm", wm)
+    # print("private_m", private_m)
     Aw = [add(multiply(g1, wos[i]), multiply(h, wm[i])) for i in range(len(private_m))]
     Bw = add(multiply(g1, wr), ec_sum([multiply(hs[i], wm[i]) for i in range(len(attributes))]))
     Cw = []
@@ -413,7 +406,7 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
             tmp = add(tmp, multiply(ttp_hs[j], total_wm[i][j]))
         Cw.append(tmp)
     # create the challenge
-    print("start")
+    # print("start")
     c = to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw)
    
     # create responses

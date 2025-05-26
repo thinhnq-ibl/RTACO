@@ -83,10 +83,8 @@ fn check_vcert_item(vcerts: List<Vcert>, pks: List<G1Element>) -> Bool {
     if check_result == False {
       False
     } else {
-      let tail_vcerts = tail(vcerts)
-      let tail_pks = tail(pks)
-      expect Some(tail_vcerts_) = tail_vcerts
-      expect Some(tail_pks_) = tail_pks
+      expect Some(tail_vcerts_) = tail(vcerts)
+      expect Some(tail_pks_) = tail(pks)
       check_vcert_item(tail_vcerts_, tail_pks_)
     }
   }
@@ -120,10 +118,8 @@ test check_vcerts_test() {
 }
 
 pub fn check_sk(proof: IssueProof) -> Bool {
-  let first_item = head(proof.total_rm)
-  expect Some(first_item_) = first_item
-  let first_item_index = head(first_item_)
-  expect Some(first_item_index_) = first_item_index
+  expect Some(first_item_) = head(proof.total_rm)
+  expect Some(first_item_index_) = head(first_item_)
   expect Some(tail_items) = tail(proof.total_rm)
   check_sk_item(first_item_index_, tail_items)
 }
@@ -134,13 +130,11 @@ fn check_sk_item(first_item_index: Int, total_rm: List<List<Int>>) -> Bool {
     True
   } else {
     expect Some(first_) = first
-    let first_index = head(first_)
-    expect Some(first_index_) = first_index
+    expect Some(first_index_) = head(first_)
     if first_index_ != first_item_index {
       False
     } else {
-      let tail_rm = tail(total_rm)
-      expect Some(tail_rm_) = tail_rm
+      expect Some(tail_rm_) = tail(total_rm)
       check_sk_item(first_item_index, tail_rm_)
     }
   }
@@ -155,37 +149,21 @@ fn check_sk_item(first_item_index: Int, total_rm: List<List<Int>>) -> Bool {
 pub fn check_issue_proof(
   cm_compressed: ByteArray,
   h_compressed: ByteArray,
-  hs: List<ByteArray>,
-  commits: List<ByteArray>,
+  hs_compressed: List<ByteArray>,
+  commits_compressed: List<ByteArray>,
   proof: IssueProof,
   rm: List<Int>,
 ) {
   // rm come from proof.total_rm
-  let aw =
-    calculate_Aw(
-      list_bytearray_to_g1(commits),
-      proof.c,
-      proof.ros,
-      g1.decompress(h_compressed),
-      rm,
-    )
-  let bw = calculate_Bw(proof.c, proof.rr, rm, g1.decompress(cm_compressed), hs)
-  let cw =
-    calculate_Cw(
-      proof.total_rm,
-      list_bytearray_to_g1(commits),
-      proof.c,
-      list_bytearray_to_g1(hs),
-    )
+  let commits = list_bytearray_to_g1(commits_compressed)
+  let hs = list_bytearray_to_g1(hs_compressed)
+  let h = g1.decompress(h_compressed)
+  let cm = g1.decompress(cm_compressed)
+  let aw = calculate_Aw(commits, proof.c, proof.ros, h, rm)
+  let bw = calculate_Bw(proof.c, proof.rr, rm, cm, hs)
+  let cw = calculate_Cw(proof.total_rm, commits, proof.c, hs)
   proof.c == from_bytearray_big_endian(
-    to_challenge_issue(
-      g1.decompress(cm_compressed),
-      g1.decompress(h_compressed),
-      bw,
-      list_bytearray_to_g1(hs),
-      aw,
-      cw,
-    ),
+    to_challenge_issue(cm, h, bw, hs, aw, cw),
   )
 }
 
@@ -260,16 +238,29 @@ pub fn request_cred(
   cm_compressed: ByteArray,
   h_compressed: ByteArray,
   hs: List<ByteArray>,
-  commits: List<ByteArray>,
   include_indexes: List<List<Int>>,
-) {  
+) {
   let rm = get_rm(proof.total_rm, include_indexes)
+  let commits = get_commits(vcerts)
   let result1 = check_vcerts(proof, vcerts)
   let result2 =
     check_issue_proof(cm_compressed, h_compressed, hs, commits, proof, rm)
   // todo 
   // check_open_proof
   result1 && result2
+}
+
+fn get_commits(vcerts: List<Vcert>) -> List<ByteArray> {
+  let first = head(vcerts)
+  if is_none(first) {
+    []
+  } else {
+    expect Some(first_) = first
+    let commit_ = first_.commit
+    expect Some(tail_) = tail(vcerts)
+    let tail_commits = get_commits(tail_)
+    list.push(tail_commits, commit_)
+  }
 }
 
 pub fn calculate_Aw(
@@ -294,38 +285,29 @@ pub fn calculate_Aw_item(
     []
   } else {
     expect Some(commitment) = head_commitments
-    let head_ros = head(ros)
-    expect Some(head_ros_) = head_ros
-    let head_rm = head(rm)
-    expect Some(head_rm_) = head_rm
+    expect Some(head_ros_) = head(ros)
+    expect Some(head_rm_) = head(rm)
     expect Some(c_scar) = scalar.new(c)
     expect Some(ros_scar) = scalar.new(head_ros_)
     let cal_ro = g1.scale(g1.generator, ros_scar)
     expect Some(rm_scar) = scalar.new(head_rm_)
     let cal_rm = g1.scale(h_point, rm_scar)
     let aw_item = g1.add(g1.scale(commitment, c_scar), g1.add(cal_ro, cal_rm))
-    let tail_commitments = tail(commitments)
-    let tail_ros = tail(ros)
-    let tail_rm = tail(rm)
-    expect Some(tail_commitments_) = tail_commitments
-    expect Some(tail_ros_) = tail_ros
-    expect Some(tail_rm_) = tail_rm
+    expect Some(tail_commitments_) = tail(commitments)
+    expect Some(tail_ros_) = tail(ros)
+    expect Some(tail_rm_) = tail(rm)
     let tail_result =
       calculate_Aw_item(tail_commitments_, c, tail_ros_, h_point, tail_rm_)
     list.push(tail_result, aw_item)
   }
 }
 
-// test calculate_Aw_test() {
-//   False
-// }
-
 pub fn calculate_Bw(
   c: Int,
   rr: Int,
   rm: List<Int>,
   cm_point: G1Element,
-  hs: List<ByteArray>,
+  hs: List<G1Element>,
 ) -> G1Element {
   expect Some(c_scar) = scalar.new(c)
   expect Some(rr_scar) = scalar.new(rr)
@@ -336,22 +318,18 @@ pub fn calculate_Bw(
 pub fn calculate_Bw_item(
   bw: G1Element,
   rm: List<Int>,
-  hs: List<ByteArray>,
+  hs: List<G1Element>,
 ) -> G1Element {
   let head_rm = head(rm)
   if is_none(head_rm) {
     bw
   } else {
     expect Some(head_rm_) = head_rm
-    let head_hs = head(hs)
-    expect Some(head_hs_) = head_hs
-    let h_point = g1.decompress(head_hs_)
+    expect Some(head_hs_) = head(hs)
     expect Some(rm_scar) = scalar.new(head_rm_)
-    let cal_rm = g1.scale(h_point, rm_scar)
-    let tail_rm = tail(rm)
-    let tail_hs = tail(hs)
-    expect Some(tail_rm_) = tail_rm
-    expect Some(tail_hs_) = tail_hs
+    let cal_rm = g1.scale(head_hs_, rm_scar)
+    expect Some(tail_rm_) = tail(rm)
+    expect Some(tail_hs_) = tail(hs)
     calculate_Bw_item(g1.add(bw, cal_rm), tail_rm_, tail_hs_)
   }
 }
@@ -376,21 +354,16 @@ pub fn calculate_Cw_item(
     []
   } else {
     expect Some(first_) = first
-    let commit_index = head(commits)
-    expect Some(commit_index_) = commit_index
+    expect Some(commit_index_) = head(commits)
     expect Some(c_scar) = scalar.new(c)
     let tmp = g1.scale(commit_index_, c_scar)
-    let last_first = list.last(first_)
-    expect Some(last_first_) = last_first
-    let init_first = list.init(first_)
-    expect Some(init_first_) = init_first
+    expect Some(last_first_) = list.last(first_)
+    expect Some(init_first_) = list.init(first_)
     expect Some(last_first_scalar) = scalar.new(last_first_)
     let updated_tmp = g1.add(tmp, g1.scale(g1.generator, last_first_scalar))
     let first_item = calculate_Cw_hs(updated_tmp, hs, init_first_)
-    let tail_rm = tail(total_rm)
-    let tail_commits = tail(commits)
-    expect Some(tail_rm_) = tail_rm
-    expect Some(tail_commits_) = tail_commits
+    expect Some(tail_rm_) = tail(total_rm)
+    expect Some(tail_commits_) = tail(commits)
     let tail_result = calculate_Cw_item(tail_rm_, tail_commits_, c, hs)
     list.push(tail_result, first_item)
   }
@@ -406,14 +379,11 @@ pub fn calculate_Cw_hs(
     tmp
   } else {
     expect Some(first_) = first
-    let first_hs = head(hs)
-    expect Some(first_hs_) = first_hs
+    expect Some(first_hs_) = head(hs)
     expect Some(first_hs_scar) = scalar.new(first_)
     let sum_f = g1.add(tmp, g1.scale(first_hs_, first_hs_scar))
-    let tail_rm = tail(total_rm_elemnt)
-    let tail_hs = tail(hs)
-    expect Some(tail_rm_) = tail_rm
-    expect Some(tail_hs_) = tail_hs
+    expect Some(tail_rm_) = tail(total_rm_elemnt)
+    expect Some(tail_hs_) = tail(hs)
     calculate_Cw_hs(sum_f, tail_hs_, tail_rm_)
   }
 }
@@ -511,66 +481,3 @@ pub fn to_challenge_open(
   let fifth_c = concat(fourth_c, hs_bytes)
   sha2_256(fifth_c)
 }
-// function verify_Dw(G.G2Point[] memory Dw, Ciphershare[] memory ciphershares, OpenProof memory proof) private view returns(bool) {
-//         // Dw and rr should be same length
-//         G.G1Point[] memory AA = new G.G1Point[](3);
-//         G.G2Point[] memory AB = new G.G2Point[](3);
-//         for(uint256 i=0; i< Dw.length; i++) {
-//             AA[0] = G.g1mul(G.P1(), proof.c[i]);
-//             AA[1] = G.g1mul(G.P1(), proof.rr[i]);
-//             AA[2] = G.g1neg(G.P1());
-//             AB[0] = ciphershares[i].X[0];
-//             AB[1] = G.P2();
-//             AB[2] = Dw[i];
-//             if (!G.pairing(AA, AB)) {
-//                 return false;
-//             }
-//         }
-//         return true;
-//     }
-
-// pub fn verify_Dw(
-//   dw: List<G2Element>,
-//   ciphershares: List<ByteArray>,
-//   proof: OpenProof,
-// ) -> Bool {
-//   let first = head(dw)
-//   if is_none(first) {
-//     True
-//   } else {
-//     expect Some(first_) = first
-//     let first_ciphershare = head(ciphershares)
-//     expect Some(first_ciphershare_) = first_ciphershare
-//     let first_item = head(proof.total_rm)
-//     expect Some(first_item_) = first_item
-//     let first_index = head(first_item_)
-//     expect Some(first_index_) = first_index
-//     let result =
-//       verify_Dw_item(
-//         g1.scale(g1.generator, proof.c),
-//         g1.scale(g1.generator, proof.rr),
-//         g1.decompress(first_ciphershare_),
-//         g1.decompress(first_),
-//       )
-//     if result == False {
-//       False
-//     } else {
-//       let tail_Dw = tail(Dw)
-//       let tail_ciphershares = tail(ciphershares)
-//       expect Some(tail_Dw_) = tail_Dw
-//       expect Some(tail_ciphershares_) = tail_ciphershares
-//       verify_Dw(tail_Dw_, tail_ciphershares_, proof)
-//     }
-//   }
-// }
-
-// pub fn verify_Dw_item(
-//   AA: G1Element,
-//   AB: G1Element,
-//   ciphershare: G1Element,
-//   dw: G2Element,
-// ) -> Bool {
-//   let first = g1.add(AA, g1.neg(AB))
-//   let second = g2.add(ciphershare, g2.neg(Dw))
-//   g1.pairing(first, second)
-// }

@@ -84,17 +84,17 @@ result  = VerifyZKPoK(ca_params, [], [], encoded_attribute_verify, commit, zkpok
 pubCP, mskCP = ttpKeyGen(ca_params)
 signature = SignCommitment(ca_params, mskCP, commit)
 issueVcert = (commit, signature)
-print("pubCP: ", pubCP)
+# print("pubCP: ", pubCP)
 pubkeyUncompress: G1Uncompressed = (FQO(pubCP[0].n),
                               FQO(pubCP[1].n), 
                               FQO(1))
 # compress_G1(point3D)
-print("digest", get_int_digest(ca_params, commit))
-print("pubkeyUncompress", i2osp(compress_G1(pubkeyUncompress),48).hex())
-print("signature r, s", signature[0], signature[1])
-print("signatureCompress",i2osp(compress_G1((FQO(signature[0]),
-                              FQO(signature[1]), 
-                              FQO(1))),48).hex())
+# print("digest", get_int_digest(ca_params, commit))
+# print("pubkeyUncompress", i2osp(compress_G1(pubkeyUncompress),48).hex())
+# print("signature r, s", signature[0], signature[1])
+# print("signatureCompress",i2osp(compress_G1((FQO(signature[0]),
+#                               FQO(signature[1]), 
+#                               FQO(1))),48).hex())
 # end
 
 if(VerifyVcerts(ca_params, pubCP, signature, SHA256(commit)) == True):
@@ -156,13 +156,16 @@ encoded_attribute_income_verify = [encoded_attribute_income[1]]
 result_income = VerifyZKPoK(ca_params_income, prevParams, prevVcerts, encoded_attribute_income_verify, commit_income, zkpok_income)
 #print("ZKPoK verification income result: ", result_income)
 
-pubCP, mskCP = ttpKeyGen(ca_params)
-signature_income = SignCommitment(ca_params, mskCP, commit_income)
+pubCP2, mskCP2 = ttpKeyGen(ca_params)
+pubkeyUncompress2: G1Uncompressed = (FQO(pubCP2[0].n),
+                              FQO(pubCP2[1].n), 
+                              FQO(1))
+signature_income = SignCommitment(ca_params, mskCP2, commit_income)
 #print("signature_income", signature_income)
 issueVcertIncome = (commit_income, signature_income)
 # #print("Signature: ", signature_income)
 
-if(VerifyVcerts(ca_params, pubCP, signature_income, SHA256(commit_income)) == True):
+if(VerifyVcerts(ca_params, pubCP2, signature_income, SHA256(commit_income)) == True):
     vcert_income["attributes"] = attributes_income
     vcert_income["commit"] = commit_income
     vcert_income["signature"] = signature_income
@@ -240,6 +243,30 @@ public_m.append(encoded_attribute[1])
 public_m.append(encoded_attribute[2])
 public_m.append(encoded_attribute_income[1])
 str_public_m = [str(public_m[i]) for i in range(len(public_m))]
+print("########## Requesting Credential #########")
+# print("prevVcerts", prevVcerts[0])
+
+print("pubkeyUncompress", i2osp(compress_G1(pubkeyUncompress),48).hex())
+print("pubkeyUncompress2", i2osp(compress_G1(pubkeyUncompress2),48).hex())
+commitUncompress: G1Uncompressed = (FQO(prevVcerts[0][0][0].n),
+                              FQO(prevVcerts[0][0][1].n), 
+                              FQO(1))
+commitUncompress2: G1Uncompressed = (FQO(prevVcerts[1][0][0].n),
+                              FQO(prevVcerts[1][0][0].n), 
+                              FQO(1))
+print("commitUncompress", i2osp(compress_G1(commitUncompress),48).hex())
+print("commitUncompress2", i2osp(compress_G1(commitUncompress2),48).hex())
+
+print("signature r, s", prevVcerts[0][1][0],  prevVcerts[0][1][1])
+print("signatureCompress",i2osp(compress_G1((FQO(prevVcerts[0][1][0]),
+                              FQO(prevVcerts[0][1][1]), 
+                              FQO(1))),48).hex())
+
+print("signature r, s 2", prevVcerts[1][1][0],  prevVcerts[1][1][1])
+print("signatureCompresss2",i2osp(compress_G1((FQO(prevVcerts[1][1][0]),
+                              FQO(prevVcerts[1][1][1]), 
+                              FQO(1))),48).hex())
+print("sending for verification pi proof", pi_s)
 # tx_hash = request_contract.functions.RequestCred(title, send_vcerts, send_cm, send_compressed_cipher, send_hp, send_hr, send_bo, pi_s, pi_o, send_compressed_G2Points, str_public_m).transact({'from':user_addr})
 #print("cred req", ac_title, send_vcerts)
 #print("send_vcerts[0][0]", send_vcerts[0][0])
