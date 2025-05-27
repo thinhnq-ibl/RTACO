@@ -14,7 +14,7 @@ use bls.{
 pub type Vcert {
   // G1 point
   commit: ByteArray,
-  // G1 point
+  // Sign struct
   signature: Sign,
 }
 
@@ -26,43 +26,15 @@ pub type IssueProof {
   pubkeys: List<ByteArray>,
 }
 
-pub type OpenProof {
-  aw: List<ByteArray>,
-  bw: ByteArray,
-  c: Int,
-  rr: Int,
-  rs: List<Int>,
-}
+// pub type OpenProof {
+//   aw: List<ByteArray>,
+//   bw: ByteArray,
+//   c: Int,
+//   rr: Int,
+//   rs: List<Int>,
+// }
 
-const iproof =
-  IssueProof {
-    c: 111028293681481776174710511636606709440469689910069175151354337820721184534253,
-    rr: 5050437177520903155847248449104124878646040665278897517070821451493842774601,
-    ros: [
-      49744196328279248815796712426546829894584294309244497450305853101602225222529,
-      29782732702853354121904336237005215317539472786765989838419548536149186648559,
-      3986513954939188089344606671398402557201798092878666912131712831328580791987,
-      42926437779922011362364629289975177979465250943458230974890693324059432914956,
-    ],
-    total_rm: [
-      [
-        28570405751608929143275229779994869610628602755456909429086846981825913832910,
-        13507742991005023007096234598351915058180043055507780815574349619528610865134,
-        26806696748710448407371037207606330670021875901994732626874438952060518010483,
-        14337009862152980476725691075380459026334552202534707298997180022700568755898,
-      ],
-      [
-        28570405751608929143275229779994869610628602755456909429086846981825913832910,
-        45279309888158677857503732152612499548654948313017471839403896507493988578648,
-        18631698991280989165794156185809282554249027473066654851015905870822852378043,
-      ],
-    ],
-    pubkeys: [
-      #"968cc0fcd3879a0b7b1f1f70fe60a7c5ea3aa45fcbb2d4963c5dec7b9efa5ec23be6ebf59f285d904d734afdf2f0147e",
-      #"896b2e6fab0e737e1e299da5ea2cf9046883aaea3b4271bc0463f6cbe964be5b54f09325ee02caa704f7e71c03cd392a",
-    ],
-  }
-
+/// TODO
 pub fn check_vcerts(iproof: IssueProof, vcerts: List<Vcert>) -> Bool {
   let pks = iproof.pubkeys
   let decompress_pks = list_compressed_to_g1(pks)
@@ -91,6 +63,35 @@ fn check_vcert_item(vcerts: List<Vcert>, pks: List<G1Element>) -> Bool {
 }
 
 test check_vcerts_test() {
+  let iproof =
+    IssueProof {
+      c: 111028293681481776174710511636606709440469689910069175151354337820721184534253,
+      rr: 5050437177520903155847248449104124878646040665278897517070821451493842774601,
+      ros: [
+        49744196328279248815796712426546829894584294309244497450305853101602225222529,
+        29782732702853354121904336237005215317539472786765989838419548536149186648559,
+        3986513954939188089344606671398402557201798092878666912131712831328580791987,
+        42926437779922011362364629289975177979465250943458230974890693324059432914956,
+      ],
+      total_rm: [
+        [
+          28570405751608929143275229779994869610628602755456909429086846981825913832910,
+          13507742991005023007096234598351915058180043055507780815574349619528610865134,
+          26806696748710448407371037207606330670021875901994732626874438952060518010483,
+          14337009862152980476725691075380459026334552202534707298997180022700568755898,
+        ],
+        [
+          28570405751608929143275229779994869610628602755456909429086846981825913832910,
+          45279309888158677857503732152612499548654948313017471839403896507493988578648,
+          18631698991280989165794156185809282554249027473066654851015905870822852378043,
+        ],
+      ],
+      pubkeys: [
+        #"968cc0fcd3879a0b7b1f1f70fe60a7c5ea3aa45fcbb2d4963c5dec7b9efa5ec23be6ebf59f285d904d734afdf2f0147e",
+        #"896b2e6fab0e737e1e299da5ea2cf9046883aaea3b4271bc0463f6cbe964be5b54f09325ee02caa704f7e71c03cd392a",
+      ],
+    }
+
   let sign: Sign =
     Sign {
       r: 1405393218543153634611558277146205543651389828460482046569307751654236783901042705626443752376987448075822652265738,
@@ -140,12 +141,6 @@ fn check_sk_item(first_item_index: Int, total_rm: List<List<Int>>) -> Bool {
   }
 }
 
-//  rm = []
-//     for i in range(len(total_rm)):
-//         for j in range(len(total_rm[i])):
-//             if include_indexes[i][j] == 1:
-//                 rm.append(int(total_rm[i][j]))
-//     rm = rm + total_rm[-1]
 pub fn check_issue_proof(
   cm_compressed: ByteArray,
   h_compressed: ByteArray,
@@ -154,7 +149,6 @@ pub fn check_issue_proof(
   proof: IssueProof,
   rm: List<Int>,
 ) {
-  // rm come from proof.total_rm
   let commits = list_bytearray_to_g1(commits_compressed)
   let hs = list_bytearray_to_g1(hs_compressed)
   let h = g1.decompress(h_compressed)
@@ -166,31 +160,6 @@ pub fn check_issue_proof(
     to_challenge_issue(cm, h, bw, hs, aw, cw),
   )
 }
-
-// function check_open_proof(string memory name, OpenProof memory proof, G.G1Point memory cm, Compresser memory compressed_params,  G2PointCompresser memory compressedG2points, G.G1Point[][] memory hidden_p, G.G1Point[] memory hr, G.G2Point[] memory bo) private view returns (bool) {
-//         assert(verify_Dw(compressedG2points.Dw, compressed_params.ciphershares, proof));
-//         assert(verify_Ew(name, compressedG2points.Ew, compressed_params.commitments, compressed_params.ciphershares, proof));
-//         G.G1Point memory h = G.HashToPoint(uint256(G.G1_to_binary256(cm)));
-//         G.G1Point[] memory hs = params.get_hs(name);
-//         for(uint256 i=0; i<proof.rr.length; i++) {
-//             if(proof.c[i] != ToChallengeOpen(h, compressedG2points.Dw[i], compressedG2points.Ew[i], hs)) {
-//                 return false;
-//             }
-//         }
-//         return (check_hr_bo(name, compressed_params.commitments, compressed_params.ciphershares, h, hidden_p, hr, bo));
-//     }
-
-// pub fn check_open_proof(
-//   g1: ByteArray,
-//   g2: List<ByteArray>,
-//   h: ByteArray,
-//   aw: List<ByteArray>,
-//   bw: ByteArray,
-//   hs: List<ByteArray>,
-// ) {
-//   // to_challenge_open(g1, g2, h, aw, bw, hs)
-//   todo
-// }
 
 pub fn get_rm(
   total_rm: List<List<Int>>,
@@ -237,14 +206,21 @@ pub fn request_cred(
   vcerts: List<Vcert>,
   cm_compressed: ByteArray,
   h_compressed: ByteArray,
-  hs: List<ByteArray>,
+  hs_compressed: List<ByteArray>,
   include_indexes: List<List<Int>>,
 ) {
   let rm = get_rm(proof.total_rm, include_indexes)
   let commits = get_commits(vcerts)
   let result1 = check_vcerts(proof, vcerts)
   let result2 =
-    check_issue_proof(cm_compressed, h_compressed, hs, commits, proof, rm)
+    check_issue_proof(
+      cm_compressed,
+      h_compressed,
+      hs_compressed,
+      commits,
+      proof,
+      rm,
+    )
   // todo 
   // check_open_proof
   result1 && result2
@@ -413,7 +389,7 @@ pub fn to_challenge_issue(
   let seventh_c = concat(sixth_c, cw_bytes)
   sha2_256(seventh_c)
 }
-
+/// TODO
 // test to_challenge_issue_test() {
 //   let g1 =
 //     #"17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1"
@@ -460,24 +436,24 @@ pub fn to_challenge_issue(
 //   expect c == from_bytearray_big_endian(challenge)
 // }
 
-pub fn to_challenge_open(
-  g1_point: G1Element,
-  g2_point: G2Element,
-  h: G1Element,
-  aw: List<G1Element>,
-  bw: G1Element,
-  hs: List<G1Element>,
-) -> ByteArray {
-  let g1_bytes = g1_to_binary256(g1_point)
-  let g2_bytes = g2_to_binary256(g2_point)
-  let h_bytes = g1_to_binary256(h)
-  let bw_bytes = g1_to_binary256(bw)
-  let hs_bytes = list_g1_to_binary256(hs)
-  let aw_bytes = list_g1_to_binary256(aw)
-  let first_c = concat(g1_bytes, g2_bytes)
-  let second_c = concat(first_c, h_bytes)
-  let third_c = concat(second_c, aw_bytes)
-  let fourth_c = concat(third_c, bw_bytes)
-  let fifth_c = concat(fourth_c, hs_bytes)
-  sha2_256(fifth_c)
-}
+// pub fn to_challenge_open(
+//   g1_point: G1Element,
+//   g2_point: G2Element,
+//   h: G1Element,
+//   aw: List<G1Element>,
+//   bw: G1Element,
+//   hs: List<G1Element>,
+// ) -> ByteArray {
+//   let g1_bytes = g1_to_binary256(g1_point)
+//   let g2_bytes = g2_to_binary256(g2_point)
+//   let h_bytes = g1_to_binary256(h)
+//   let bw_bytes = g1_to_binary256(bw)
+//   let hs_bytes = list_g1_to_binary256(hs)
+//   let aw_bytes = list_g1_to_binary256(aw)
+//   let first_c = concat(g1_bytes, g2_bytes)
+//   let second_c = concat(first_c, h_bytes)
+//   let third_c = concat(second_c, aw_bytes)
+//   let fourth_c = concat(third_c, bw_bytes)
+//   let fifth_c = concat(fourth_c, hs_bytes)
+//   sha2_256(fifth_c)
+// }
