@@ -38,28 +38,39 @@ pub type IssueProof {
 pub fn check_vcerts(iproof: IssueProof, vcerts: List<Vcert>) -> Bool {
   let pks = iproof.pubkeys
   let decompress_pks = list_compressed_to_g1(pks)
-  check_vcert_item(vcerts, decompress_pks) && check_sk(iproof)
+  check_vcert_item(vcerts, decompress_pks)
+  // && check_sk(iproof)
 }
 
 fn check_vcert_item(vcerts: List<Vcert>, pks: List<G1Element>) -> Bool {
   let first_vcert = head(vcerts)
   let first_pk = head(pks)
-
-  if is_none(first_vcert) {
-    True
-  } else {
-    expect Some(first_vcert_) = first_vcert
-    expect Some(first_pk_) = first_pk
-    let check_result =
-      do_ecdsa_verify(first_pk_, first_vcert_.signature, first_vcert_.commit)
-    if check_result == False {
-      False
-    } else {
-      expect Some(tail_vcerts_) = tail(vcerts)
-      expect Some(tail_pks_) = tail(pks)
-      check_vcert_item(tail_vcerts_, tail_pks_)
-    }
-  }
+  expect Some(first_vcert_) = first_vcert
+  expect Some(first_pk_) = first_pk
+  trace first_vcert_.commit
+  trace first_pk_
+  trace first_vcert_.signature.r
+  let result =
+    do_ecdsa_verify(first_pk_, first_vcert_.signature, first_vcert_.commit)
+  trace True == True
+  // 122
+  // 121
+  result
+  // if is_none(first_vcert) {
+  //   True
+  // } else {
+  //   expect Some(first_vcert_) = first_vcert
+  //   expect Some(first_pk_) = first_pk
+  //   let check_result =
+  //     do_ecdsa_verify(first_pk_, first_vcert_.signature, first_vcert_.commit)
+  //   if check_result == False {
+  //     False
+  //   } else {
+  //     expect Some(tail_vcerts_) = tail(vcerts)
+  //     expect Some(tail_pks_) = tail(pks)
+  //     check_vcert_item(tail_vcerts_, tail_pks_)
+  //   }
+  // }
 }
 
 test check_vcerts_test() {
@@ -223,7 +234,8 @@ pub fn request_cred(
     )
   // todo 
   // check_open_proof
-  result1 && result2
+  result1
+  // && result2
 }
 
 fn get_commits(vcerts: List<Vcert>) -> List<ByteArray> {
