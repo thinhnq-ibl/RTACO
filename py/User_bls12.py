@@ -88,21 +88,26 @@ issueVcert = (commit, signature)
 pubkeyUncompress: G1Uncompressed = (FQO(pubCP[0].n),
                               FQO(pubCP[1].n), 
                               FQO(1))
-# compress_G1(point3D)
-# print("digest", get_int_digest(ca_params, commit))
-# print("pubkeyUncompress", i2osp(compress_G1(pubkeyUncompress),48).hex())
-# print("signature r, s", signature[0], signature[1])
-# print("signatureCompress",i2osp(compress_G1((FQO(signature[0]),
-#                               FQO(signature[1]), 
-#                               FQO(1))),48).hex())
-# end
+
 
 if(VerifyVcerts(ca_params, pubCP, signature, SHA256(commit)) == True):
     vcert["attributes"] = attributes
     vcert["commit"] = commit
     vcert["signature"] = signature
-        
-#print("vcert", vcert)
+
+# print("pubkeyUncompress", i2osp(compress_G1(pubkeyUncompress),48).hex())
+# print("signature", {
+#     "r":  signature[0],
+#     "s":  signature[1],
+#     "r_g1": signature[2]
+# } )
+
+# commitUncompress: G1Uncompressed = (FQO(commit[0].n),
+#                               FQO(commit[1].n), 
+#                               FQO(1))
+# print("commitUncompress", i2osp(compress_G1(commitUncompress),48).hex())
+
+# print("vcert", vcert)
 
 # Income Certificate
 vcert_title_income = "Income Certificate"
@@ -153,24 +158,25 @@ zkpok_income = GenZKPoK(ca_params_income, prevParams, prevVcerts, prevAttributes
 
 # send for CA do verify income
 encoded_attribute_income_verify = [encoded_attribute_income[1]]
+
 result_income = VerifyZKPoK(ca_params_income, prevParams, prevVcerts, encoded_attribute_income_verify, commit_income, zkpok_income)
 #print("ZKPoK verification income result: ", result_income)
 
-pubCP2, mskCP2 = ttpKeyGen(ca_params)
+pubCP2, mskCP2 = ttpKeyGen(ca_params_income)
+
+
 pubkeyUncompress2: G1Uncompressed = (FQO(pubCP2[0].n),
                               FQO(pubCP2[1].n), 
                               FQO(1))
-signature_income = SignCommitment(ca_params, mskCP2, commit_income)
+signature_income = SignCommitment(ca_params_income, mskCP2, commit_income)
 #print("signature_income", signature_income)
 issueVcertIncome = (commit_income, signature_income)
 # #print("Signature: ", signature_income)
 
-if(VerifyVcerts(ca_params, pubCP2, signature_income, SHA256(commit_income)) == True):
+if(VerifyVcerts(ca_params_income, pubCP2, signature_income, SHA256(commit_income)) == True):
     vcert_income["attributes"] = attributes_income
     vcert_income["commit"] = commit_income
     vcert_income["signature"] = signature_income
-        
-# #print("vcert_income", vcert_income)
 
 ######################################
 ## create credential
@@ -257,15 +263,19 @@ commitUncompress2: G1Uncompressed = (FQO(prevVcerts[1][0][0].n),
 print("commitUncompress", i2osp(compress_G1(commitUncompress),48).hex())
 print("commitUncompress2", i2osp(compress_G1(commitUncompress2),48).hex())
 
-print("signature r, s", prevVcerts[0][1][0],  prevVcerts[0][1][1])
-print("signatureCompress",i2osp(compress_G1((FQO(prevVcerts[0][1][0]),
-                              FQO(prevVcerts[0][1][1]), 
-                              FQO(1))),48).hex())
 
-print("signature r, s 2", prevVcerts[1][1][0],  prevVcerts[1][1][1])
-print("signatureCompresss2",i2osp(compress_G1((FQO(prevVcerts[1][1][0]),
-                              FQO(prevVcerts[1][1][1]), 
-                              FQO(1))),48).hex())
+print("signature", {
+    "r":  prevVcerts[0][1][0],
+    "s":  prevVcerts[0][1][1],
+    "r_g1": prevVcerts[0][1][2],
+} )
+
+print("signature2", {
+    "r":  prevVcerts[1][1][0],
+    "s":  prevVcerts[1][1][1],
+    "r_g1": prevVcerts[1][1][2]
+} )
+
 print("sending for verification pi proof", pi_s)
 # tx_hash = request_contract.functions.RequestCred(title, send_vcerts, send_cm, send_compressed_cipher, send_hp, send_hr, send_bo, pi_s, pi_o, send_compressed_G2Points, str_public_m).transact({'from':user_addr})
 #print("cred req", ac_title, send_vcerts)

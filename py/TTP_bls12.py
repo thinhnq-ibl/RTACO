@@ -155,7 +155,6 @@ def VerifyZKPoK(params, prev_params, prev_vcerts, encoded_attr, comm, ZKPoK):
 def SignCommitment(params, sk, comm):
     G, g, o, hs = params
     digest = SHA256(comm)
-    int_digest = int.from_bytes(digest, "big") % o
     sign = do_ecdsa_sign(sk, digest)
     return sign
 
@@ -174,11 +173,14 @@ def do_ecdsa_sign(sk, digest):
         k = random.randint(2, o)
         p1 = multiply(G1, k)
         r = p1[0].n
+        r_g1 = i2osp(compress_G1((FQO(p1[0].n),
+                              FQO(p1[1].n), 
+                              FQO(1))),48).hex()
         s = (modInverse(k, o) * (int_digest + ((sk * r) % o)) ) %o
-    return (r, s)
+    return (r, s, r_g1)
 
 def do_ecdsa_verify(pk, sign, digest):
-	(r, s) = sign
+	(r, s, r_g1) = sign
 	o = int(curve_order)
 	int_digest = int.from_bytes(digest, "big") % o
 	s1 = modInverse(s, o)
