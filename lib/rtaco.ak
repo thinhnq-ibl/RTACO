@@ -234,8 +234,7 @@ pub fn request_cred(
     )
   // todo 
   // check_open_proof
-  result1
-  // && result2
+  result1 && result2
 }
 
 fn get_commits(vcerts: List<Vcert>) -> List<ByteArray> {
