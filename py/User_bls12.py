@@ -186,6 +186,7 @@ ac_title = "Loan Credential"
 credential = {"title": ac_title, "attributes" : attributes, "credential": None}
 q = 4 + 3 # schemaOrder = ["msk", "name", "dob", "r", "salary"], schemaOrderIncome = ["msk", "salary", "r"]
 params = setup(q, ac_title)
+(_, _, _, hs, _, _) = params
 nv = 3 #getTotalValidators(args.title)
 tv = 2 #getThresholdValidators(args.title)
 #q = getTotalAttributes(args.title)
@@ -194,7 +195,7 @@ tv = 2 #getThresholdValidators(args.title)
 aggregate_vk = agg_key(params, vk)
 to = 2 #getThresholdOpeners(args.title) 
 no = 3 #getTotalOpeners(args.title)
-(opk, osk) = opener_keygen(params)
+(opk, osk) = opener_keygen( params)
 (opk1, osk1) = opener_keygen(params)
 (opk2, osk2) = opener_keygen(params)
 opks = [opk, opk1, opk2]
@@ -277,10 +278,12 @@ print("signature2", {
 } )
 
 print("sending for verification pi proof", pi_s)
+print("cm_compressed", i2osp(compress_G1((send_cm[0], send_cm[1], FQO(1))),48).hex())
+print("hs_compressed", [i2osp(compress_G1((hs[i][0].n, hs[i][1].n, FQO(1))),48).hex() for i in range(len(hs))])
 # tx_hash = request_contract.functions.RequestCred(title, send_vcerts, send_cm, send_compressed_cipher, send_hp, send_hr, send_bo, pi_s, pi_o, send_compressed_G2Points, str_public_m).transact({'from':user_addr})
 #print("cred req", ac_title, send_vcerts)
 #print("send_vcerts[0][0]", send_vcerts[0][0])
-compressCommitments = [i2osp(compress_G1((send_vcerts[i][0][0],send_vcerts[i][0][1], FQO(1))),48).hex() for i in range(len(send_vcerts))]
+# compressCommitments = [i2osp(compress_G1((send_vcerts[i][0][0],send_vcerts[i][0][1], FQO(1))),48).hex() for i in range(len(send_vcerts))]
 #print("compressed commitments", compressCommitments)
 #print('iproof', pi_s)
 
@@ -293,7 +296,7 @@ blind_sig = BlindSignAttr(params, sk[0], Lambda2, public_m)
 send_h = [blind_sig[0][0].n, blind_sig[0][1].n]
 send_t = [blind_sig[1][0].n, blind_sig[1][1].n]
 
-# #print("send_h: ", send_h)
+print("send_h_compress: ", i2osp(compress_G1((send_h[0], send_h[1], FQO(1))),96).hex())
 # #print("send_t: ", send_t)
 
 h = (FQ(send_h[0]), FQ(send_h[1]))
