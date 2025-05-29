@@ -281,12 +281,7 @@ print("sending for verification pi proof", pi_s)
 print("cm_compressed", i2osp(compress_G1((send_cm[0], send_cm[1], FQO(1))),48).hex())
 print("hs_compressed", [i2osp(compress_G1((hs[i][0].n, hs[i][1].n, FQO(1))),48).hex() for i in range(len(hs))])
 # tx_hash = request_contract.functions.RequestCred(title, send_vcerts, send_cm, send_compressed_cipher, send_hp, send_hr, send_bo, pi_s, pi_o, send_compressed_G2Points, str_public_m).transact({'from':user_addr})
-#print("cred req", ac_title, send_vcerts)
-#print("send_vcerts[0][0]", send_vcerts[0][0])
 # compressCommitments = [i2osp(compress_G1((send_vcerts[i][0][0],send_vcerts[i][0][1], FQO(1))),48).hex() for i in range(len(send_vcerts))]
-#print("compressed commitments", compressCommitments)
-#print('iproof', pi_s)
-
 #send_cm, send_compressed_cipher, send_hp, send_hr, send_bo, pi_s, pi_o, send_compressed_G2Points, str_public_m)
 # validator 1
 Lambda2 = (cm, commitments)
