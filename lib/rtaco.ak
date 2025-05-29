@@ -34,12 +34,10 @@ pub type IssueProof {
 //   rs: List<Int>,
 // }
 
-/// TODO
 pub fn check_vcerts(iproof: IssueProof, vcerts: List<Vcert>) -> Bool {
   let pks = iproof.pubkeys
   let decompress_pks = list_compressed_to_g1(pks)
-  check_vcert_item(vcerts, decompress_pks)
-  // && check_sk(iproof)
+  check_vcert_item(vcerts, decompress_pks) && check_sk(iproof)
 }
 
 fn check_vcert_item(vcerts: List<Vcert>, pks: List<G1Element>) -> Bool {
