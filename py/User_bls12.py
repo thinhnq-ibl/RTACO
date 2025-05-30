@@ -241,7 +241,7 @@ send_compressed_G2Points = (send_Dw, send_Ew)
 send_vcerts = [((prevVcerts[i][0][0].n, prevVcerts[i][0][1].n), prevVcerts[i][1]) for i in range(len(prevVcerts))]
 
 pi_s = list(pi_s)
-pi_s.append(combination)
+# pi_s.append(combination)
 pi_s = tuple(pi_s)
 
 # #print("sending for verification", pi_s)
@@ -327,7 +327,8 @@ aggr_sig = AggCred(params, signs)
 # #print("aggr_sig: ", aggr_sig)
 
 credential["credential"] = aggr_sig
-
+verify_proof = verify_pi_s(params, commitments, cm, prevParams, prevVcerts, pi_s, include_indexes)
+print("Verify pi_s: ", verify_proof)
 ##############################################
 ## RequestService
 ##############################################

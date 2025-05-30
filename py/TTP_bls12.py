@@ -78,15 +78,19 @@ def SHA256(element):
     g1_point: G1Uncompressed = (FQO(element[0].n),FQO(element[1].n), FQO(1))
     return sha256(i2osp(compress_G1(g1_point),48)).digest()
 def get_g1_bytes(point):
-     return ((point[0].n).to_bytes(48, 'big') + (point[1].n).to_bytes(48, 'big')).hex()
+    commitUncompress = (FQO(point[0].n), FQO(point[1].n), FQO(1))
+    return i2osp(compress_G1(commitUncompress),48).hex()
 
 def get_g2_bytes(point):
-    return [((point[0].coeffs[0].n).to_bytes(48, 'big') + (point[0].coeffs[1].n).to_bytes(48, 'big')).hex() , ((point[1].coeffs[0].n).to_bytes(48, 'big') + (point[1].coeffs[1].n).to_bytes(48, 'big')).hex()]
+    commit2Uncompress = (FQO2([point[0].coeffs[0].n, point[0].coeffs[1].n]), FQO2([point[1].coeffs[0].n, point[1].coeffs[1].n]), FQO2.one())
+    commit2Compress = compress_G2(commit2Uncompress)
+    return i2osp(commit2Compress[0], 48).hex() + i2osp(commit2Compress[1], 48).hex()
 
 def get_list_g1_bytes(points):
     ret = []
     for point in points:
-        ret.append(((point[0].n).to_bytes(48, 'big') + (point[1].n).to_bytes(48, 'big')).hex())
+        commitUncompress = (FQO(point[0].n), FQO(point[1].n), FQO(1))
+        ret.append(i2osp(compress_G1(commitUncompress),48).hex())
     return ret
 
 def GenZKPoK(params, prev_params, prev_vcerts, all_enc_attr, comm):
@@ -319,6 +323,7 @@ def PrepareCredRequest(params, aggr_vk, to, no, opk, prevParams, all_attr, inclu
     h = hashG1(to_binary256(cm))
     os = [random.randint(2, o) for _ in range(len(private_m))]#os is a "private_m" length random number array
     commitments = [add(multiply(g1, os[i]), multiply(h, private_m[i])) for i in range(len(private_m))]
+    print("build pi_s")
     pi_s = make_pi_s(params, commitments, cm, os, rand, public_m, private_m, all_attr, prevParams, include_indexes)
     # build proofs
     # pi_s = make_pi_s(params, gamma, c, cm, k, r, public_m, private_m)
@@ -417,15 +422,15 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
     total_rm = [[(total_wm[i][j] - c*all_attr[i][j]) % o for j in range(len(total_wm[i]))] for i in range(len(total_wm) - 1)]
     total_rm.append([(total_wm[-1][i] - c*public_m[i]) % o for i in range(len(total_wm[-1]))])
     # rm = [(wm[i] - c*attributes[i]) % o for i in range(len(wm))]
-    # print("Aw", get_list_g1_bytes(Aw))
-    # print("Bw", get_g1_bytes(Bw)),
-    # print("Cw", get_list_g1_bytes(Cw))
-    # print("g1", get_g1_bytes(g1)), 
-    # print("g2", get_g2_bytes(g2)),
-    # print("cm", get_g1_bytes(cm)), 
-    # print("h", get_g1_bytes(h)) ,
-    # print("hs", get_list_g1_bytes(hs))
-    # print("c", c)
+    print("Aw", get_list_g1_bytes(Aw))
+    print("Bw", get_g1_bytes(Bw)),
+    print("Cw", get_list_g1_bytes(Cw))
+    print("g1", get_g1_bytes(g1)), 
+    print("g2", get_g2_bytes(g2)),
+    print("cm", get_g1_bytes(cm)), 
+    print("h", get_g1_bytes(h)) ,
+    print("hs", get_list_g1_bytes(hs))
+    print("c", c)
     # , rr, ros, total_rm)
     return (c, rr, ros, total_rm)
 
@@ -581,3 +586,34 @@ def verify_pi_v(params, aggr_vk, sigma, kappa, nu, proof, disclose_index, disclo
 
     # compute the challenge prime
     return c == to_challenge([g1, g2, alpha, Aw, Bw, kappa]+ hs + beta + disclose_attr + [timestamp])
+
+def verify_pi_s(params, commitments, cm, prevParams, prevVcerts, proof, include_indexes):
+    """ verify correctness of ciphertext and cm """
+    (G, o, g1, hs, g2, e) = params
+
+    (c, rr, ros, total_rm) = proof
+    for i in range(1, len(total_rm)-1):
+        if total_rm[0][0] != total_rm[i][0]:
+            return False
+    rm = []
+    for i in range(len(total_rm)):
+        for j in range(len(total_rm[i])):
+            if include_indexes[i][j] == 1:
+                rm.append(int(total_rm[i][j]))
+    rm = rm + total_rm[-1]
+
+    assert len(commitments) == len(ros)
+    # re-compute h
+    h = hashG1(to_binary256(cm))
+    # re-compute witnesses commitments
+    Aw = [add(multiply(commitments[i], c), add(multiply(g1, ros[i]), multiply(h, rm[i])))for i in range(len(commitments))]
+    Bw = add(multiply(cm, c), add(multiply(g1, rr), ec_sum([multiply(hs[i], rm[i]) for i in range(len(rm))])))
+    Cw = []
+    for i in range(len(total_rm) - 1):
+        _, ttp_g, _, ttp_hs = prevParams[i]
+        tmp = multiply(ttp_g, total_rm[i][-1])
+        for j in range(len(total_rm[i])-1):
+            tmp = add(tmp, multiply(ttp_hs[j], total_rm[i][j]))
+        tmp = add(tmp, multiply(prevVcerts[i][0], c))
+        Cw.append(tmp)
+    return c == to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw)
