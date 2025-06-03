@@ -368,6 +368,20 @@ def to_binary256(point) :
         g2_point_compressed = compress_G2(g2_point)
         return sha256(i2osp(g2_point_compressed[0],48)+i2osp(g2_point_compressed[1],48)).digest()
 
+def compress_G1_cd(point):
+    """Compress a G1 point to bytes"""
+    g1_point: G1Uncompressed = (FQO(point[0].n), FQO(point[1].n), FQO(1))
+    return i2osp(compress_G1(g1_point), 48).hex()
+
+def compress_G2_cd(point):
+    """Compress a G2 point to bytes"""
+    g2_point = (FQO2((point[0].coeffs[0].n, point[0].coeffs[1].n)), 
+              FQO2((point[1].coeffs[0].n, point[1].coeffs[1].n)),
+              FQO2.one()
+              )
+    g2_point_compressed = compress_G2(g2_point)
+    return (i2osp(g2_point_compressed[0], 48) + i2osp(g2_point_compressed[1], 48)).hex()
+
 def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, prevParams, include_indexes):
     """ prove correctness of ciphertext and cm """
     (G, o, g1, hs, g2, e) = params
@@ -570,6 +584,7 @@ def VerifyCred(params, aggr_vk, Theta, disclose_index, disclose_attr, public_m=[
     aggr = None
     if len(public_m) != 0:
         aggr = ec_sum([multiply(beta[i+len(disclose_index)], public_m[i]) for i in range(len(public_m))])
+    print("kappa", compress_G2_cd(kappa), "nu", compress_G1_cd(nu), "h", compress_G1_cd(h), "s", compress_G1_cd(s), "aggr", compress_G2_cd(aggr))
     return not is_inf(h) and e(add(kappa, aggr), h) == e(g2, add(s, nu))
 
 def verify_pi_v(params, aggr_vk, sigma, kappa, nu, proof, disclose_index, disclose_attr, timestamp):

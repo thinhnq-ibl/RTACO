@@ -37,17 +37,43 @@ pub type Theta {
   kappa: G2Element,
   nu: G1Element,
   sigma: List<G1Element>,
-  proof: Proof,
 }
+
+//   proof: Proof,
 
 pub fn verify_cred(theta: Theta, aggr: G2Element) {
   expect Some(sigma_head) = list.head(theta.sigma)
   expect Some(sigma_last) = list.last(theta.sigma)
-  let coord1 = builtin.bls12_381_g1_neg(sigma_head)
+  let coord1 = sigma_head
   let coord2 = g1.add(sigma_last, theta.nu)
   let coord3 = g2.add(theta.kappa, aggr)
   let coord4 = g2.generator
   let pair1 = group_pairing(coord1, coord3)
   let pair2 = group_pairing(coord2, coord4)
   bls12_381_final_verify(pair1, pair2)
+}
+
+test verify_cred_test() {
+  let theta =
+    Theta {
+      kappa: g2.decompress(
+        #"8a420f7c74ba70c2850f4d75caa81e8fbc0927816de4b2dfe840a233975f5fa1c064c9f1ceb7e7e843eb1401e6f16cb206fd33d015e0787fb7f81738451759466e62d03389f0bdb81ef46e63772e8bd969c68f1995ac3054f6d84a258682424c",
+      ),
+      nu: g1.decompress(
+        #"a78353cb5a8617bbefca2699945c757b9ed778f85a20416ca223eb1dd0a69c2640a099efa50822afaaa882870f6d9e50",
+      ),
+      sigma: [
+        g1.decompress(
+          #"b68a6c29f56f6b74de211d4b300521e26e7f88156fac57fae42698fb6ad4b02311209f4e0617bab887956268d8eff33d",
+        ),
+        g1.decompress(
+          #"a69855e3880d704863e0aa7e4013ab54934a10de9ca5b508072ecc793e4999ffc31af6eeae90373bb2dd71f6693cc433",
+        ),
+      ],
+    }
+  let aggr =
+    g2.decompress(
+      #"b9cbb99e1250991e4d365a48540e254c7dca4af62d77b804a4b05d4ed87d85f312f8e7759f6720e94cb6fac65ca21f891909ebbb242bb735eb684154a1e9f580ea0bab14043d660f79b953621a8ba7d3e242db6bbbb9f5bbed5b8cfbfefef210",
+    )
+  verify_cred(theta, aggr)
 }
