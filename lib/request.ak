@@ -440,24 +440,52 @@ test hash_g1_test() {
   let hash = g1.compress(g1_element)
   expect hash == g1_point
 }
-// pub fn to_challenge_open(
-//   g1_point: G1Element,
-//   g2_point: G2Element,
-//   h: G1Element,
-//   aw: List<G1Element>,
-//   bw: G1Element,
-//   hs: List<G1Element>,
-// ) -> ByteArray {
-//   let g1_bytes = g1_to_binary256(g1_point)
-//   let g2_bytes = g2_to_binary256(g2_point)
-//   let h_bytes = g1_to_binary256(h)
-//   let bw_bytes = g1_to_binary256(bw)
-//   let hs_bytes = list_g1_to_binary256(hs)
-//   let aw_bytes = list_g1_to_binary256(aw)
-//   let first_c = concat(g1_bytes, g2_bytes)
-//   let second_c = concat(first_c, h_bytes)
-//   let third_c = concat(second_c, aw_bytes)
-//   let fourth_c = concat(third_c, bw_bytes)
-//   let fifth_c = concat(fourth_c, hs_bytes)
-//   sha2_256(fifth_c)
-// }
+
+pub fn to_challenge_open(
+  h: G1Element,
+  aw: G2Element,
+  bw: G2Element,
+  hs: List<G1Element>,
+) -> ByteArray {
+  let g1_bytes = g1_to_binary256(g1.generator)
+  let g2_bytes = g2_to_binary256(g2.generator)
+  let h_bytes = g1_to_binary256(h)
+  let bw_bytes = g2_to_binary256(bw)
+  let hs_bytes = list_g1_to_binary256(hs)
+  let aw_bytes = g2_to_binary256(aw)
+  let first_c = concat(g1_bytes, g2_bytes)
+  let second_c = concat(first_c, h_bytes)
+  let third_c = concat(second_c, aw_bytes)
+  let fourth_c = concat(third_c, bw_bytes)
+  let fifth_c = concat(fourth_c, hs_bytes)
+  sha2_256(fifth_c)
+}
+
+test to_challenge_open_test() {
+  let aw =
+    #"8d17c4b14becb9136184fb35ac76cd631b16cd3c414eceb91f98268ef9a0f733b0f808896d9b36d38f495fcc3efbcb9d08fda23723a5913ea302a9ceb8477fe45e9a42a88027cde01b7d23a8f3c498a31e592ed6484421232aa538578889ec80"
+  let bw =
+    #"a71a4a4ca5a4018176b31585a58b80a9db86505d12ed9fee05f195b368ff8621f8121b930d7ff3a7b0b14364d766640814ff56234da1b74a022bf552862906084877aeed0185022f80da54d64898dd3741ace09b3ebaee76b6c010bb38a71d42"
+  let h =
+    #"8c1414d29dbffed035c0b0c6acf1719cb03eaf484a331f375737f72c3d68720ee7644ab73e2a55efd291198e32782e99"
+  let hs =
+    [
+      #"a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
+      #"865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c",
+      #"ae1dc44ad2d3084be3574e5feb59476b1c530322c1eab7d9a869372899cdfa75279ff5119ca6d2980e9e022a98a0ba6b",
+      #"b358409e76fa35a23ec6f3e88bd963eb9da3ad83e59e3c005a3b4e050061fda1fe56227dcec8610061073795fb259b50",
+      #"8bb97519cdb28bb8ceab19bb289c02856a542da4ce52fd3c2cbe8914986f7162a2632e94a6420e47c3d7503f2024fb3d",
+      #"8d06e182789336765f00589a3dd16690ad368d656e95a4b7709bb7ba686d17ae7df5f23e91270bccf334632b3c86df99",
+      #"994278e9661d267e2eaec3fee0a9302fc58347be0466778ea4ba55c9ca426a9856ef7479fc381e7408a9e01da5cc24de",
+    ]
+  let c =
+    88026736549632845623902641450951592274924528375060517240887636654855702845898
+  let to_challenge_open_rs =
+    to_challenge_open(
+      g1.decompress(h),
+      g2.decompress(aw),
+      g2.decompress(bw),
+      list_bytearray_to_g1(hs),
+    )
+  expect c == from_bytearray_big_endian(to_challenge_open_rs)
+}

@@ -93,6 +93,14 @@ def get_list_g1_bytes(points):
         ret.append(i2osp(compress_G1(commitUncompress),48).hex())
     return ret
 
+def get_list_g2_bytes(points):
+    ret = []
+    for point in points:
+        commit2Uncompress = (FQO2([point[0].coeffs[0].n, point[0].coeffs[1].n]), FQO2([point[1].coeffs[0].n, point[1].coeffs[1].n]), FQO2.one())
+        commit2Compress = compress_G2(commit2Uncompress)
+        ret.append(i2osp(commit2Compress[0], 48).hex() + i2osp(commit2Compress[1], 48).hex())
+    return ret
+
 def GenZKPoK(params, prev_params, prev_vcerts, all_enc_attr, comm):
     _, g, o, hs = params
     total_wm = [[random.randint(2, o) for _ in range(len(all_enc_attr[i]))] for i in range(len(all_enc_attr))]
@@ -434,7 +442,7 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
     total_rm.append([(total_wm[-1][i] - c*public_m[i]) % o for i in range(len(total_wm[-1]))])
     # rm = [(wm[i] - c*attributes[i]) % o for i in range(len(wm))]
     # print("Aw", get_list_g1_bytes(Aw))
-    print("Bw", get_g1_bytes(Bw)),
+    # print("Bw", get_g1_bytes(Bw)),
     # print("Cw", get_list_g1_bytes(Cw))
     # print("g1", get_g1_bytes(g1)), 
     # print("g2", get_g2_bytes(g2)),
@@ -444,11 +452,11 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
     # print("c", c)
     # print("wm", wm)
     # , rr, ros, total_rm)
-    Aw1 = [add(multiply(commitments[i], c), add(multiply(g1, ros[i]), multiply(h, wm[i])))for i in range(len(commitments))]
-    # print("Aw1", get_list_g1_bytes(Aw1))
-    Bw1 = add(multiply(cm, c), add(multiply(g1, rr), ec_sum([multiply(hs[i], wm[i]) for i in range(len(wm))])))
-    print("Bw1", get_g1_bytes(Bw1)),
-    Cw1 = []
+    # Aw1 = [add(multiply(commitments[i], c), add(multiply(g1, ros[i]), multiply(h, wm[i])))for i in range(len(commitments))]
+    # # print("Aw1", get_list_g1_bytes(Aw1))
+    # Bw1 = add(multiply(cm, c), add(multiply(g1, rr), ec_sum([multiply(hs[i], wm[i]) for i in range(len(wm))])))
+    # print("Bw1", get_g1_bytes(Bw1)),
+    # Cw1 = []
     # for i in range(len(total_rm) - 1):
     #     _, ttp_g, _, ttp_hs = prevParams[i]
     #     tmp = multiply(ttp_g, total_rm[i][-1])
@@ -456,7 +464,7 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
     #         tmp = add(tmp, multiply(ttp_hs[j], total_rm[i][j]))
     #     tmp = add(tmp, multiply(commitments[i], c))
     #     Cw1.append(tmp)
-    print(c == to_challenge([g1, g2, cm, h, Bw]+hs+Aw1+Cw))
+    # print(c == to_challenge([g1, g2, cm, h, Bw]+hs+Aw1+Cw))
     return (c, rr, ros, total_rm)
 
 
@@ -492,6 +500,17 @@ def make_pi_o(params, cm, C, r, s, aggr_vk, opk):
     c = []
     for i in range(len(wr)):
         c.append(to_challenge([g1, g2, h, Aw[i], Bw[i]]+ hs))
+
+    print("Aw", get_list_g2_bytes(Aw))
+    print("Bw", get_list_g2_bytes(Bw)),
+    # print("Cw", get_list_g1_bytes(Cw))
+    # print("g1", get_g1_bytes(g1)), 
+    # print("g2", get_g2_bytes(g2)),
+    # print("cm", get_g1_bytes(cm)), 
+    print("h", get_g1_bytes(h)) ,
+    print("hs", get_list_g1_bytes(hs))
+    print("c", c)
+    # print("wm", wm)
 
     rr = [(wr[i] - c[i]*r[i]) % o for i in range(len(wr))] 
     rs = [[(ws[i][j] - c[i]*s[i][j])% o for j in range(len(s[i]))] for i in range(len(s))]
