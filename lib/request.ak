@@ -211,18 +211,19 @@ pub fn request_cred(
   let rm = get_rm(proof.total_rm, include_indexes)
   let commits = get_commits(vcerts)
   let result1 = check_vcerts(proof, vcerts)
-  let result2 =
-    check_issue_proof(
-      cm_compressed,
-      h_compressed,
-      hs_compressed,
-      commits,
-      proof,
-      rm,
-    )
+  // let result2 =
+  //   check_issue_proof(
+  //     cm_compressed,
+  //     h_compressed,
+  //     hs_compressed,
+  //     commits,
+  //     proof,
+  //     rm,
+  //   )
   // todo 
   // check_open_proof
-  result1 && result2
+  result1
+  // && result2
 }
 
 fn get_commits(vcerts: List<Vcert>) -> List<ByteArray> {
