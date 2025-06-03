@@ -1,6 +1,6 @@
 use bls.{Sign}
 use cardano/transaction.{OutputReference, Transaction, placeholder}
-use rtaco.{IssueProof, Vcert, request_cred}
+use request.{IssueProof, Vcert, request_cred}
 
 pub type Datum {
   iproof: IssueProof,
