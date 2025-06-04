@@ -226,6 +226,26 @@ pub fn request_cred(
   // && result2
 }
 
+pub fn check_open_proof(
+  cm_compressed: ByteArray,
+  h_compressed: ByteArray,
+  hs_compressed: List<ByteArray>,
+  commits_compressed: List<ByteArray>,
+  proof: IssueProof,
+  rm: List<Int>,
+) {
+  let commits = list_bytearray_to_g1(commits_compressed)
+  let hs = list_bytearray_to_g1(hs_compressed)
+  let h = g1.decompress(h_compressed)
+  let cm = g1.decompress(cm_compressed)
+  let aw = calculate_Aw(commits, proof.c, proof.ros, h, rm)
+  let bw = calculate_Bw(proof.c, proof.rr, rm, cm, hs)
+  let cw = calculate_Cw(proof.total_rm, commits, proof.c, hs)
+  proof.c == from_bytearray_big_endian(
+    to_challenge_issue(cm, h, bw, hs, aw, cw),
+  )
+}
+
 fn get_commits(vcerts: List<Vcert>) -> List<ByteArray> {
   let first = head(vcerts)
   if is_none(first) {

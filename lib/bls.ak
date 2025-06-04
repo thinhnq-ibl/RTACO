@@ -289,6 +289,38 @@ pub fn list_g1_to_binary256(g1_list: List<G1Element>) -> ByteArray {
   }
 }
 
+pub fn list_g2_to_binary256(g1_list: List<G2Element>) -> ByteArray {
+  let first = head(g1_list)
+  if is_none(first) {
+    #""
+  } else {
+    expect Some(first_) = first
+    let first_bytes = g2_to_binary256(first_)
+    let tail = tail(g1_list)
+    expect Some(tail_) = tail
+    let tail_bytes = list_g2_to_binary256(tail_)
+    concat(first_bytes, tail_bytes)
+  }
+}
+
+pub fn list_to_binary256(list: List<Int>) -> ByteArray {
+  let first = head(list)
+  if is_none(first) {
+    #""
+  } else {
+    expect Some(first_) = first
+    let first_bytes = int_to_binary256(first_)
+    let tail = tail(list)
+    expect Some(tail_) = tail
+    let tail_bytes = list_to_binary256(tail_)
+    concat(first_bytes, tail_bytes)
+  }
+}
+
+pub fn int_to_binary256(int_value: Int) -> ByteArray {
+  bytearray.from_int_big_endian(int_value, 48)
+}
+
 pub fn list_compressed_to_g1(list: List<ByteArray>) -> List<G1Element> {
   let first = head(list)
   if is_none(first) {

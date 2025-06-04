@@ -532,6 +532,26 @@ def BlindSignAttr(params, sk, Lambda, public_m=[]):
     sigma_tilde = (h, t2)
     return sigma_tilde
 
+def BlindSign(params, sk, prevParams, prevVcerts, all_pks, Lambda, public_m=[]):
+    (G, o, g1, hs, g2, e) = params
+    (x, y) = sk
+    for i in range(len(prevVcerts)):
+        if not VerifyVcerts(prevParams[i], all_pks[i], prevVcerts[i][1], SHA256(prevVcerts[i][0])):
+            return None
+    (cm, commitments, pi_s, hidden_P, C, pi_o, Aw, Bw, h_r, b_o) = Lambda
+    assert (len(commitments)+len(public_m)) <= len(hs)
+    # verify proof of correctness
+    assert verify_pi_s(params, commitments, cm, prevParams, prevVcerts, pi_s)
+    #work from here in thr afternoon.
+    assert verify_pi_o(params, commitments, C, cm, hidden_P, h_r, b_o, aggr_vk, opk, pi_o)
+    # issue signature
+    h = hashG1(to_binary256(cm))
+    t1 = [multiply(h, mi) for mi in public_m]
+    t2 = add(multiply(h, x), ec_sum([multiply(bi, yi) for yi,bi in zip(y, commitments+t1)]))
+    sigma_tilde = (h, t2)
+    return sigma_tilde
+
+
 def Unblind(params, aggr_vk, sigma_tilde, os):
     _, _, g1_beta, _ = aggr_vk
     (h, c_tilde) = sigma_tilde
@@ -625,10 +645,16 @@ def verify_pi_v(params, aggr_vk, sigma, kappa, nu, proof, disclose_index, disclo
         if disclose_index[i] == 0:
             undisclosed_sum = add(undisclosed_sum, multiply(beta[i], rm[k]))
             k += 1
-
+    # print("undisclosed_sum", undisclosed_sum)
+    # print("new_kappa", compress_G2_cd(new_kappa), "h", compress_G1_cd(h), "s", compress_G1_cd(s))
     Aw = add(add(multiply(new_kappa, c), multiply(g2, rt)), add(multiply(alpha, (o - c + 1)%o), undisclosed_sum))
     Bw = add(multiply(nu, c), multiply(h, rt))
 
+    print("alpha", compress_G2_cd(alpha))
+    print("Aw", compress_G2_cd(Aw), "Bw", compress_G1_cd(Bw), "hs", [compress_G1_cd(hs[i]) for i in range(len(hs))], "beta", [compress_G2_cd(beta[i]) for i in range(len(beta))])
+    print("disclose_attr", disclose_attr, "timestamp", timestamp)
+    print("kappa", compress_G2_cd(kappa))
+    print("c", c, "rm", rm, "rt", rt)
     # compute the challenge prime
     return c == to_challenge([g1, g2, alpha, Aw, Bw, kappa]+ hs + beta + disclose_attr + [timestamp])
 
@@ -664,3 +690,26 @@ def verify_pi_s(params, commitments, cm, prevParams, prevVcerts, proof, include_
         Cw.append(tmp)
     return c == to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw)
 
+def verify_pi_o(params, commitments, C, cm, hidden_P, h_r, b_o, aggr_vk, opk, proof):
+    (G, o, g1, hs, g2, e) = params
+    c, rr, rs = proof
+    assert len(C) == len(rr)
+    # re-compute h
+    h = hashG1(to_binary256(cm))
+    # re-compute witnesses commitments
+    _, _, _, beta = aggr_vk
+    # compute the witnesses commitments
+    sum_b_o = ec_sum(b_o)
+    for i in range(len(rr)):
+        Aw = add(multiply(g2, rr[i]), multiply(C[i][0], c[i]))
+        Bw = [add(multiply(C[i][1], c[i]), add(multiply(opk[i], rr[i]), ec_sum([multiply(beta[j], rs[i][j]) for j in range(len(rs[i]))]))) for i in range(len(rr))]
+        if not (c[i] == to_challenge([g1, g2, h, Aw, Bw]+ hs)):
+            return False
+        lhs = e(C[i][1], h) * e(sum_b_o, g1)
+        rhs = e(opk[i], h_r[i])
+        for j in range(0, len(commitments)):
+            tmp = commitments[j] + ec_sum([hidden_P[j][l-1] * (Bn(i+1) ** l) for l in range(1, 1+len(hidden_P[j]))])
+            rhs = rhs * e(tmp, beta[j])
+        if lhs != rhs:
+            return False 
+    return True
