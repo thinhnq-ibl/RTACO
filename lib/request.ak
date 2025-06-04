@@ -283,12 +283,12 @@ pub fn calculate_Aw_item(
     expect Some(commitment) = head_commitments
     expect Some(head_ros_) = head(ros)
     expect Some(head_rm_) = head(rm)
-    expect Some(c_scar) = scalar.new(c)
-    expect Some(ros_scar) = scalar.new(head_ros_)
-    let cal_ro = g1.scale(g1.generator, ros_scar)
-    expect Some(rm_scar) = scalar.new(head_rm_)
-    let cal_rm = g1.scale(h_point, rm_scar)
-    let aw_item = g1.add(g1.scale(commitment, c_scar), g1.add(cal_ro, cal_rm))
+    expect Some(c_sca) = scalar.new(c)
+    expect Some(ros_sca) = scalar.new(head_ros_)
+    let cal_ro = g1.scale(g1.generator, ros_sca)
+    expect Some(rm_sca) = scalar.new(head_rm_)
+    let cal_rm = g1.scale(h_point, rm_sca)
+    let aw_item = g1.add(g1.scale(commitment, c_sca), g1.add(cal_ro, cal_rm))
     expect Some(tail_commitments_) = tail(commitments)
     expect Some(tail_ros_) = tail(ros)
     expect Some(tail_rm_) = tail(rm)
@@ -305,9 +305,9 @@ pub fn calculate_Bw(
   cm_point: G1Element,
   hs: List<G1Element>,
 ) -> G1Element {
-  expect Some(c_scar) = scalar.new(c)
-  expect Some(rr_scar) = scalar.new(rr)
-  let bw = g1.add(g1.scale(cm_point, c_scar), g1.scale(g1.generator, rr_scar))
+  expect Some(c_sca) = scalar.new(c)
+  expect Some(rr_sca) = scalar.new(rr)
+  let bw = g1.add(g1.scale(cm_point, c_sca), g1.scale(g1.generator, rr_sca))
   calculate_Bw_item(bw, rm, hs)
 }
 
@@ -322,8 +322,8 @@ pub fn calculate_Bw_item(
   } else {
     expect Some(head_rm_) = head_rm
     expect Some(head_hs_) = head(hs)
-    expect Some(rm_scar) = scalar.new(head_rm_)
-    let cal_rm = g1.scale(head_hs_, rm_scar)
+    expect Some(rm_sca) = scalar.new(head_rm_)
+    let cal_rm = g1.scale(head_hs_, rm_sca)
     expect Some(tail_rm_) = tail(rm)
     expect Some(tail_hs_) = tail(hs)
     calculate_Bw_item(g1.add(bw, cal_rm), tail_rm_, tail_hs_)
@@ -351,8 +351,8 @@ pub fn calculate_Cw_item(
   } else {
     expect Some(first_) = first
     expect Some(commit_index_) = head(commits)
-    expect Some(c_scar) = scalar.new(c)
-    let tmp = g1.scale(commit_index_, c_scar)
+    expect Some(c_sca) = scalar.new(c)
+    let tmp = g1.scale(commit_index_, c_sca)
     expect Some(last_first_) = list.last(first_)
     expect Some(init_first_) = list.init(first_)
     expect Some(last_first_scalar) = scalar.new(last_first_)
@@ -376,8 +376,8 @@ pub fn calculate_Cw_hs(
   } else {
     expect Some(first_) = first
     expect Some(first_hs_) = head(hs)
-    expect Some(first_hs_scar) = scalar.new(first_)
-    let sum_f = g1.add(tmp, g1.scale(first_hs_, first_hs_scar))
+    expect Some(first_hs_sca) = scalar.new(first_)
+    let sum_f = g1.add(tmp, g1.scale(first_hs_, first_hs_sca))
     expect Some(tail_rm_) = tail(total_rm_elemnt)
     expect Some(tail_hs_) = tail(hs)
     calculate_Cw_hs(sum_f, tail_hs_, tail_rm_)

@@ -335,6 +335,20 @@ pub fn list_compressed_to_g1(list: List<ByteArray>) -> List<G1Element> {
   }
 }
 
+pub fn list_compressed_to_g2(list: List<ByteArray>) -> List<G2Element> {
+  let first = head(list)
+  if is_none(first) {
+    []
+  } else {
+    expect Some(first_) = first
+    let g2_point = g2.decompress(first_)
+    let tail = tail(list)
+    expect Some(tail_) = tail
+    let tail_result = list_compressed_to_g2(tail_)
+    list.push(tail_result, g2_point)
+  }
+}
+
 test test_gen_challage() {
   let g1_list =
     [

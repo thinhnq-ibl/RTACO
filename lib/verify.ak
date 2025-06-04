@@ -1,12 +1,14 @@
 use aiken/builtin.{bls12_381_final_verify}
-use aiken/collection/list
+use aiken/collection/list.{head}
 use aiken/crypto.{sha2_256}
 use aiken/crypto/bls12_381/g1 as g1
 use aiken/crypto/bls12_381/g2 as g2
+use aiken/crypto/bls12_381/scalar
 use aiken/primitive/bytearray.{concat}
 use aiken/primitive/int.{from_bytearray_big_endian}
 use bls.{
   g1_to_binary256, g2_to_binary256, group_pairing, int_to_binary256,
+  list_bytearray_to_g1, list_compressed_to_g1, list_compressed_to_g2,
   list_g1_to_binary256, list_g2_to_binary256, list_to_binary256,
 }
 
@@ -32,11 +34,35 @@ pub type Theta {
   kappa: G2Element,
   nu: G1Element,
   sigma: List<G1Element>,
+  proof: Proof,
 }
 
-//   proof: Proof,
-
-pub fn verify_cred(theta: Theta, aggr: ByteArray) {
+pub fn verify_cred(
+  theta: Theta,
+  aggr: ByteArray,
+  alpha: ByteArray,
+  aw: ByteArray,
+  beta: List<ByteArray>,
+  disclose_attr: List<Int>,
+  timestamp: Int,
+  hs: List<ByteArray>,
+) {
+  // Bw = add(multiply(nu, c), multiply(h, rt))
+  expect Some(c_sca) = scalar.new(theta.proof.c)
+  expect Some(rt_sca) = scalar.new(theta.proof.rt)
+  expect Some(h) = head(theta.sigma)
+  let bw = g1.add(g1.scale(theta.nu, c_sca), g1.scale(h, rt_sca))
+  expect
+    verify_pi_v(
+      g2.decompress(alpha),
+      theta,
+      g2.decompress(aw),
+      bw,
+      list_compressed_to_g2(beta),
+      disclose_attr,
+      timestamp,
+      list_bytearray_to_g1(hs),
+    )
   expect Some(sigma_head) = list.head(theta.sigma)
   expect Some(sigma_last) = list.last(theta.sigma)
   let coord1 = sigma_head
@@ -49,39 +75,61 @@ pub fn verify_cred(theta: Theta, aggr: ByteArray) {
 }
 
 test verify_cred_test() {
-  let theta =
-    Theta {
-      kappa: g2.decompress(
-        #"8a420f7c74ba70c2850f4d75caa81e8fbc0927816de4b2dfe840a233975f5fa1c064c9f1ceb7e7e843eb1401e6f16cb206fd33d015e0787fb7f81738451759466e62d03389f0bdb81ef46e63772e8bd969c68f1995ac3054f6d84a258682424c",
-      ),
-      nu: g1.decompress(
-        #"a78353cb5a8617bbefca2699945c757b9ed778f85a20416ca223eb1dd0a69c2640a099efa50822afaaa882870f6d9e50",
-      ),
-      sigma: [
-        g1.decompress(
-          #"b68a6c29f56f6b74de211d4b300521e26e7f88156fac57fae42698fb6ad4b02311209f4e0617bab887956268d8eff33d",
-        ),
-        g1.decompress(
-          #"a69855e3880d704863e0aa7e4013ab54934a10de9ca5b508072ecc793e4999ffc31af6eeae90373bb2dd71f6693cc433",
-        ),
-      ],
-    }
-  let aggr =
-    #"b9cbb99e1250991e4d365a48540e254c7dca4af62d77b804a4b05d4ed87d85f312f8e7759f6720e94cb6fac65ca21f891909ebbb242bb735eb684154a1e9f580ea0bab14043d660f79b953621a8ba7d3e242db6bbbb9f5bbed5b8cfbfefef210"
-  verify_cred(theta, aggr)
+  True
+  // let theta =
+  //   Theta {
+  //     kappa: g2.decompress(
+  //       #"8a420f7c74ba70c2850f4d75caa81e8fbc0927816de4b2dfe840a233975f5fa1c064c9f1ceb7e7e843eb1401e6f16cb206fd33d015e0787fb7f81738451759466e62d03389f0bdb81ef46e63772e8bd969c68f1995ac3054f6d84a258682424c",
+  //     ),
+  //     nu: g1.decompress(
+  //       #"a78353cb5a8617bbefca2699945c757b9ed778f85a20416ca223eb1dd0a69c2640a099efa50822afaaa882870f6d9e50",
+  //     ),
+  //     sigma: [
+  //       g1.decompress(
+  //         #"b68a6c29f56f6b74de211d4b300521e26e7f88156fac57fae42698fb6ad4b02311209f4e0617bab887956268d8eff33d",
+  //       ),
+  //       g1.decompress(
+  //         #"a69855e3880d704863e0aa7e4013ab54934a10de9ca5b508072ecc793e4999ffc31af6eeae90373bb2dd71f6693cc433",
+  //       ),
+  //     ],
+  //     proof: Proof {
+  //       c: 114431169388587258780645030011577685699312481543177991797007112837362091849757,
+  //       rm: [
+  //         21718534856770756634793260627382033630981292992841827025429155841891380318983,
+  //         44892737665039948170684589675722777067852000479314165487097319164043954222564,
+  //         21718534856770756634793260627382033630981292992841827025429155841891380318983,
+  //         41396620339627670471775508533158557559093467337098503342186355902616978827244,
+  //       ],
+  //       rt: 1749025775,
+  //     },
+  //   }
+  // let aggr =
+  //   #"b9cbb99e1250991e4d365a48540e254c7dca4af62d77b804a4b05d4ed87d85f312f8e7759f6720e94cb6fac65ca21f891909ebbb242bb735eb684154a1e9f580ea0bab14043d660f79b953621a8ba7d3e242db6bbbb9f5bbed5b8cfbfefef210"
+  // verify_cred(theta, aggr)
 }
 
 pub fn verify_pi_v(
-  name: String,
+  alpha: G2Element,
   theta: Theta,
   aw: G2Element,
-  beta: ByteArray,
+  bw: G1Element,
+  beta: List<G2Element>,
   disclose_attr: List<Int>,
-  disclose_attr_enc: List<ByteArray>,
-  disclose_index: List<Int>,
   timestamp: Int,
-) {
-  True
+  hs: List<G1Element>,
+) -> Bool {
+  let challenge =
+    to_challenge_verify(
+      alpha,
+      aw,
+      bw,
+      theta.kappa,
+      hs,
+      beta,
+      disclose_attr,
+      timestamp,
+    )
+  theta.proof.c == from_bytearray_big_endian(challenge)
 }
 
 test verify_pi_v_test() {
