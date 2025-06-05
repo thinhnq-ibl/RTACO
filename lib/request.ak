@@ -147,16 +147,22 @@ pub fn check_issue_proof(
   commits_compressed: List<ByteArray>,
   proof: IssueProof,
   rm: List<Int>,
+  aw: List<ByteArray>,
+  bw: ByteArray,
+  cw: List<ByteArray>,
 ) {
   let commits = list_bytearray_to_g1(commits_compressed)
   let hs = list_bytearray_to_g1(hs_compressed)
   let h = g1.decompress(h_compressed)
   let cm = g1.decompress(cm_compressed)
-  let aw = calculate_Aw(commits, proof.c, proof.ros, h, rm)
-  let bw = calculate_Bw(proof.c, proof.rr, rm, cm, hs)
-  let cw = calculate_Cw(proof.total_rm, commits, proof.c, hs)
+  // let aw = calculate_Aw(commits, proof.c, proof.ros, h, rm)
+  let awp = list_bytearray_to_g1(aw)
+  // let bw = calculate_Bw(proof.c, proof.rr, rm, cm, hs)
+  let bwp = g1.decompress(bw)
+  // let cw = calculate_Cw(proof.total_rm, commits, proof.c, hs)
+  let cwp = list_bytearray_to_g1(cw)
   proof.c == from_bytearray_big_endian(
-    to_challenge_issue(cm, h, bw, hs, aw, cw),
+    to_challenge_issue(cm, h, bwp, hs, awp, cwp),
   )
 }
 
@@ -207,23 +213,28 @@ pub fn request_cred(
   h_compressed: ByteArray,
   hs_compressed: List<ByteArray>,
   include_indexes: List<List<Int>>,
+  aw: List<ByteArray>,
+  bw: ByteArray,
+  cw: List<ByteArray>,
 ) {
   let rm = get_rm(proof.total_rm, include_indexes)
   let commits = get_commits(vcerts)
   let result1 = check_vcerts(proof, vcerts)
-  // let result2 =
-  //   check_issue_proof(
-  //     cm_compressed,
-  //     h_compressed,
-  //     hs_compressed,
-  //     commits,
-  //     proof,
-  //     rm,
-  //   )
+  let result2 =
+    check_issue_proof(
+      cm_compressed,
+      h_compressed,
+      hs_compressed,
+      commits,
+      proof,
+      rm,
+      aw,
+      bw,
+      cw,
+    )
   // todo 
   // check_open_proof
-  result1
-  // && result2
+  result1 && result2
 }
 
 pub fn check_open_proof(
