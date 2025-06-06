@@ -1,9 +1,10 @@
 use bls.{Sign}
 use cardano/transaction.{OutputReference, Transaction, placeholder}
-use request.{IssueProof, Vcert, request_cred}
+use request.{IssueProof, OpenProof, Vcert, request_cred}
 
 pub type Datum {
   iproof: IssueProof,
+  open: OpenProof,
   vcerts: List<Vcert>,
   cm_compressed: ByteArray,
   h_compressed: ByteArray,
@@ -24,6 +25,7 @@ validator verify_vcert {
     expect Some(data) = datum
     expect Datum {
       iproof,
+      open,
       vcerts,
       cm_compressed,
       h_compressed,
@@ -35,6 +37,7 @@ validator verify_vcert {
     } = data
     request_cred(
       iproof,
+      open,
       vcerts,
       cm_compressed,
       h_compressed,

@@ -8,7 +8,7 @@ use aiken/primitive/bytearray.{concat}
 use aiken/primitive/int.{from_bytearray_big_endian}
 use bls.{
   Sign, do_ecdsa_verify, g1_to_binary256, g2_to_binary256, list_bytearray_to_g1,
-  list_compressed_to_g1, list_g1_to_binary256,
+  list_compressed_to_g1, list_compressed_to_g2, list_g1_to_binary256,
 }
 
 pub type Vcert {
@@ -26,13 +26,16 @@ pub type IssueProof {
   pubkeys: List<ByteArray>,
 }
 
-// pub type OpenProof {
-//   aw: List<ByteArray>,
-//   bw: ByteArray,
-//   c: Int,
-//   rr: Int,
-//   rs: List<Int>,
-// }
+pub type OpenProof {
+  // g2 point list
+  dw: List<ByteArray>,
+  // g2 point list
+  ew: List<ByteArray>,
+  c: List<Int>,
+}
+
+// rr: Int,
+// rs: List<Int>,
 
 pub fn check_vcerts(iproof: IssueProof, vcerts: List<Vcert>) -> Bool {
   let pks = iproof.pubkeys
@@ -208,6 +211,7 @@ pub fn get_rm_inner_item(
 
 pub fn request_cred(
   proof: IssueProof,
+  open_proof: OpenProof,
   vcerts: List<Vcert>,
   cm_compressed: ByteArray,
   h_compressed: ByteArray,
@@ -232,29 +236,45 @@ pub fn request_cred(
       bw,
       cw,
     )
-  // todo 
-  // check_open_proof
-  result1 && result2
+  let result3 = check_open_proof(h_compressed, hs_compressed, open_proof)
+  result1 && result2 && result3
 }
 
 pub fn check_open_proof(
-  cm_compressed: ByteArray,
   h_compressed: ByteArray,
   hs_compressed: List<ByteArray>,
-  commits_compressed: List<ByteArray>,
-  proof: IssueProof,
-  rm: List<Int>,
+  proof: OpenProof,
 ) {
-  let commits = list_bytearray_to_g1(commits_compressed)
-  let hs = list_bytearray_to_g1(hs_compressed)
+  let hs = list_compressed_to_g1(hs_compressed)
   let h = g1.decompress(h_compressed)
-  let cm = g1.decompress(cm_compressed)
-  let aw = calculate_Aw(commits, proof.c, proof.ros, h, rm)
-  let bw = calculate_Bw(proof.c, proof.rr, rm, cm, hs)
-  let cw = calculate_Cw(proof.total_rm, commits, proof.c, hs)
-  proof.c == from_bytearray_big_endian(
-    to_challenge_issue(cm, h, bw, hs, aw, cw),
-  )
+  let dw = list_compressed_to_g2(proof.dw)
+  let ew = list_compressed_to_g2(proof.ew)
+  check_open_challenge_item(h, hs, proof.c, dw, ew)
+}
+
+pub fn check_open_challenge_item(
+  h: G1Element,
+  hs: List<G1Element>,
+  c: List<Int>,
+  dw: List<G2Element>,
+  ew: List<G2Element>,
+) -> Bool {
+  let dw_head = head(dw)
+  if is_none(dw_head) {
+    True
+  } else {
+    expect Some(dw_) = dw_head
+    expect Some(ew_) = head(ew)
+    expect Some(c_) = head(c)
+    if c_ == from_bytearray_big_endian(to_challenge_open(h, dw_, ew_, hs)) {
+      expect Some(tail_dw) = tail(dw)
+      expect Some(tail_ew) = tail(ew)
+      expect Some(tail_c) = tail(c)
+      check_open_challenge_item(h, hs, tail_c, tail_dw, tail_ew)
+    } else {
+      False
+    }
+  }
 }
 
 fn get_commits(vcerts: List<Vcert>) -> List<ByteArray> {
