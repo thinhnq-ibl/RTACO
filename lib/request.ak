@@ -32,6 +32,7 @@ pub type OpenProof {
   // g2 point list
   ew: List<ByteArray>,
   c: List<Int>,
+  sigma: List<ByteArray>,
 }
 
 // rr: Int,
@@ -236,7 +237,8 @@ pub fn request_cred(
       bw,
       cw,
     )
-  let result3 = check_open_proof(h_compressed, hs_compressed, open_proof)
+  expect Some(h_) = head(open_proof.sigma)
+  let result3 = check_open_proof(h_, hs_compressed, open_proof)
   result1 && result2 && result3
 }
 
