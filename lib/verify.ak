@@ -12,18 +12,6 @@ use bls.{
   list_g1_to_binary256, list_g2_to_binary256, list_to_binary256,
 }
 
-// require(verify_pi_v(name, [theta.sigma[0], theta.nu], [Aw, theta.kappa], theta.proof, beta, disclose_attr, disclose_attr_enc, disclose_index, _timestamp));
-//     uint256[] memory public_m_enc = params.get_public_m_encoding(name);
-//     if(public_m.length != 0) {
-//       require(check_aggr(public_m, public_m_enc, aggr, beta, theta.proof.rm.length+disclose_attr.length));
-//     }
-//     G.G1Point[] memory coord1 = new G.G1Point[](2);
-//     G.G2Point[] memory coord2 = new G.G2Point[](2);
-//     coord1[0] = G.g1neg(theta.sigma[0]);
-//     coord1[1] = G.g1add(theta.sigma[1], theta.nu);
-//     coord2[0] = G.g2add(theta.kappa, aggr);
-//     coord2[1] = G.P2();
-//     require(!G.isinf(theta.sigma[0]) && G.pairing(coord1, coord2));
 pub type Proof {
   c: Int,
   rm: List<Int>,
@@ -132,7 +120,7 @@ pub fn verify_pi_v(
   theta.proof.c == from_bytearray_big_endian(challenge)
 }
 
-test verify_pi_v_test() {
+test to_challenge_verify_test() {
   let c =
     114431169388587258780645030011577685699312481543177991797007112837362091849757
   let kappa =
