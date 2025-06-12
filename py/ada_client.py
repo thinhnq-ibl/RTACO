@@ -1,9 +1,10 @@
 import os
 
-from blockfrost import ApiError, ApiUrls, BlockFrostApi, BlockFrostIPFS
+from blockfrost import ApiUrls, BlockFrostApi
 from dotenv import load_dotenv
-
-from pycardano import *
+from pycardano import Address, Network, crypto, ExtendedSigningKey, PlutusV2Script, TransactionBuilder, TransactionOutput, plutus_script_hash, BlockFrostChainContext
+import cbor2
+from retry import retry
 
 load_dotenv()
 network = os.getenv("network")
@@ -78,3 +79,44 @@ for utxo in utxos:
     print(
         f"{utxo.tx_hash}#{utxo.tx_index} \t {int(utxo.amount[0].quantity)/1000000} ADA [{tokens}]"
     )
+
+with open("fortytwoV2.plutus", "r") as f:
+    script_hex = f.read()
+    forty_two_script = PlutusV2Script(cbor2.loads(bytes.fromhex(script_hex)))
+
+
+script_hash = plutus_script_hash(forty_two_script)
+
+script_address = Address(script_hash, network = cardano_network)
+
+giver_address = staking_enabled_address
+
+chain_context = BlockFrostChainContext(
+    project_id=blockfrost_api_key,
+    base_url=base_url,
+)
+
+builder = TransactionBuilder(chain_context)
+builder.add_input_address(giver_address)
+builder.add_output(TransactionOutput(giver_address, 50000000, script=forty_two_script))
+
+signed_tx = builder.build_and_sign([payment_skey], giver_address)
+
+@retry(delay=20)
+def wait_for_tx(tx_id):
+    chain_context.api.transaction(tx_id)
+    print(f"Transaction {tx_id} has been successfully included in the blockchain.")
+
+
+def submit_tx(tx):
+    print("############### Transaction created ###############")
+    print(tx)
+    print(tx.to_cbor_hex())
+    print("############### Submitting transaction ###############")
+    chain_context.submit_tx(tx)
+    wait_for_tx(str(tx.id))
+
+print("############### Transaction created ###############")
+print(signed_tx)
+print("############### Submitting transaction ###############")
+submit_tx(signed_tx)
