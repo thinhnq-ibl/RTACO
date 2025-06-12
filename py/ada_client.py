@@ -2,7 +2,7 @@ import os
 
 from blockfrost import ApiUrls, BlockFrostApi
 from dotenv import load_dotenv
-from pycardano import Address, Network, crypto, ExtendedSigningKey, PlutusV2Script, TransactionBuilder, TransactionOutput, plutus_script_hash, BlockFrostChainContext
+from pycardano import Address, Network, crypto, ExtendedSigningKey, PlutusV2Script, TransactionBuilder, TransactionOutput, plutus_script_hash, BlockFrostChainContext, Redeemer
 import cbor2
 from retry import retry
 
@@ -96,12 +96,6 @@ chain_context = BlockFrostChainContext(
     base_url=base_url,
 )
 
-builder = TransactionBuilder(chain_context)
-builder.add_input_address(giver_address)
-builder.add_output(TransactionOutput(giver_address, 50000000, script=forty_two_script))
-
-signed_tx = builder.build_and_sign([payment_skey], giver_address)
-
 @retry(delay=20)
 def wait_for_tx(tx_id):
     chain_context.api.transaction(tx_id)
@@ -115,6 +109,50 @@ def submit_tx(tx):
     print("############### Submitting transaction ###############")
     chain_context.submit_tx(tx)
     wait_for_tx(str(tx.id))
+
+# ----------- Send ADA to the script address ---------------
+'''
+builder = TransactionBuilder(chain_context)
+builder.add_input_address(giver_address)
+datum = 42
+builder.add_output(TransactionOutput(script_address, 50000000, datum=datum))
+
+signed_tx = builder.build_and_sign([payment_skey], giver_address)
+
+print("############### Transaction created ###############")
+print(signed_tx)
+print("############### Submitting transaction ###############")
+submit_tx(signed_tx)
+'''
+# ----------- Taker take ---------------
+
+redeemer = Redeemer(42)
+
+utxo_to_spend = None
+
+# Spend the utxo with datum 42 sitting at the script address
+for utxo in chain_context.utxos(script_address):
+    print(utxo)
+    if utxo.output.datum:
+        utxo_to_spend = utxo
+        break
+
+# Find the reference script utxo
+reference_script_utxo = None
+for utxo in chain_context.utxos(giver_address):
+    if utxo.output.script and utxo.output.script == forty_two_script:
+        reference_script_utxo = utxo
+        break
+
+taker_address = staking_enabled_address
+
+builder = TransactionBuilder(chain_context)
+
+builder.add_script_input(utxo_to_spend, script=reference_script_utxo, redeemer=redeemer)
+take_output = TransactionOutput(taker_address, 25123456)
+builder.add_output(take_output)
+
+signed_tx = builder.build_and_sign([payment_skey], taker_address)
 
 print("############### Transaction created ###############")
 print(signed_tx)
