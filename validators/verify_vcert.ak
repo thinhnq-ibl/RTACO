@@ -1,5 +1,4 @@
-use bls.{Sign}
-use cardano/transaction.{OutputReference, Transaction, placeholder}
+use cardano/transaction.{OutputReference, Transaction}
 use request.{IssueProof, OpenProof, Vcert, request_cred}
 
 pub type Datum {
