@@ -210,9 +210,8 @@ def submit_tx(tx):
 @dataclass
 class G2Point(PlutusData):
     CONSTR_ID = 0
-    x: int
-    y: int
-    
+    x: bytes
+    y: bytes
 @dataclass
 class IssueProof(PlutusData):
     CONSTR_ID = 0
@@ -232,7 +231,7 @@ class Sign(PlutusData):
 @dataclass
 class Vcert(PlutusData):
     CONSTR_ID = 0
-    commit: bytes
+    commit: G2Point
     signature: Sign
 
 @dataclass
@@ -250,7 +249,10 @@ s = 3820247908429508818806789468812938871285280812595562123976511352762107557253
 r_g1 = bytes.fromhex("89218ac9d46dbef17651a764dd5e0ee7414b040221e3d0f188642129acfea1a17862de38851b2483095449c4732d150a")# Convert pubkeyUncompress to bytes
 )
 vcert1 = Vcert(
-commit = bytes.fromhex("1669f6cef337b4373a0f3e6307c6cdfb44517a36e125d7866ee9e838f4f5455cca63ce114d25b62ae4e597dc78c4db45170d8abb0611028477e44388db31dccbee44f308b8f5cd934727ede4202b807fe1e7ba3c0d7c0680c9213dd84a29576d"),
+commit = G2Point(
+    x = bytes.fromhex("1669f6cef337b4373a0f3e6307c6cdfb44517a36e125d7866ee9e838f4f5455cca63ce114d25b62ae4e597dc78c4db45"),
+    y = bytes.fromhex("170d8abb0611028477e44388db31dccbee44f308b8f5cd934727ede4202b807fe1e7ba3c0d7c0680c9213dd84a29576d")
+),
 signature = sign1
 )
 sign2 = Sign(
@@ -260,7 +262,10 @@ r_g1 = bytes.fromhex("9095c91e320d01fad00d33f26f19cfaa6e9d4a64a820bc2a854c72f3c7
 )
 
 vcert2 = Vcert(
-    commit = bytes.fromhex("08f174c5102f45f9a4becc60fd8561d5948240ca3494830f20c143b4e116902bf633ebab064d90b920394a1588636aba0e794a1e4e852485931858df9b034535078f94d6f68e4da286130dbef7d15d4cf5768718d703227c04dab741ef2b078e"),
+    commit = G2Point(
+        x = bytes.fromhex("08f174c5102f45f9a4becc60fd8561d5948240ca3494830f20c143b4e116902bf633ebab064d90b920394a1588636aba"),
+        y = bytes.fromhex("0e794a1e4e852485931858df9b034535078f94d6f68e4da286130dbef7d15d4cf5768718d703227c04dab741ef2b078e")
+    ),
     signature = sign2
 )
 
@@ -294,11 +299,11 @@ iproof = IssueProof(
 
 datum_data = MyDatum(iProof = iproof, vCert = [vcert1, vcert2])
 
-builder.add_output(TransactionOutput(script_address, 10000000, datum=datum_data))
+builder.add_output(TransactionOutput(script_address, 1000000, datum=datum_data))
 
 signed_tx = builder.build_and_sign([payment_skey], giver_address)
 
 print("############### Transaction created ###############")
 print(signed_tx)
 print("############### Submitting transaction ###############")
-# submit_tx(signed_tx)
+submit_tx(signed_tx)
