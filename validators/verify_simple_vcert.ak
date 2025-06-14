@@ -12,17 +12,17 @@ pub type Redeem {
 
 validator verify_simple_vcert {
   spend(
-    _datum: Option<Data>,
+    datum: Option<Data>,
     _redeemer: Data,
     _utxo: OutputReference,
     _self: Transaction,
   ) {
-    // expect Some(data) = datum
-    // expect Datum { vcerts } = data
+    expect Some(data) = datum
+    expect Datum { vcerts } = data
     // expect Redeem { iproof } = redeemer
-    // expect 2 == list.length(vcerts)
+    2 == list.length(vcerts)
     // check_vcerts(iproof, vcerts)
-    True
+    // True
   }
 
   else(_) {
