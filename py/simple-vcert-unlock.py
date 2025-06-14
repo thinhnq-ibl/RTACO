@@ -120,12 +120,12 @@ if(VerifyVcerts(ca_params, pubCP, signature, SHA256(commit)) == True):
 
 @dataclass
 class G2Point(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     x: bytes
     y: bytes
 @dataclass
 class IssueProof(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     c: int
     rr: int
     ros: List[int]
@@ -134,20 +134,20 @@ class IssueProof(PlutusData):
 
 @dataclass
 class Sign(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     r: int
     s: int
     r_g1: bytes
 
 @dataclass
 class Vcert(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     commit: G2Point
     signature: Sign
 
 @dataclass
 class MyDatum(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     vCert: List[Vcert]
 
 @dataclass

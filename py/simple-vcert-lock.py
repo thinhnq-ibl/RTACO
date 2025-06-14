@@ -124,12 +124,13 @@ if(VerifyVcerts(ca_params, pubCP, signature, SHA256(commit)) == True):
 
 @dataclass
 class G2Point(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     x: bytes
     y: bytes
+
 @dataclass
 class IssueProof(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     c: int
     rr: int
     ros: List[int]
@@ -138,51 +139,50 @@ class IssueProof(PlutusData):
 
 @dataclass
 class Sign(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     r: int
     s: int
     r_g1: bytes
 
 @dataclass
 class Vcert(PlutusData):
-    CONSTR_ID = 1
-    commit: G2Point
-    signature: Sign
+    CONSTR_ID = 0
+    commit: List[bytes]
+    r: int
+    s: int
+    r_g1: bytes
+    # signature: Sign
 
 @dataclass
 class MyDatum(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     vCert: List[Vcert]
 
 @dataclass
 class MyRedeemer(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     iProof: IssueProof
 
-sign1 = Sign(
-r = 1405393218543153634611558277146205543651389828460482046569307751654236783901042705626443752376987448075822652265738,
-s = 38202479084295088188067894688129388712852808125955621239765113527621075572534,
-r_g1 = bytes.fromhex("89218ac9d46dbef17651a764dd5e0ee7414b040221e3d0f188642129acfea1a17862de38851b2483095449c4732d150a")# Convert pubkeyUncompress to bytes
-)
 vcert1 = Vcert(
-commit = G2Point(
-    x = bytes.fromhex("1669f6cef337b4373a0f3e6307c6cdfb44517a36e125d7866ee9e838f4f5455cca63ce114d25b62ae4e597dc78c4db45"),
-    y = bytes.fromhex("170d8abb0611028477e44388db31dccbee44f308b8f5cd934727ede4202b807fe1e7ba3c0d7c0680c9213dd84a29576d")
-),
-signature = sign1
-)
-sign2 = Sign(
-r = 2552680529624568173590066327177950774551146809542008094226796730622167382728536331628983497397925589240933200869214,
-s = 42372284252738667106345738865448192044614864058854813921958423275374058347560,
-r_g1 = bytes.fromhex("9095c91e320d01fad00d33f26f19cfaa6e9d4a64a820bc2a854c72f3c72e3d47d55c418374daa130818e43c73a02b75e")  # Convert pubkeyUncompress to bytes
+    commit = [
+        bytes.fromhex("1669f6cef337b4373a0f3e6307c6cdfb44517a36e125d7866ee9e838f4f5455cca63ce114d25b62ae4e597dc78c4db45"),
+        bytes.fromhex("170d8abb0611028477e44388db31dccbee44f308b8f5cd934727ede4202b807fe1e7ba3c0d7c0680c9213dd84a29576d")
+    ],
+    r = 1405393218543153634611558277146205543651389828460482046569307751654236783901042705626443752376987448075822652265738,
+    s = 38202479084295088188067894688129388712852808125955621239765113527621075572534,
+    r_g1 = bytes.fromhex("89218ac9d46dbef17651a764dd5e0ee7414b040221e3d0f188642129acfea1a17862de38851b2483095449c4732d150a")# Convert pubkeyUncompress to bytes
+
 )
 
 vcert2 = Vcert(
-    commit = G2Point(
-        x = bytes.fromhex("08f174c5102f45f9a4becc60fd8561d5948240ca3494830f20c143b4e116902bf633ebab064d90b920394a1588636aba"),
-        y = bytes.fromhex("0e794a1e4e852485931858df9b034535078f94d6f68e4da286130dbef7d15d4cf5768718d703227c04dab741ef2b078e")
-    ),
-    signature = sign2
+    commit = [
+        bytes.fromhex("1669f6cef337b4373a0f3e6307c6cdfb44517a36e125d7866ee9e838f4f5455cca63ce114d25b62ae4e597dc78c4db45"),
+        bytes.fromhex("170d8abb0611028477e44388db31dccbee44f308b8f5cd934727ede4202b807fe1e7ba3c0d7c0680c9213dd84a29576d")
+    ],
+    r = 2552680529624568173590066327177950774551146809542008094226796730622167382728536331628983497397925589240933200869214,
+    s = 42372284252738667106345738865448192044614864058854813921958423275374058347560,
+    r_g1 = bytes.fromhex("9095c91e320d01fad00d33f26f19cfaa6e9d4a64a820bc2a854c72f3c72e3d47d55c418374daa130818e43c73a02b75e")  # Convert pubkeyUncompress to bytes
+
 )
 
 iproof = IssueProof(
