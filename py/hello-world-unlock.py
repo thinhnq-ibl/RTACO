@@ -26,7 +26,7 @@ def read_validator() -> dict:
     with open("../plutus.json", "r") as f:
          script_hex = json.load(f)
     validators = script_hex["validators"]
-    last_validator = filter(lambda x: x["title"] == "verify_simple_vcert.verify_simple_vcert.spend", validators)
+    last_validator = filter(lambda x: x["title"] == "hello_word.hello_world.spend", validators)
     last_validator = list(last_validator)[0]
     script_bytes = PlutusV3Script(
         bytes.fromhex(last_validator["compiledCode"])
