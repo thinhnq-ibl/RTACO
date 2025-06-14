@@ -40,8 +40,7 @@ validator verify_simple_vcert {
           }
         },
       )
-    // check_vcerts(iproof, vcerts)
-    True
+    check_vcerts(iproof, vcerts)
   }
 
   else(_) {
