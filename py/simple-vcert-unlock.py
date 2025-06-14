@@ -1,13 +1,30 @@
+from dataclasses import dataclass
+from pycardano import (
+    Address,
+    BlockFrostChainContext,
+    Network,
+    PaymentSigningKey,
+    PaymentVerificationKey,
+    PlutusData,
+    PlutusV3Script,
+    ScriptHash,
+    TransactionBuilder,
+    TransactionOutput,
+    UTxO
+)
+from pycardano.hash import (
+    VerificationKeyHash,
+    TransactionId,
+    ScriptHash,
+)
+import json
+import sys
+
 from TTP_bls12 import *
 import datetime
-import os
 
-from blockfrost import ApiUrls, BlockFrostApi
-from dotenv import load_dotenv
-from pycardano import Address, Network, crypto, ExtendedSigningKey, PlutusV3Script, TransactionBuilder, TransactionOutput, plutus_script_hash, BlockFrostChainContext, Redeemer, PlutusData
-import cbor2
-from retry import retry
-import json
+from pycardano import Address, Network, PlutusV3Script, TransactionBuilder, TransactionOutput, BlockFrostChainContext, Redeemer, PlutusData
+
 
 
 from py_ecc.bls.hash import (
@@ -101,121 +118,14 @@ if(VerifyVcerts(ca_params, pubCP, signature, SHA256(commit)) == True):
     vcert["commit"] = commit
     vcert["signature"] = signature
 
-load_dotenv()
-network = os.getenv("network")
-wallet_mnemonic = os.getenv("wallet_mnemonic")
-blockfrost_api_key = os.getenv("blockfrost_api_key")
-
-if network == "testnet":
-    base_url = ApiUrls.preprod.value
-    cardano_network = Network.TESTNET
-else:
-    base_url = ApiUrls.mainnet.value
-    cardano_network = Network.MAINNET
-
-
-new_wallet = crypto.bip32.HDWallet.from_mnemonic(wallet_mnemonic)
-payment_key = new_wallet.derive_from_path(f"m/1852'/1815'/0'/0/0")
-staking_key = new_wallet.derive_from_path(f"m/1852'/1815'/0'/2/0")
-payment_skey = ExtendedSigningKey.from_hdwallet(payment_key)
-staking_skey = ExtendedSigningKey.from_hdwallet(staking_key)
-
-
-print("Enterprise address (only payment):")
-print("Payment Derivation path: m/1852'/1815'/0'/0/0")
-
-enterprise_address = Address(
-    payment_part=payment_skey.to_verification_key().hash(), network=cardano_network
-)
-print(enterprise_address)
-
-print(" ")
-print("Staking enabled address:")
-print("Payment Derivation path: m/1852'/1815'/0'/0/0")
-print("Staking Derivation path: m/1852'/1815'/0'/2/0")
-
-staking_enabled_address = Address(
-    payment_part=payment_skey.to_verification_key().hash(),
-    staking_part=staking_skey.to_verification_key().hash(),
-    network=cardano_network,
-)
-print(staking_enabled_address)
-
-main_address = staking_enabled_address
-print(" ")
-print(f"Derived address: {main_address}")
-print(" ")
-
-api = BlockFrostApi(project_id=blockfrost_api_key, base_url=base_url)
-
-try:
-    utxos = api.address_utxos(main_address)
-except Exception as e:
-    if e.status_code == 404:
-        print("Address does not have any UTXOs. ")
-        if network == "testnet":
-            print(
-                "Request tADA from the faucet: https://docs.cardano.org/cardano-testnets/tools/faucet/"
-            )
-    else:
-        print(e.message)
-    sys.exit(1)
-
-print(f"hash \t\t\t\t\t\t\t\t\t amount")
-print(
-    "--------------------------------------------------------------------------------------"
-)
-
-for utxo in utxos:
-    tokens = ""
-    for token in utxo.amount:
-        if token.unit != "lovelace":
-            tokens += f"{token.quantity} {token.unit} + "
-    print(
-        f"{utxo.tx_hash}#{utxo.tx_index} \t {int(utxo.amount[0].quantity)/1000000} ADA [{tokens}]"
-    )
-
-with open("../plutus.json", "r") as f:
-    script_hex = json.load(f)
-    validators = script_hex["validators"]
-    last_validator = filter(lambda x: x["title"] == "verify_simple_vcert.verify_simple_vcert.spend", validators)
-    last_validator = list(last_validator)[0]
-    forty_two_script = PlutusV3Script(cbor2.loads(bytes.fromhex(last_validator["compiledCode"])))
-print(f"Script: {last_validator['title']}")
-
-script_hash = plutus_script_hash(forty_two_script)
-
-script_address = Address(script_hash, network = cardano_network)
-
-giver_address = staking_enabled_address
-
-chain_context = BlockFrostChainContext(
-    project_id=blockfrost_api_key,
-    base_url=base_url,
-)
-
-@retry(delay=20)
-def wait_for_tx(tx_id):
-    chain_context.api.transaction(tx_id)
-    print(f"Transaction {tx_id} has been successfully included in the blockchain.")
-
-
-def submit_tx(tx):
-    print("############### Transaction created ###############")
-    print(tx)
-    print(tx.to_cbor_hex())
-    print("############### Submitting transaction ###############")
-    chain_context.submit_tx(tx)
-    wait_for_tx(str(tx.id))
-
 @dataclass
 class G2Point(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     x: bytes
     y: bytes
 @dataclass
 class IssueProof(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     c: int
     rr: int
     ros: List[int]
@@ -224,25 +134,25 @@ class IssueProof(PlutusData):
 
 @dataclass
 class Sign(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     r: int
     s: int
     r_g1: bytes
 
 @dataclass
 class Vcert(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     commit: G2Point
     signature: Sign
 
 @dataclass
 class MyDatum(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     vCert: List[Vcert]
 
 @dataclass
 class MyRedeemer(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     iProof: IssueProof
 
 sign1 = Sign(
@@ -301,51 +211,93 @@ iproof = IssueProof(
 
 datum_data = MyDatum(vCert = [vcert1, vcert2])
 redeemer_data = MyRedeemer(iProof = iproof)
-
-# ----------- Send ADA to the script address ---------------
-# builder = TransactionBuilder(chain_context)
-# builder.add_input_address(giver_address)
-
-# builder.add_output(TransactionOutput(script_address, 50000000, datum = 44))
-
-# signed_tx = builder.build_and_sign([payment_skey], giver_address)
-
-# print("############### Transaction created ###############")
-# print(signed_tx)
-# print("############### Submitting transaction ###############")
-# submit_tx(signed_tx)
-
-# ----------- Taker take ---------------
-redeemer = Redeemer(44)
-
-utxo_to_spend = None
-
-# Spend the utxo with datum 42 sitting at the script address
-for utxo in chain_context.utxos(script_address):
-    if utxo.input.transaction_id.to_primitive()==  bytes.fromhex("fa2218001218f4b163752575bd4ec24d473fe373dd96e7d6eb9f074b5fbbbebb"):
-        print(utxo)
-        utxo_to_spend = utxo
-        break
-print("utxo_to_spend", utxo_to_spend)
-# Find the reference script utxo
-reference_script_utxo = None
-for utxo in chain_context.utxos(giver_address):
-    if utxo.output.script and utxo.output.script == forty_two_script:
-        reference_script_utxo = utxo
-        break
-# print("reference_script_utxo", reference_script_utxo)
-taker_address = staking_enabled_address
-
-builder = TransactionBuilder(chain_context)
-builder.add_script_input(utxo_to_spend, script=forty_two_script, redeemer=redeemer)
-
-take_output = TransactionOutput(taker_address, 40123456)
-builder.add_output(take_output)
-builder.required_signers = [payment_skey.to_verification_key().hash()]
-signed_tx = builder.build_and_sign([payment_skey], taker_address)
-
-print("############### Transaction created ###############")
-print(signed_tx)
-print("############### Submitting transaction ###############")
-submit_tx(signed_tx)
-# 9ecd2676f167d7e91a9a23d56a349eb4c7ed3132b4bb45e96084503fff08ad15
+ 
+def read_validator() -> dict:
+    with open("../plutus.json", "r") as f:
+         script_hex = json.load(f)
+    validators = script_hex["validators"]
+    last_validator = filter(lambda x: x["title"] == "verify_simple_vcert.verify_simple_vcert.spend", validators)
+    last_validator = list(last_validator)[0]
+    script_bytes = PlutusV3Script(
+        bytes.fromhex(last_validator["compiledCode"])
+    )
+    script_hash = ScriptHash(bytes.fromhex(last_validator["hash"]))
+    return {
+        "type": "PlutusV3",
+        "script_bytes": script_bytes,
+        "script_hash": script_hash,
+    }
+ 
+def unlock(
+    utxo: UTxO,
+    from_script: PlutusV3Script,
+    redeemer: Redeemer,
+    signing_key: PaymentSigningKey,
+    owner: VerificationKeyHash,
+    context: BlockFrostChainContext,
+) -> TransactionId:
+    # read addresses
+    with open("me.addr", "r") as f:
+        input_address = Address.from_primitive(f.read())
+ 
+    # build transaction
+    builder = TransactionBuilder(context=context)
+    builder.add_script_input(
+        utxo=utxo,
+        script=from_script,
+        redeemer=redeemer,
+    )
+    builder.add_input_address(input_address)
+    builder.add_output(
+        TransactionOutput(
+            address=input_address,
+            amount=utxo.output.amount.coin,
+        )
+    )
+    builder.required_signers = [owner]
+    signed_tx = builder.build_and_sign(
+        signing_keys=[signing_key],
+        change_address=input_address,
+    )
+ 
+    # submit transaction
+    return context.submit_tx(signed_tx)
+ 
+def get_utxo_from_str(tx_id: str, contract_address: Address) -> UTxO:
+    for utxo in context.utxos(str(contract_address)):
+        if str(utxo.input.transaction_id) == tx_id:
+            return utxo
+    raise Exception(f"UTxO not found for transaction {tx_id}")
+ 
+context = BlockFrostChainContext(
+    project_id="preprodXUnrdhNwv1yl0fKfF6AHcWt8e8ZqrTwb",
+    base_url="https://cardano-preprod.blockfrost.io/api/",
+)
+ 
+signing_key = PaymentSigningKey.load("me.sk")
+ 
+validator = read_validator()
+ 
+# get utxo to spend
+utxo = get_utxo_from_str(sys.argv[1], Address(
+    payment_part = validator["script_hash"],
+    network=Network.TESTNET,
+))
+ 
+# build redeemer
+# redeemer = Redeemer(data=HelloWorldRedeemer(msg=b"Hello, World!"))
+redeemer = Redeemer(data=redeemer_data)
+ 
+# execute transaction
+tx_hash = unlock(
+    utxo=utxo,
+    from_script=validator["script_bytes"],
+    redeemer=redeemer,
+    signing_key=signing_key,
+    owner=PaymentVerificationKey.from_signing_key(signing_key).hash(),
+    context=context,
+)
+ 
+print(
+    f"2 tADA unlocked from the contract\n\tTx ID: {tx_hash}\n\tRedeemer: {redeemer.to_cbor_hex()}"
+)

@@ -11,9 +11,14 @@ use bls.{
   list_compressed_to_g1, list_compressed_to_g2, list_g1_to_binary256,
 }
 
+pub type G2Point {
+  x: ByteArray,
+  y: ByteArray,
+}
+
 pub type Vcert {
   // G1 point
-  commit: ByteArray,
+  commit: G2Point,
   // Sign struct
   signature: Sign,
 }
@@ -35,9 +40,6 @@ pub type OpenProof {
   sigma: List<ByteArray>,
 }
 
-// rr: Int,
-// rs: List<Int>,
-
 pub fn check_vcerts(iproof: IssueProof, vcerts: List<Vcert>) -> Bool {
   let pks = iproof.pubkeys
   let decompress_pks = list_compressed_to_g1(pks)
@@ -54,7 +56,11 @@ fn check_vcert_item(vcerts: List<Vcert>, pks: List<G1Element>) -> Bool {
     expect Some(first_vcert_) = first_vcert
     expect Some(first_pk_) = first_pk
     let check_result =
-      do_ecdsa_verify(first_pk_, first_vcert_.signature, first_vcert_.commit)
+      do_ecdsa_verify(
+        first_pk_,
+        first_vcert_.signature,
+        bytearray.concat(first_vcert_.commit.x, first_vcert_.commit.y),
+      )
     if check_result == False {
       False
     } else {
@@ -109,9 +115,15 @@ test check_vcerts_test() {
       r_g1: #"9095c91e320d01fad00d33f26f19cfaa6e9d4a64a820bc2a854c72f3c72e3d47d55c418374daa130818e43c73a02b75e",
     }
   let commit1 =
-    #"1669f6cef337b4373a0f3e6307c6cdfb44517a36e125d7866ee9e838f4f5455cca63ce114d25b62ae4e597dc78c4db45170d8abb0611028477e44388db31dccbee44f308b8f5cd934727ede4202b807fe1e7ba3c0d7c0680c9213dd84a29576d"
+    G2Point {
+      x: #"1669f6cef337b4373a0f3e6307c6cdfb44517a36e125d7866ee9e838f4f5455cca63ce114d25b62ae4e597dc78c4db45",
+      y: #"170d8abb0611028477e44388db31dccbee44f308b8f5cd934727ede4202b807fe1e7ba3c0d7c0680c9213dd84a29576d",
+    }
   let commit2 =
-    #"08f174c5102f45f9a4becc60fd8561d5948240ca3494830f20c143b4e116902bf633ebab064d90b920394a1588636aba0e794a1e4e852485931858df9b034535078f94d6f68e4da286130dbef7d15d4cf5768718d703227c04dab741ef2b078e"
+    G2Point {
+      x: #"08f174c5102f45f9a4becc60fd8561d5948240ca3494830f20c143b4e116902bf633ebab064d90b920394a1588636aba",
+      y: #"0e794a1e4e852485931858df9b034535078f94d6f68e4da286130dbef7d15d4cf5768718d703227c04dab741ef2b078e",
+    }
   check_vcerts(
     iproof,
     [
@@ -288,7 +300,7 @@ fn get_commits(vcerts: List<Vcert>) -> List<ByteArray> {
     let commit_ = first_.commit
     expect Some(tail_) = tail(vcerts)
     let tail_commits = get_commits(tail_)
-    list.push(tail_commits, commit_)
+    list.push(tail_commits, bytearray.concat(commit_.x, commit_.y))
   }
 }
 
