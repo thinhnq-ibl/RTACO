@@ -8,8 +8,8 @@ use aiken/primitive/bytearray.{concat}
 use aiken/primitive/int.{from_bytearray_big_endian}
 use bls.{
   g1_to_binary256, g2_to_binary256, group_pairing, int_to_binary256,
-  list_bytearray_to_g1, list_compressed_to_g1, list_compressed_to_g2,
-  list_g1_to_binary256, list_g2_to_binary256, list_to_binary256,
+  list_bytearray_to_g1, list_compressed_to_g2, list_g1_to_binary256,
+  list_g2_to_binary256, list_to_binary256,
 }
 
 pub type Proof {

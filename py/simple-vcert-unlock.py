@@ -27,11 +27,7 @@ from pycardano import Address, Network, PlutusV3Script, TransactionBuilder, Tran
 from typing import List, Dict
 from dataclasses import dataclass
 
-@dataclass
-class G2Point(PlutusData):
-    CONSTR_ID = 0
-    x: bytes
-    y: bytes
+
 @dataclass
 class IssueProof(PlutusData):
     CONSTR_ID = 0
@@ -40,24 +36,6 @@ class IssueProof(PlutusData):
     ros: List[int]
     total_rm: List[List[int]]
     pubkeys: List[bytes]
-
-@dataclass
-class Sign(PlutusData):
-    CONSTR_ID = 0
-    r: int
-    s: int
-    r_g1: bytes
-
-@dataclass
-class Vcert(PlutusData):
-    CONSTR_ID = 0
-    commit: G2Point
-    signature: Sign
-
-@dataclass
-class MyDatum(PlutusData):
-    CONSTR_ID = 0
-    vCert: List[Vcert]
 
 @dataclass
 class MyRedeemer(PlutusData):
