@@ -1,10 +1,10 @@
 use aiken/collection/list.{head, last}
 use bls.{Sign}
 use cardano/transaction.{OutputReference, Transaction}
-use request.{G2Point, IssueProof, Vcert, check_vcerts}
+use request.{IssueProof, Vcert, check_vcerts}
 
 pub type VcertData {
-  commit: List<ByteArray>,
+  commit: ByteArray,
   r: Int,
   s: Int,
   r_g1: ByteArray,
@@ -32,10 +32,8 @@ validator verify_simple_vcert {
       list.map(
         vcerts_data,
         fn(n) {
-          expect Some(x) = head(n.commit)
-          expect Some(y) = last(n.commit)
           Vcert {
-            commit: G2Point { x, y },
+            commit: n.commit,
             signature: Sign { r: n.r, s: n.s, r_g1: n.r_g1 },
           }
         },
