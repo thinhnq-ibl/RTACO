@@ -474,6 +474,7 @@ def verify_pi_v(params, aggr_vk, sigma, kappa, nu, proof, disclose_index, disclo
             k += 1
 
     Aw = add(add(multiply(new_kappa, c), multiply(g2, rt)), add(multiply(alpha, (o - c + 1)%o), undisclosed_sum))
+    print("Aw: ", get_g2_bytes(Aw))
     Bw = add(multiply(nu, c), multiply(h, rt))
 
     # compute the challenge prime
