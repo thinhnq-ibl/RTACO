@@ -1,23 +1,7 @@
 from TTP import *
 from py_ecc_tester import *
 import datetime
-from py_ecc.bls.hash import (
-    i2osp,
-    os2ip
-)
-from py_ecc.bls.point_compression import (
-    compress_G1,
-    decompress_G1,
-    compress_G2,
-    decompress_G2,
-    G1Uncompressed
-)
-from py_ecc.fields import (
-    optimized_bls12_381_FQ as FQO,
-    optimized_bls12_381_FQ2 as FQO2,
-    optimized_bls12_381_FQ12 as FQO12,
-    optimized_bls12_381_FQP as FQPO,
-)
+
 
 ##################################
 ## create vcert
@@ -64,6 +48,8 @@ args.setdefault("title", "Identity Certificate" )
 params = ttp_setup(q-1, args["title"]) # exclude r.
 pk, sk = ttpKeyGen(params)
 
+print("pubkeyUncompress", get_g1_bytes(pk))
+
 r = genRandom()
 _date = datetime.datetime.strptime("1998-05-12","%Y-%m-%d").date()
 value_date = int(_date.strftime('%Y%m%d'))
@@ -72,6 +58,8 @@ encode_str = [2,1,2,2]
 
 encoded_attribute = encode_attributes(attribute, encode_str)
 commit = GenCommitment(params, encoded_attribute)
+
+print("commitUncompress", get_g1_bytes(commit))
 
 prevAttributes = []
 prevAttributes.append([attribute[0], attribute[-1]])
@@ -85,6 +73,11 @@ new_encoded_attribute = encode_attributes(new_attribute, new_encode_str)
 verify_zkp = VerifyZKPoK(params, prevParams, prevVcerts, new_encoded_attribute, commit, zkpok)
 print ("verify_zkp", verify_zkp)
 signature = SignCommitment(params, sk, commit)
+print("signature", {
+    "r":  signature[0],
+    "s":  signature[1],
+    "r_g1": get_g1_bytes(signature[2])
+} )
 
 vcert = {}
 vcert["attributes"] = encoded_attribute
@@ -120,12 +113,16 @@ args2.setdefault("title", "Income Certificate" )
 params2 = ttp_setup(q2-1, args2["title"]) # exclude r.
 pk2, sk2 = ttpKeyGen(params2)
 
+print("pubkeyUncompress2", get_g1_bytes(pk2))
+
 r2 = genRandom()
 attribute2 = [msk, 100000, r2]
 encode_str2 = [2,2,2]
 
 encoded_attribute2 = encode_attributes(attribute2, encode_str2)
 commit2 = GenCommitment(params2, encoded_attribute2)
+
+print("commitUncompress2", get_g1_bytes(commit2))
 
 prevAttributes2 = [encoded_attribute]
 prevAttributes2.append([encoded_attribute2[0], encoded_attribute2[-1]])
@@ -136,6 +133,12 @@ zkpok2 = GenZKPoK(params2, prevParams2, prevVcerts2, prevAttributes2, commit2)
 verify_zkp2 = VerifyZKPoK(params2, prevParams2, prevVcerts2, [100000], commit2, zkpok2)
 print ("verify_zkp2", verify_zkp2)
 signature2 = SignCommitment(params2, sk2, commit2)
+
+print("signature2", {
+    "r":  signature2[0],
+    "s":  signature2[1],
+    "r_g1": get_g1_bytes(signature2[2])
+} )
 
 vcert2 = {}
 vcert2["attributes"] = encoded_attribute2
@@ -191,12 +194,17 @@ send_compressed_G2Points = (send_Dw, send_Ew)
 send_vcerts = [((prevVcerts[i][0][0].n, prevVcerts[i][0][1].n), prevVcerts[i][1]) for i in range(len(prevVcerts))]
 
 pi_s_old = pi_s
+(c, rr, ros, total_rm) = pi_s_old
+print("c", c)
+print("rr", rr)
+print("ros", ros)
+print("total_rm", total_rm)
 
 pi_s = list(pi_s)
 pi_s.append(combination)
 pi_s = tuple(pi_s)
 
-print("pi_s", pi_s)
+# print("pi_s", pi_s)
 
 # tx_hash = request_contract.functions.RequestCred(title, send_vcerts, send_cm, send_compressed_cipher, send_hp, send_hr, send_bo, pi_s, pi_o, send_compressed_G2Points, str_public_m).transact({'from':user_addr})
 
@@ -208,7 +216,7 @@ blind_sig = BlindSignAttr(validator_params, sk[0], Lambda2, [])
 send_h = [blind_sig[0][0].n, blind_sig[0][1].n]
 send_t = [blind_sig[1][0].n, blind_sig[1][1].n]
 
-print("send_h_compress: ", i2osp(compress_G1((send_h[0], send_h[1], FQO(1))),96).hex())
+# print("send_h_compress: ", i2osp(compress_G1((send_h[0], send_h[1], FQO(1))),96).hex())
 # #print("send_t: ", send_t)
 
 h = (FQ(send_h[0]), FQ(send_h[1]))
@@ -262,93 +270,6 @@ encoded_disclosed_attr = []
 tf = VerifyCred(validator_params, aggregate_vk, Theta, disclose_index, encoded_disclosed_attr, encoded_public_m)
 print("Verify Cred : ",tf)
 print(tf)
-
-# pubCP, mskCP = ttpKeyGen(ca_params)
-# signature = SignCommitment(ca_params, mskCP, commit)
-# issueVcert = (commit, signature)
-# # print("pubCP: ", pubCP)
-# pubkeyUncompress: G1Uncompressed = (FQO(pubCP[0].n),
-#                               FQO(pubCP[1].n), 
-#                               FQO(1))
-
-
-# if(VerifyVcerts(ca_params, pubCP, signature, SHA256(commit)) == True):
-#     vcert["attributes"] = attributes
-#     vcert["commit"] = commit
-#     vcert["signature"] = signature
-
-# # print("pubkeyUncompress", i2osp(compress_G1(pubkeyUncompress),48).hex())
-# # print("signature", {
-# #     "r":  signature[0],
-# #     "s":  signature[1],
-# #     "r_g1": signature[2]
-# # } )
-
-# # commitUncompress: G1Uncompressed = (FQO(commit[0].n),
-# #                               FQO(commit[1].n), 
-# #                               FQO(1))
-# # print("commitUncompress", i2osp(compress_G1(commitUncompress),48).hex())
-
-# # print("vcert", vcert)
-
-
-# pubCP2, mskCP2 = ttpKeyGen(ca_params_income)
-
-
-# pubkeyUncompress2: G1Uncompressed = (FQO(pubCP2[0].n),
-#                               FQO(pubCP2[1].n), 
-#                               FQO(1))
-# signature_income = SignCommitment(ca_params_income, mskCP2, commit_income)
-# #print("signature_income", signature_income)
-# issueVcertIncome = (commit_income, signature_income)
-# # #print("Signature: ", signature_income)
-
-# if(VerifyVcerts(ca_params_income, pubCP2, signature_income, SHA256(commit_income)) == True):
-#     vcert_income["attributes"] = attributes_income
-#     vcert_income["commit"] = commit_income
-#     vcert_income["signature"] = signature_income
-
-# ######################################
-# ## create credential
-# ######################################
-
-# prevVcerts = [(vcert["commit"], vcert["signature"])]	
-# prevParams = [ca_params, ca_params_income]
-# all_encoded_attr = []
-# prevParams.append(ca_params)
-# prevVcerts.append((vcert_income["commit"], vcert_income["signature"]))
-# all_encoded_attr.append(encoded_attribute)
-# all_encoded_attr.append(encoded_attribute_income)
-
-# combination = ["Identity Certificate", "Income Certificate"]
-# include_indexes = [[1,0,0,1],[1,0,1]]
-
-# print("########## Requesting Credential #########")
-# # print("prevVcerts", prevVcerts[0])
-
-# print("pubkeyUncompress", i2osp(compress_G1(pubkeyUncompress),48).hex())
-# print("pubkeyUncompress2", i2osp(compress_G1(pubkeyUncompress2),48).hex())
-# commitUncompress: G1Uncompressed = (FQO(prevVcerts[0][0][0].n),
-#                               FQO(prevVcerts[0][0][1].n), 
-#                               FQO(1))
-# commitUncompress2: G1Uncompressed = (FQO(prevVcerts[1][0][0].n),
-#                               FQO(prevVcerts[1][0][0].n), 
-#                               FQO(1))
-# print("commitUncompress", i2osp(compress_G1(commitUncompress),48).hex())
-# print("commitUncompress2", i2osp(compress_G1(commitUncompress2),48).hex())
-
-
-# print("signature", {
-#     "r":  prevVcerts[0][1][0],
-#     "s":  prevVcerts[0][1][1],
-#     # "r_g1": prevVcerts[0][1][2],
-# } )
-
-# print("signature2", {
-#     "r":  prevVcerts[1][1][0],
-#     "s":  prevVcerts[1][1][1],
-#     # "r_g1": prevVcerts[1][1][2]
-# } )
 
 # print("sending for verification pi proof", pi_s)
 # print("cm_compressed", i2osp(compress_G1((send_cm[0], send_cm[1], FQO(1))),48).hex())

@@ -2,6 +2,26 @@ from py_ecc.bls12_381 import *
 from hashlib import sha256
 import random
 
+from py_ecc.fields import (
+    optimized_bls12_381_FQ as FQO,
+    optimized_bls12_381_FQ2 as FQO2,
+    optimized_bls12_381_FQ12 as FQO12,
+    optimized_bls12_381_FQP as FQPO,
+)
+
+from py_ecc.bls.hash import (
+    i2osp,
+    os2ip
+)
+
+from py_ecc.bls.point_compression import (
+    compress_G1,
+    decompress_G1,
+    compress_G2,
+    decompress_G2,
+    G1Uncompressed
+)
+
 def genRandom():
 	o = int(curve_order)
 	return random.randint(2, o)
@@ -183,7 +203,7 @@ def do_ecdsa_sign(sk, digest):
 		p1 = multiply(G1, k)
 		r = p1[0].n
 		s = (modInverse(k, o) * (int_digest + ((sk * r) % o)) ) %o
-	return (r, s)
+	return (r, s, p1)
 
 def do_ecdsa_verify(pk, sign, digest):
 	(r, s) = sign
@@ -196,3 +216,41 @@ def do_ecdsa_verify(pk, sign, digest):
 	pt2 = multiply(pk, x2)
 	_r = add(pt1, pt2)
 	return r == _r[0].n
+
+def compress_G1_cd(point):
+    """Compress a G1 point to bytes"""
+    g1_point: G1Uncompressed = (FQO(point[0].n), FQO(point[1].n), FQO(1))
+    return i2osp(compress_G1(g1_point), 48).hex()
+
+def compress_G2_cd(point):
+    """Compress a G2 point to bytes"""
+    g2_point = (FQO2((point[0].coeffs[0].n, point[0].coeffs[1].n)), 
+              FQO2((point[1].coeffs[0].n, point[1].coeffs[1].n)),
+              FQO2.one()
+              )
+    g2_point_compressed = compress_G2(g2_point)
+    return (i2osp(g2_point_compressed[0], 48) + i2osp(g2_point_compressed[1], 48)).hex()
+
+def get_g1_bytes(point):
+    commitUncompress = (FQO(point[0].n), FQO(point[1].n), FQO(1))
+    return i2osp(compress_G1(commitUncompress),48).hex()
+
+def get_g2_bytes(point):
+    commit2Uncompress = (FQO2([point[0].coeffs[0].n, point[0].coeffs[1].n]), FQO2([point[1].coeffs[0].n, point[1].coeffs[1].n]), FQO2.one())
+    commit2Compress = compress_G2(commit2Uncompress)
+    return i2osp(commit2Compress[0], 48).hex() + i2osp(commit2Compress[1], 48).hex()
+
+def get_list_g1_bytes(points):
+    ret = []
+    for point in points:
+        commitUncompress = (FQO(point[0].n), FQO(point[1].n), FQO(1))
+        ret.append(i2osp(compress_G1(commitUncompress),48).hex())
+    return ret
+
+def get_list_g2_bytes(points):
+    ret = []
+    for point in points:
+        commit2Uncompress = (FQO2([point[0].coeffs[0].n, point[0].coeffs[1].n]), FQO2([point[1].coeffs[0].n, point[1].coeffs[1].n]), FQO2.one())
+        commit2Compress = compress_G2(commit2Uncompress)
+        ret.append(i2osp(commit2Compress[0], 48).hex() + i2osp(commit2Compress[1], 48).hex())
+    return ret
