@@ -1,4 +1,4 @@
-from TTP_bls12 import *
+from TTP import *
 from py_ecc_tester import *
 import datetime
 from py_ecc.bls.hash import (
