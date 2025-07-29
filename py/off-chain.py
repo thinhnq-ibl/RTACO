@@ -59,7 +59,9 @@ encode_str = [2,1,2,2]
 encoded_attribute = encode_attributes(attribute, encode_str)
 commit = GenCommitment(params, encoded_attribute)
 
-print("commitUncompress", get_g1_bytes(commit))
+# raw commit
+print("commit", ((commit[0].n).to_bytes(48, 'big').hex() , (commit[1].n).to_bytes(48, 'big').hex()))
+
 
 prevAttributes = []
 prevAttributes.append([attribute[0], attribute[-1]])
@@ -121,8 +123,8 @@ encode_str2 = [2,2,2]
 
 encoded_attribute2 = encode_attributes(attribute2, encode_str2)
 commit2 = GenCommitment(params2, encoded_attribute2)
-
-print("commitUncompress2", get_g1_bytes(commit2))
+# raw commit2
+print("commit2", ((commit2[0].n).to_bytes(48, 'big').hex() , (commit2[1].n).to_bytes(48, 'big').hex()))
 
 prevAttributes2 = [encoded_attribute]
 prevAttributes2.append([encoded_attribute2[0], encoded_attribute2[-1]])
