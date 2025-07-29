@@ -51,9 +51,9 @@ pub fn verify_cred(
       timestamp,
       list_bytearray_to_g1(hs),
     )
-  expect Some(sigma_head) = list.head(theta.sigma)
+
   expect Some(sigma_last) = list.last(theta.sigma)
-  let coord1 = sigma_head
+  let coord1 = h
   let coord2 = g1.add(sigma_last, theta.nu)
   let coord3 = g2.add(theta.kappa, g2.decompress(aggr))
   let coord4 = g2.generator
