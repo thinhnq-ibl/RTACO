@@ -69,32 +69,15 @@ def to_binary256(point) :
     if isinstance(point, int):
         return point.to_bytes(48, 'big')
     if isinstance(point[0], FQ):
-        point1 = point[0].n.to_bytes(48, 'big')
-        point2 = point[1].n.to_bytes(48, 'big')
-        return sha256(point1+point2).digest()
+        g1_point: G1Uncompressed = (FQO(point[0].n),FQO(point[1].n), FQO(1))
+        return sha256(i2osp(compress_G1(g1_point),48)).digest()
     if isinstance(point[0], FQ2):
-        point1 = point[0].coeffs[0].n.to_bytes(48, 'big') + point[0].coeffs[1].n.to_bytes(48, 'big')
-        point2 = point[1].coeffs[0].n.to_bytes(48, 'big') + point[1].coeffs[1].n.to_bytes(48, 'big')
-        return sha256(point1+point2).digest()
-
-# def to_binary256(point) :
-#     if isinstance(point, str):
-#         return sha256(point.encode("utf8").strip()).digest()
-#     if isinstance(point, int):
-#         return point.to_bytes(48, 'big')
-#     if isinstance(point[0], FQ):
-#         # point1 = point[0].n.to_bytes(48, 'big')
-#         # point2 = point[1].n.to_bytes(48, 'big')
-#         # return sha256(point1+point2).digest()
-#         g1_point: G1Uncompressed = (FQO(point[0].n),FQO(point[1].n), FQO(1))
-#         return sha256(i2osp(compress_G1(g1_point),48)).digest()
-#     if isinstance(point[0], FQO2):
-#         g2_point = (FQO2((point[0].coeffs[0].n, point[0].coeffs[1].n)), 
-#               FQO2((point[1].coeffs[0].n, point[1].coeffs[1].n)),
-#               FQO2.one()
-#               )
-#         g2_point_compressed = compress_G2(g2_point)
-#         return sha256(i2osp(g2_point_compressed[0],48)+i2osp(g2_point_compressed[1],48)).digest()
+        g2_point = (FQO2((point[0].coeffs[0].n, point[0].coeffs[1].n)), 
+              FQO2((point[1].coeffs[0].n, point[1].coeffs[1].n)),
+              FQO2.one()
+              )
+        g2_point_compressed = compress_G2(g2_point)
+        return sha256(i2osp(g2_point_compressed[0],48)+i2osp(g2_point_compressed[1],48)).digest()
 
 def to_challenge(elements):
     _list = [to_binary256(x) for x in elements]
@@ -476,8 +459,9 @@ def verify_pi_v(params, aggr_vk, sigma, kappa, nu, proof, disclose_index, disclo
     Aw = add(add(multiply(new_kappa, c), multiply(g2, rt)), add(multiply(alpha, (o - c + 1)%o), undisclosed_sum))
     print("Aw: ", get_g2_bytes(Aw))
     Bw = add(multiply(nu, c), multiply(h, rt))
-
+    print ("Bw: ", get_g1_bytes(Bw))
     # compute the challenge prime
+    print("cccc", c)
     return c == to_challenge([g1, g2, alpha, Aw, Bw, kappa]+ hs + beta + disclose_attr + [timestamp])
 
 def VerifyCred(params, aggr_vk, Theta, disclose_index, disclose_attr, public_m=[]):
