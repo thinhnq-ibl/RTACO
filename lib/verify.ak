@@ -39,25 +39,32 @@ pub fn verify_cred(
   expect Some(rt_sca) = scalar.new(theta.proof.rt)
   expect Some(h) = head(theta.sigma)
   let bw = g1.add(g1.scale(theta.nu, c_sca), g1.scale(h, rt_sca))
-  // expect
-  verify_pi_v(
-    g2.decompress(alpha),
-    theta,
-    g2.decompress(aw),
-    bw,
-    list_compressed_to_g2(beta),
-    disclose_attr,
-    timestamp,
-    list_bytearray_to_g1(hs),
-  )
-  // expect Some(sigma_last) = list.last(theta.sigma)
-  // let coord1 = h
-  // let coord2 = g1.add(sigma_last, theta.nu)
-  // let coord3 = g2.add(theta.kappa, g2.decompress(aggr))
-  // let coord4 = g2.generator
-  // let pair1 = group_pairing(coord1, coord3)
-  // let pair2 = group_pairing(coord2, coord4)
-  // bls12_381_final_verify(pair1, pair2)
+  expect
+    verify_pi_v(
+      g2.decompress(alpha),
+      theta,
+      g2.decompress(aw),
+      bw,
+      list_compressed_to_g2(beta),
+      disclose_attr,
+      timestamp,
+      list_bytearray_to_g1(hs),
+    )
+  expect Some(sigma_last) = list.last(theta.sigma)
+  let coord1 = h
+  let coord2 = g1.add(sigma_last, theta.nu)
+  trace aggr
+  let aggr_point =
+    if aggr != #"" {
+      g2.decompress(aggr)
+    } else {
+      g2.zero
+    }
+  let coord3 = g2.add(theta.kappa, aggr_point)
+  let coord4 = g2.generator
+  let pair1 = group_pairing(coord1, coord3)
+  let pair2 = group_pairing(coord2, coord4)
+  bls12_381_final_verify(pair1, pair2)
 }
 
 test verify_cred_test() {
@@ -67,27 +74,26 @@ test verify_cred_test() {
         #"878a8ad400fad9651450254eb59e00d32430106965d2d3c17a7888152249440ff00cfb731c9e70ab05b2b1794fd4f2960b07b8c368b4f00072bc7e6b9c74723e6fd6ffbe59bb7889da38d51a52e5f6086f3d60033ea8567114f9409f3d230a9b",
       ),
       nu: g1.decompress(
-        #"b51ae75498fef3cae8d0c6e1319386b235352ae9b38cb3397bb7d28e8d735c9d7c49881a1272437084bfecf841078694",
+        #"a6e229247ef0dea50213e7245216c948d3e8471a32d2a65a6d74e6edf4911bc04bd7165f227cd4358ad0da8f745ab843",
       ),
       sigma: [
         g1.decompress(
-          #"a70c6573331c5f23f9e033d24603eaca9adf32db30a98b71705191398cced00da7e21733f5382397774a70a091845aec",
+          #"a818baa56c6c069f45b09833057480298637af3eb20f2aed46314dff3ecce01d47d35cf27cf57e511b248daaa24245ea",
         ),
         g1.decompress(
-          #"b8815738183320c6a0d83a59f4f1d37a72387bde698533a2852bc3950c0974942e797d42536c9b21f9bf4e8e4212e9c1",
+          #"9117e4f0f81c8483d8cd6967ce547e1af18bfe85e0cf59aba25b3c6668b2e3a740e49131a5c7e8bfef4466c3a58e6f28",
         ),
       ],
       proof: Proof {
-        c: 1230751894114075488974938211121810863482508024893644360233282930827967532061,
+        c: 43953825675714075024391357470089393824546011683396945525107498247681984930981,
         rm: [
-          35503829278936686253299531984317090797658666009646903776389655854556695739478,
-          43899057319489748705195114720731318373641159474983611021049442545807423119346,
+          33201398774658044924842383368859864201050291569118115993700463891168183954704,
+          1886665901031710547374862922187803698730842134686358055213993339908120500534,
         ],
-        rt: 13980670220811624395892089001509555427156649541931691110206495701289616940301,
+        rt: 34386718347699404645595550243171262552307584501849354162591548582147168255223,
       },
     }
-  let aggr =
-    #"c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+  let aggr = #""
   let alpha =
     #"a277357a6c44f5080f27ce2964d0b0e7c3e590d0e48dc0e032436ae15cbd435082e2266baed48398432ab43446337c210f654ac4e8d02c6aefa7ebe4dac7691c4d2fc84cf9b349c9cfac1e34c1be67e1728662697bdd59ba11df76880a588194"
   let wa =
@@ -98,7 +104,7 @@ test verify_cred_test() {
       #"a69c24fdb1f77e1b0b1656d642f2205f2aff2b68fe2a8af6a8f1c77b5f743f31c639d11521d35f344fb52cd847fafbb2106c7075a1d888351ca6b62a8adf67d76b56479076d8dcb1642019ebf8a69680bf4c2f0f909ac84ecff05dec923bd8ba",
     ]
   let disclose_attr = []
-  let timestamp = 1753842094
+  let timestamp = 1753846862
   let hs =
     [
       #"a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
