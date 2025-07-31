@@ -1,4 +1,4 @@
-use aiken/collection/list.{head, last}
+use aiken/collection/list
 use bls.{Sign}
 use cardano/transaction.{OutputReference, Transaction}
 use request.{IssueProof, Vcert, check_vcerts}
