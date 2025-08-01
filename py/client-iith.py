@@ -7,6 +7,21 @@ import json
 from typing import List, Dict
 from dataclasses import dataclass
 
+from retry import retry
+import json
+
+
+from py_ecc.bls.hash import (
+    i2osp,
+    os2ip
+)
+from py_ecc.bls.point_compression import (
+    G1Uncompressed
+)
+from py_ecc.fields import (
+    optimized_bls12_381_FQ as FQO,
+)
+
 load_dotenv()
 network = os.getenv("network")
 wallet_mnemonic = os.getenv("wallet_mnemonic")
@@ -77,52 +92,101 @@ for utxo in utxos:
         f"{utxo.tx_hash}#{utxo.tx_index} \t {int(utxo.amount[0].quantity)/1000000} ADA [{tokens}]"
     )
 
-# with open("../plutus.json", "r") as f:
-#     script_hex = json.load(f)
-#     validators = script_hex["validators"]
-#     last_validator = filter(lambda x: x["title"] == "verify_simple_vcert.verify_simple_vcert.spend", validators)
-#     last_validator = list(last_validator)[0]
-#     forty_two_script = PlutusV3Script(cbor2.loads(bytes.fromhex(last_validator["compiledCode"])))
-# print(f"Script: {last_validator['title']}")
+with open("../plutus.json", "r") as f:
+    script_hex = json.load(f)
+    validators = script_hex["validators"]
+    last_validator = filter(lambda x: x["title"] == "verify_simple_vcert.verify_simple_vcert.spend", validators)
+    last_validator = list(last_validator)[0]
+    forty_two_script = PlutusV3Script(cbor2.loads(bytes.fromhex(last_validator["compiledCode"])))
+print(f"Script: {last_validator['title']}")
 
-# script_hash = plutus_script_hash(forty_two_script)
+script_hash = plutus_script_hash(forty_two_script)
 
-# script_address = Address(script_hash, network = cardano_network)
+script_address = Address(script_hash, network = cardano_network)
 
-# giver_address = staking_enabled_address
+giver_address = staking_enabled_address
 
-# chain_context = BlockFrostChainContext(
-#     project_id=blockfrost_api_key,
-#     base_url=base_url,
-# )
+chain_context = BlockFrostChainContext(
+    project_id=blockfrost_api_key,
+    base_url=base_url,
+)
 
-# @retry(delay=20)
-# def wait_for_tx(tx_id):
-#     chain_context.api.transaction(tx_id)
-#     print(f"Transaction {tx_id} has been successfully included in the blockchain.")
+@retry(delay=20)
+def wait_for_tx(tx_id):
+    chain_context.api.transaction(tx_id)
+    print(f"Transaction {tx_id} has been successfully included in the blockchain.")
 
 
-# def submit_tx(tx):
-#     print("############### Transaction created ###############")
-#     print(tx)
-#     print(tx.to_cbor_hex())
-#     print("############### Submitting transaction ###############")
-#     chain_context.submit_tx(tx)
-#     wait_for_tx(str(tx.id))
+def submit_tx(tx):
+    print("############### Transaction created ###############")
+    print(tx)
+    print(tx.to_cbor_hex())
+    print("############### Submitting transaction ###############")
+    chain_context.submit_tx(tx)
+    wait_for_tx(str(tx.id))
+
+### 
+# Todo: #1
+# Create a transaction to create request credential
+
+@dataclass
+class IssueProof(PlutusData):
+    CONSTR_ID = 1
+    c: int
+    rr: int
+    ros: List[int]
+    total_rm: List[List[int]]
+    pubkeys: List[bytes]
+
+@dataclass
+class Sign(PlutusData):
+    CONSTR_ID = 1
+    r: int
+    s: int
+    r_g1: bytes
+
+@dataclass
+class Vcert(PlutusData):
+    CONSTR_ID = 1
+    commit: bytes
+    signature: Sign
+
+@dataclass
+class MyDatum(PlutusData):
+    CONSTR_ID = 1
+    vCert: List[Vcert]
+
+datum_data = 44
+
+builder = TransactionBuilder(chain_context)
+builder.add_input_address(giver_address)
+
+builder.add_output(TransactionOutput(script_address, 50000000, datum = datum_data))
+
+signed_tx = builder.build_and_sign([payment_skey], giver_address)
+
+print("############### Transaction created ###############")
+print(signed_tx)
+print("############### Submitting transaction ###############")
+submit_tx(signed_tx)
+
+# Todo: #2
+# Using datum from request credential UTXO
+# Create a transaction to issue blind sign + verify request credential = partial credential
+# Aggregate partial credentials into a full credential
+
+# Todo: #3
+# Using datum from blind sign UTXO
+# Create a transaction to verify full credential
+###
+
 
 # @dataclass
 # class G2Point(PlutusData):
 #     CONSTR_ID = 1
 #     x: bytes
 #     y: bytes
-# @dataclass
-# class IssueProof(PlutusData):
-#     CONSTR_ID = 1
-#     c: int
-#     rr: int
-#     ros: List[int]
-#     total_rm: List[List[int]]
-#     pubkeys: List[bytes]
+
 
 # @dataclass
 # class Sign(PlutusData):

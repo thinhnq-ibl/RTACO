@@ -320,7 +320,6 @@ def PrepareCredRequest(params, aggr_vk, to, no, opk, prevParams, all_attr, inclu
     Lambda = (cm, commitments, pi_s, hidden_P, C, pi_o, Aw, Bw, h_r, b_o)
     return Lambda, os
 
-
 def BlindSign(params, sk, prevParams, prevVcerts, all_pks, Lambda, public_m=[]):
     (G, o, g1, hs, g2, e) = params
     (x, y) = sk
