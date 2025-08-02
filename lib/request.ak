@@ -244,6 +244,38 @@ pub fn check_open_proof(
   check_open_challenge_item(h, hs, proof.c, dw, ew)
 }
 
+test check_open_proof_test() {
+  let h_compressed =
+    #"b8ed5b8f9dc605471fd4a9d373318d0a4b230722169aacdeda85a6ad0c0c3ebfe6fa58a16b062086368437cf8d45f185"
+  // G1 point
+  let hs_compressed =
+    [
+      #"a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
+      #"865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c",
+    ]
+  // G1 point
+  let proof =
+    OpenProof {
+      c: [
+        13804325079850457725627142957951104827873126539730078258784195038440940880392,
+        11726514466030405860930521000683610778958399959004350468181692188389284878278,
+        51432526391402064059818130005060767434915237470275281612051755280949532972757,
+      ],
+      dw: [
+        #"b7d202145af60c01a1294e20a824ec0ff5a8bb3c8960a0862714fdad6f1d72afeb38c2ef9ede0efa80f4bc530e361c0512f07e97e697747ff1732948b6a9588f0502bc78d5ebcfbc0ccbd599f12fa73086711a758e32c29ed65671cc75a4b742",
+        #"b17404753763b1a7a2c8f3eda805c94e7e5726ca2d8850fcc64e7da63501f228ddbaba2646761505034b41133f106f00192f783e17209bfbf58196e6a81edf05d5694ea016a559aa8c1ea70a7e6a31320037b88e8f19d125bcadf9120e214fc6",
+        #"a9b246d918b61b40990060eed918839eed12404dcd4e8fee55fde61aa5f7f532e6aa46fb89a8558c5997497c130ba1c913fb095a31ee0b02fb61b2e991027909810cd6140056cd47dc6ab5a8f8f9cdd48bf71683fe6315854992041cc5f32426",
+      ],
+      ew: [
+        #"b21b44aa690efa4366df2bab175f0f29dd58f3f05848199f1870b9a857a20cc0de9d862a9e773f6c0733b7582a8d3dec0838b6c4c31121fc67a63f0a56f607cdbd9fbf6de1fbc81f89b2a0a2e967facc671c9e8bdf5341c5ab1b1b36e4a0618f",
+        #"a24e10a1f880d42e061513da1d224d009139b2aa1d52b7cc8b603c316a6a43f2d1a9862cf95cd59bf8aaf7e9fe5f0ccd0d24adec785a3adea053b05e3c8a0369f5b95568b2ef8092e4aafaef6d4d5546f43e05133d0624956f9e6264e070b17c",
+        #"974932069a948e5776dd4d7928b26840a8188012ced6894a454552ddb6abf2b2dc946e56b8c493f7bec43fe5e69070f70a01382b44ed8653af6190c303009f2bf51f60eaa0f171fb3a24274515202d81baf143e4b17e276723a40574449af4e9",
+      ],
+      sigma: [],
+    }
+  check_open_proof(h_compressed, hs_compressed, proof)
+}
+
 pub fn check_open_challenge_item(
   h: G1Element,
   hs: List<G1Element>,
@@ -251,18 +283,23 @@ pub fn check_open_challenge_item(
   dw: List<G2Element>,
   ew: List<G2Element>,
 ) -> Bool {
-  let dw_head = head(dw)
-  if is_none(dw_head) {
+  let c_head = head(c)
+  if is_none(c_head) {
     True
   } else {
-    expect Some(dw_) = dw_head
+    expect Some(c_) = c_head
+    expect Some(dw_) = head(dw)
     expect Some(ew_) = head(ew)
-    expect Some(c_) = head(c)
     if c_ == from_bytearray_big_endian(to_challenge_open(h, dw_, ew_, hs)) {
-      expect Some(tail_dw) = tail(dw)
-      expect Some(tail_ew) = tail(ew)
-      expect Some(tail_c) = tail(c)
-      check_open_challenge_item(h, hs, tail_c, tail_dw, tail_ew)
+      let tail_c_check = tail(c)
+      if is_none(tail_c_check) {
+        True
+      } else {
+        expect Some(tail_c) = tail(c)
+        expect Some(tail_dw) = tail(dw)
+        expect Some(tail_ew) = tail(ew)
+        check_open_challenge_item(h, hs, tail_c, tail_dw, tail_ew)
+      }
     } else {
       False
     }
@@ -506,23 +543,18 @@ pub fn to_challenge_open(
 
 test to_challenge_open_test() {
   let aw =
-    #"8d17c4b14becb9136184fb35ac76cd631b16cd3c414eceb91f98268ef9a0f733b0f808896d9b36d38f495fcc3efbcb9d08fda23723a5913ea302a9ceb8477fe45e9a42a88027cde01b7d23a8f3c498a31e592ed6484421232aa538578889ec80"
+    #"b7d202145af60c01a1294e20a824ec0ff5a8bb3c8960a0862714fdad6f1d72afeb38c2ef9ede0efa80f4bc530e361c0512f07e97e697747ff1732948b6a9588f0502bc78d5ebcfbc0ccbd599f12fa73086711a758e32c29ed65671cc75a4b742"
   let bw =
-    #"a71a4a4ca5a4018176b31585a58b80a9db86505d12ed9fee05f195b368ff8621f8121b930d7ff3a7b0b14364d766640814ff56234da1b74a022bf552862906084877aeed0185022f80da54d64898dd3741ace09b3ebaee76b6c010bb38a71d42"
+    #"b21b44aa690efa4366df2bab175f0f29dd58f3f05848199f1870b9a857a20cc0de9d862a9e773f6c0733b7582a8d3dec0838b6c4c31121fc67a63f0a56f607cdbd9fbf6de1fbc81f89b2a0a2e967facc671c9e8bdf5341c5ab1b1b36e4a0618f"
   let h =
-    #"8c1414d29dbffed035c0b0c6acf1719cb03eaf484a331f375737f72c3d68720ee7644ab73e2a55efd291198e32782e99"
+    #"b8ed5b8f9dc605471fd4a9d373318d0a4b230722169aacdeda85a6ad0c0c3ebfe6fa58a16b062086368437cf8d45f185"
   let hs =
     [
       #"a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
       #"865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c",
-      #"ae1dc44ad2d3084be3574e5feb59476b1c530322c1eab7d9a869372899cdfa75279ff5119ca6d2980e9e022a98a0ba6b",
-      #"b358409e76fa35a23ec6f3e88bd963eb9da3ad83e59e3c005a3b4e050061fda1fe56227dcec8610061073795fb259b50",
-      #"8bb97519cdb28bb8ceab19bb289c02856a542da4ce52fd3c2cbe8914986f7162a2632e94a6420e47c3d7503f2024fb3d",
-      #"8d06e182789336765f00589a3dd16690ad368d656e95a4b7709bb7ba686d17ae7df5f23e91270bccf334632b3c86df99",
-      #"994278e9661d267e2eaec3fee0a9302fc58347be0466778ea4ba55c9ca426a9856ef7479fc381e7408a9e01da5cc24de",
     ]
   let c =
-    88026736549632845623902641450951592274924528375060517240887636654855702845898
+    13804325079850457725627142957951104827873126539730078258784195038440940880392
   let to_challenge_open_rs =
     to_challenge_open(
       g1.decompress(h),

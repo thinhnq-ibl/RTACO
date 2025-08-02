@@ -294,6 +294,7 @@ def PrepareCredRequest(params, aggr_vk, to, no, opk, prevParams, all_attr, inclu
     cm = add(multiply(g1, rand), ec_sum([multiply(hs[i], attributes[i]) for i in range(len(attributes))]))
     # build El Gamal encryption
     h = hashG1(to_binary256(cm))
+    print("send_h_compress: ", i2osp(compress_G1((h[0].n, h[1].n, FQO(1))),48).hex())
     os = [random.randint(2, o) for _ in range(len(private_m))]#os is a "private_m" length random number array
     commitments = [add(multiply(g1, os[i]), multiply(h, private_m[i])) for i in range(len(private_m))]
     pi_s = make_pi_s(params, commitments, cm, os, rand, public_m, private_m, all_attr, prevParams, include_indexes)

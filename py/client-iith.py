@@ -139,6 +139,15 @@ class IssueProof(PlutusData):
     pubkeys: List[bytes]
 
 @dataclass
+class OpenProof(PlutusData):
+    CONSTR_ID = 1
+    dw: List[bytes]
+    ew: List[bytes]
+    c: List[int]
+    sigma: List[bytes]
+
+
+@dataclass
 class Sign(PlutusData):
     CONSTR_ID = 1
     r: int
@@ -152,11 +161,19 @@ class Vcert(PlutusData):
     signature: Sign
 
 @dataclass
-class MyDatum(PlutusData):
+class BlindSignDatum(PlutusData):
     CONSTR_ID = 1
-    vCert: List[Vcert]
+    iproof: IssueProof
+    open: OpenProof
+    vcerts: List[Vcert]
+    cm_compressed: bytes
+    h_compressed: bytes
+    hs_compressed: List[bytes]
+    include_indexes: List[List[int]]
 
-datum_data = 44
+
+
+# blindSignDtatum = BlindSignDatum(
 
 builder = TransactionBuilder(chain_context)
 builder.add_input_address(giver_address)
