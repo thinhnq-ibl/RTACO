@@ -205,6 +205,7 @@ def verify_pi_s(params, commitments, cm, prevParams, prevVcerts, proof, include_
     (G, o, g1, hs, g2, e) = params
 
     (c, rr, ros, total_rm) = proof
+    print("------rr: ", rr)
     for i in range(1, len(total_rm)-1):
         if total_rm[0][0] != total_rm[i][0]:
             return False
@@ -306,7 +307,6 @@ def PrepareCredRequest(params, aggr_vk, to, no, opk, prevParams, all_attr, inclu
     cm = add(multiply(g1, rand), ec_sum([multiply(hs[i], attributes[i]) for i in range(len(attributes))]))
     # build El Gamal encryption
     h = hashG1(to_binary256(cm))
-    print("send_h_compress: ", i2osp(compress_G1((h[0].n, h[1].n, FQO(1))),48).hex())
     os = [random.randint(2, o) for _ in range(len(private_m))]#os is a "private_m" length random number array
     commitments = [add(multiply(g1, os[i]), multiply(h, private_m[i])) for i in range(len(private_m))]
     pi_s = make_pi_s(params, commitments, cm, os, rand, public_m, private_m, all_attr, prevParams, include_indexes)
@@ -469,11 +469,8 @@ def verify_pi_v(params, aggr_vk, sigma, kappa, nu, proof, disclose_index, disclo
             k += 1
 
     Aw = add(add(multiply(new_kappa, c), multiply(g2, rt)), add(multiply(alpha, (o - c + 1)%o), undisclosed_sum))
-    print("Aw: ", get_g2_bytes(Aw))
     Bw = add(multiply(nu, c), multiply(h, rt))
-    print ("Bw: ", get_g1_bytes(Bw))
     # compute the challenge prime
-    print("cccc", c)
     return c == to_challenge([g1, g2, alpha, Aw, Bw, kappa]+ hs + beta + disclose_attr + [timestamp])
 
 def VerifyCred(params, aggr_vk, Theta, disclose_index, disclose_attr, public_m=[]):

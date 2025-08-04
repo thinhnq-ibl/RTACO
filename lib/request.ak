@@ -468,6 +468,38 @@ pub fn calculate_Bw(
   calculate_Bw_item(bw, rm, hs)
 }
 
+test calculate_Bw_test() {
+  let c =
+    42535636952854378490874194418722333779152010990979182213475440387396116429547
+  let rr =
+    40675462214123865742431951389911046237865684117786381568714250885257348136441
+  let rm =
+    [
+      24215618229245167673429987719866984434968409701328374910407976599467102132405,
+      40928904529511035926773476820862854867207669516607935231354640227867095612728,
+    ]
+  let cm_point =
+    g1.decompress(
+      #"b3ff7f0d403bd9735aaaf54e14ab8409766572dd7343a04703e764fec9be90a082d7a5c2b92b9fca149412e982db8efd",
+    )
+  let hs =
+    [
+      g1.decompress(
+        #"a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
+      ),
+      g1.decompress(
+        #"865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c",
+      ),
+    ]
+  let bw =
+    g1.decompress(
+      #"87c87c8e20b91ebe8ba0f69391936c732f50cc987028841e38ac77a3fc98a55c01f6edb73b42e7359a03b48834a68c92",
+    )
+  let result = calculate_Bw(c, rr, rm, cm_point, hs)
+  // trace result
+  result == bw
+}
+
 pub fn calculate_Bw_item(
   bw: G1Element,
   rm: List<Int>,
