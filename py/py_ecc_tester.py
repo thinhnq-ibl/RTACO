@@ -214,8 +214,10 @@ def verify_pi_s(params, commitments, cm, prevParams, prevVcerts, proof, include_
             if include_indexes[i][j] == 1:
                 rm.append(int(total_rm[i][j]))
     rm = rm + total_rm[-1]
-    # print("****rm: ", rm)
+    print("------rm: ", rm)
     assert len(commitments) == len(ros)
+    print("------commitments: ", [get_g1_bytes(x) for x in commitments])
+    print("------ros: ", ros)
     # re-compute h
     h = hashG1(to_binary256(cm))
     print("------h: ", get_g1_bytes(h))

@@ -196,7 +196,7 @@ send_Ew = [([Ew[i][0].coeffs[1].n,Ew[i][0].coeffs[0].n],[Ew[i][1].coeffs[1].n,Ew
 send_compressed_G2Points = (send_Dw, send_Ew)
 send_vcerts = [((prevVcerts[i][0][0].n, prevVcerts[i][0][1].n), prevVcerts[i][1]) for i in range(len(prevVcerts))]
 
-print("commitments", get_list_g1_bytes(commitments))
+# print("commitments", get_list_g1_bytes(commitments))
 
 pi_s_old = pi_s
 (c, rr, ros, total_rm) = pi_s_old
@@ -217,8 +217,8 @@ pi_s = tuple(pi_s)
 # print("pi_s", pi_s)
 
 # tx_hash = request_contract.functions.RequestCred(title, send_vcerts, send_cm, send_compressed_cipher, send_hp, send_hr, send_bo, pi_s, pi_o, send_compressed_G2Points, str_public_m).transact({'from':user_addr})
-print("cm_compressed", i2osp(compress_G1((send_cm[0], send_cm[1], FQO(1))),48).hex())
-print("hs_compressed", [i2osp(compress_G1((hs[i][0].n, hs[i][1].n, FQO(1))),48).hex() for i in range(len(hs))])
+# print("cm_compressed", i2osp(compress_G1((send_cm[0], send_cm[1], FQO(1))),48).hex())
+# print("hs_compressed", [i2osp(compress_G1((hs[i][0].n, hs[i][1].n, FQO(1))),48).hex() for i in range(len(hs))])
 
 #h from cm
 
@@ -295,7 +295,7 @@ print("beta", get_list_g2_bytes(beta))
 print("disclose_attr", disclose_attr)
 print("timestamp", _timestamp)
 (_, _, _, hs, _, _) = validator_params
-print("hs", get_list_g1_bytes(hs))
+# print("hs", get_list_g1_bytes(hs))
 
 # Aw, _timestamp, proof = proof_v
 encoded_disclosed_attr = []
