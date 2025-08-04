@@ -153,6 +153,7 @@ pub fn check_issue_proof(
   commits_compressed: List<ByteArray>,
   proof: IssueProof,
   include_indexes: List<List<Int>>,
+  cw_bytes: List<ByteArray>,
 ) {
   let rm = get_rm(proof.total_rm, include_indexes)
   let commits = list_bytearray_to_g1(commits_compressed)
@@ -161,13 +162,70 @@ pub fn check_issue_proof(
   let cm = g1.decompress(cm_compressed)
   let aw = calculate_Aw(commits, proof.c, proof.ros, h, rm)
   let bw = calculate_Bw(proof.c, proof.rr, rm, cm, hs)
-  let cw = calculate_Cw(proof.total_rm, commits, proof.c, hs)
-  trace aw
-  trace bw
-  trace cw
-  trace from_bytearray_big_endian(to_challenge_issue(cm, h, bw, hs, aw, cw))
+  // let cw = calculate_Cw(proof.total_rm, commits, proof.c, hs)
+  let cw = list_bytearray_to_g1(cw_bytes)
   proof.c == from_bytearray_big_endian(
     to_challenge_issue(cm, h, bw, hs, aw, cw),
+  ) % scalar.field_prime
+}
+
+test check_issue_proof_test() {
+  let cm_compressed =
+    #"b3ff7f0d403bd9735aaaf54e14ab8409766572dd7343a04703e764fec9be90a082d7a5c2b92b9fca149412e982db8efd"
+  let h_compressed =
+    #"b8ed5b8f9dc605471fd4a9d373318d0a4b230722169aacdeda85a6ad0c0c3ebfe6fa58a16b062086368437cf8d45f185"
+  let hs_compressed =
+    [
+      #"a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
+      #"865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c",
+    ]
+  let commits_compressed =
+    [
+      #"83a30f27817b9a06550b8d7f81b5594281f35259660f30c9ebf4b09a7a249c644ab2918432e90b0d0c2887f25f14aceb",
+      #"b0b3013fd69e7d201c862e9e4e5308ba7d4d39a2a602c384660a0cfbddb09dc5c167a2d07ee02f8e73b9a996012b5992",
+    ]
+  let proof =
+    IssueProof {
+      c: 42535636952854378490874194418722333779152010990979182213475440387396116429547,
+      rr: 40675462214123865742431951389911046237865684117786381568714250885257348136441,
+      ros: [
+        47925282862226222643927521835608820926632670018838597296086614014727602246558,
+        21687859965734279473419411257190997575311278370788120793865541862802550871605,
+      ],
+      total_rm: [
+        [
+          50308106295266800020532960251996643677383528606831312922664123595083067330785,
+          5095311348487787861645372845191969718727204196912877257125842030966424005608,
+          24215618229245167673429987719866984434968409701328374910407976599467102132405,
+          23117088388493107445729512963030794110283280127530426202939187508228779289686,
+        ],
+        [
+          50308106295266800020532960251996643677383528606831312922664123595083067330785,
+          40928904529511035926773476820862854867207669516607935231354640227867095612728,
+          25499875010848260697670552620696378616666315278639900420553745755017069746308,
+        ],
+        [],
+      ],
+      pubkeys: [
+        #"a97b2135da7799823236baea87402c5cc00e3a61c99e9abf7c2d9c0c29d1c50fd5753e3076c5e3da091c861199ee72b7",
+        #"b51cc7408bc47ad537c29fef899a73b784de41c2063d5aac5248623f3db3dd4131e1cd9af902d49b28bc38819ffb48eb",
+      ],
+    }
+
+  let include_indexes = [[0, 0, 1, 0], [0, 1, 0]]
+  let cw =
+    [
+      #"8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de",
+      #"b33f8d0af6f8a5def6c26579645803e9d12cd4498ca4be50179566c5cdce4493fd36ee62b2016ad9ffb3b1e4f5ef5bef",
+    ]
+  check_issue_proof(
+    cm_compressed,
+    h_compressed,
+    hs_compressed,
+    commits_compressed,
+    proof,
+    include_indexes,
+    cw,
   )
 }
 
@@ -219,6 +277,7 @@ pub fn request_cred(
   h_compressed: ByteArray,
   hs_compressed: List<ByteArray>,
   include_indexes: List<List<Int>>,
+  cw: List<ByteArray>,
 ) {
   let commits = get_commits(vcerts)
   let result1 = check_vcerts(proof, vcerts)
@@ -230,6 +289,7 @@ pub fn request_cred(
       commits,
       proof,
       include_indexes,
+      cw,
     )
   expect Some(h_) = head(open_proof.sigma)
   let result3 = check_open_proof(h_, hs_compressed, open_proof)
@@ -278,59 +338,6 @@ test check_open_proof_test() {
       sigma: [],
     }
   check_open_proof(h_compressed, hs_compressed, proof)
-}
-
-test check_issue_proof_test() {
-  let cm_compressed =
-    #"b3ff7f0d403bd9735aaaf54e14ab8409766572dd7343a04703e764fec9be90a082d7a5c2b92b9fca149412e982db8efd"
-  let h_compressed =
-    #"b8ed5b8f9dc605471fd4a9d373318d0a4b230722169aacdeda85a6ad0c0c3ebfe6fa58a16b062086368437cf8d45f185"
-  let hs_compressed =
-    [
-      #"a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
-      #"865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c",
-    ]
-  let commits_compressed =
-    [
-      #"83a30f27817b9a06550b8d7f81b5594281f35259660f30c9ebf4b09a7a249c644ab2918432e90b0d0c2887f25f14aceb",
-      #"b0b3013fd69e7d201c862e9e4e5308ba7d4d39a2a602c384660a0cfbddb09dc5c167a2d07ee02f8e73b9a996012b5992",
-    ]
-  let proof =
-    IssueProof {
-      c: 45711505586820104611972793059377525513583349583118559833343749715695679593426,
-      rr: 40675462214123865742431951389911046237865684117786381568714250885257348136441,
-      ros: [
-        47925282862226222643927521835608820926632670018838597296086614014727602246558,
-        21687859965734279473419411257190997575311278370788120793865541862802550871605,
-      ],
-      total_rm: [
-        [
-          50308106295266800020532960251996643677383528606831312922664123595083067330785,
-          5095311348487787861645372845191969718727204196912877257125842030966424005608,
-          24215618229245167673429987719866984434968409701328374910407976599467102132405,
-          23117088388493107445729512963030794110283280127530426202939187508228779289686,
-        ],
-        [
-          50308106295266800020532960251996643677383528606831312922664123595083067330785,
-          40928904529511035926773476820862854867207669516607935231354640227867095612728,
-          25499875010848260697670552620696378616666315278639900420553745755017069746308,
-        ],
-        [],
-      ],
-      pubkeys: [
-        #"a97b2135da7799823236baea87402c5cc00e3a61c99e9abf7c2d9c0c29d1c50fd5753e3076c5e3da091c861199ee72b7",
-        #"b51cc7408bc47ad537c29fef899a73b784de41c2063d5aac5248623f3db3dd4131e1cd9af902d49b28bc38819ffb48eb",
-      ],
-    }
-  let include_indexes = [[0, 0, 1, 0], [0, 1, 0]]
-  check_issue_proof(
-    cm_compressed,
-    h_compressed,
-    hs_compressed,
-    commits_compressed,
-    proof,
-    include_indexes,
-  )
 }
 
 pub fn check_open_challenge_item(
@@ -527,6 +534,57 @@ pub fn calculate_Cw(
 ) -> List<G1Element> {
   calculate_Cw_item(total_rm, commits, c, hs)
 }
+
+// todo
+// test calculate_Cw_test() {
+//   let total_rm =
+//     [
+//       [
+//         50308106295266800020532960251996643677383528606831312922664123595083067330785,
+//         5095311348487787861645372845191969718727204196912877257125842030966424005608,
+//         24215618229245167673429987719866984434968409701328374910407976599467102132405,
+//         23117088388493107445729512963030794110283280127530426202939187508228779289686,
+//       ],
+//       [
+//         50308106295266800020532960251996643677383528606831312922664123595083067330785,
+//         40928904529511035926773476820862854867207669516607935231354640227867095612728,
+//         25499875010848260697670552620696378616666315278639900420553745755017069746308,
+//       ],
+//       [],
+//     ]
+//   let commits =
+//     [
+//       g1.decompress(
+//         #"83a30f27817b9a06550b8d7f81b5594281f35259660f30c9ebf4b09a7a249c644ab2918432e90b0d0c2887f25f14aceb",
+//       ),
+//       g1.decompress(
+//         #"b0b3013fd69e7d201c862e9e4e5308ba7d4d39a2a602c384660a0cfbddb09dc5c167a2d07ee02f8e73b9a996012b5992",
+//       ),
+//     ]
+//   let c =
+//     42535636952854378490874194418722333779152010990979182213475440387396116429547
+//   let hs =
+//     [
+//       g1.decompress(
+//         #"a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
+//       ),
+//       g1.decompress(
+//         #"865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c",
+//       ),
+//     ]
+//   let cw =
+//     [
+//       g1.decompress(
+//         #"8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de",
+//       ),
+//       g1.decompress(
+//         #"b33f8d0af6f8a5def6c26579645803e9d12cd4498ca4be50179566c5cdce4493fd36ee62b2016ad9ffb3b1e4f5ef5bef",
+//       ),
+//     ]
+//   let result = calculate_Cw(total_rm, commits, c, hs)
+//   // trace result
+//   head(result) == head(cw) && tail(result) == tail(cw)
+// }
 
 pub fn calculate_Cw_item(
   total_rm: List<List<Int>>,

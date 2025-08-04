@@ -10,6 +10,7 @@ pub type BlindSignDatum {
   h_compressed: ByteArray,
   hs_compressed: List<ByteArray>,
   include_indexes: List<List<Int>>,
+  cw: List<ByteArray>,
 }
 
 pub type VerifyCredDatum {
@@ -46,6 +47,7 @@ validator iith {
           h_compressed,
           hs_compressed,
           include_indexes,
+          cw,
         } = data
         request_cred(
           iproof,
@@ -55,6 +57,7 @@ validator iith {
           h_compressed,
           hs_compressed,
           include_indexes,
+          cw,
         )
       }
       VerifyCred -> {
