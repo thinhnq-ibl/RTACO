@@ -152,8 +152,9 @@ pub fn check_issue_proof(
   hs_compressed: List<ByteArray>,
   commits_compressed: List<ByteArray>,
   proof: IssueProof,
-  rm: List<Int>,
+  include_indexes: List<List<Int>>,
 ) {
+  let rm = get_rm(proof.total_rm, include_indexes)
   let commits = list_bytearray_to_g1(commits_compressed)
   let hs = list_bytearray_to_g1(hs_compressed)
   let h = g1.decompress(h_compressed)
@@ -161,6 +162,10 @@ pub fn check_issue_proof(
   let aw = calculate_Aw(commits, proof.c, proof.ros, h, rm)
   let bw = calculate_Bw(proof.c, proof.rr, rm, cm, hs)
   let cw = calculate_Cw(proof.total_rm, commits, proof.c, hs)
+  trace aw
+  trace bw
+  trace cw
+  trace from_bytearray_big_endian(to_challenge_issue(cm, h, bw, hs, aw, cw))
   proof.c == from_bytearray_big_endian(
     to_challenge_issue(cm, h, bw, hs, aw, cw),
   )
@@ -170,12 +175,12 @@ pub fn get_rm(
   total_rm: List<List<Int>>,
   include_indexes: List<List<Int>>,
 ) -> List<Int> {
-  let first = head(total_rm)
-  if is_none(first) {
+  let first_include_indexes = head(include_indexes)
+  if is_none(first_include_indexes) {
     []
   } else {
-    expect Some(first_) = first
-    expect Some(first_include_indexes_) = head(include_indexes)
+    expect Some(first_) = head(total_rm)
+    expect Some(first_include_indexes_) = first_include_indexes
     expect Some(tail_rm) = tail(total_rm)
     expect Some(tail_include_indexes) = tail(include_indexes)
     list.concat(
@@ -215,7 +220,6 @@ pub fn request_cred(
   hs_compressed: List<ByteArray>,
   include_indexes: List<List<Int>>,
 ) {
-  let rm = get_rm(proof.total_rm, include_indexes)
   let commits = get_commits(vcerts)
   let result1 = check_vcerts(proof, vcerts)
   let result2 =
@@ -225,7 +229,7 @@ pub fn request_cred(
       hs_compressed,
       commits,
       proof,
-      rm,
+      include_indexes,
     )
   expect Some(h_) = head(open_proof.sigma)
   let result3 = check_open_proof(h_, hs_compressed, open_proof)
@@ -274,6 +278,59 @@ test check_open_proof_test() {
       sigma: [],
     }
   check_open_proof(h_compressed, hs_compressed, proof)
+}
+
+test check_issue_proof_test() {
+  let cm_compressed =
+    #"b3ff7f0d403bd9735aaaf54e14ab8409766572dd7343a04703e764fec9be90a082d7a5c2b92b9fca149412e982db8efd"
+  let h_compressed =
+    #"b8ed5b8f9dc605471fd4a9d373318d0a4b230722169aacdeda85a6ad0c0c3ebfe6fa58a16b062086368437cf8d45f185"
+  let hs_compressed =
+    [
+      #"a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
+      #"865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c",
+    ]
+  let commits_compressed =
+    [
+      #"83a30f27817b9a06550b8d7f81b5594281f35259660f30c9ebf4b09a7a249c644ab2918432e90b0d0c2887f25f14aceb",
+      #"b0b3013fd69e7d201c862e9e4e5308ba7d4d39a2a602c384660a0cfbddb09dc5c167a2d07ee02f8e73b9a996012b5992",
+    ]
+  let proof =
+    IssueProof {
+      c: 45711505586820104611972793059377525513583349583118559833343749715695679593426,
+      rr: 40675462214123865742431951389911046237865684117786381568714250885257348136441,
+      ros: [
+        47925282862226222643927521835608820926632670018838597296086614014727602246558,
+        21687859965734279473419411257190997575311278370788120793865541862802550871605,
+      ],
+      total_rm: [
+        [
+          50308106295266800020532960251996643677383528606831312922664123595083067330785,
+          5095311348487787861645372845191969718727204196912877257125842030966424005608,
+          24215618229245167673429987719866984434968409701328374910407976599467102132405,
+          23117088388493107445729512963030794110283280127530426202939187508228779289686,
+        ],
+        [
+          50308106295266800020532960251996643677383528606831312922664123595083067330785,
+          40928904529511035926773476820862854867207669516607935231354640227867095612728,
+          25499875010848260697670552620696378616666315278639900420553745755017069746308,
+        ],
+        [],
+      ],
+      pubkeys: [
+        #"a97b2135da7799823236baea87402c5cc00e3a61c99e9abf7c2d9c0c29d1c50fd5753e3076c5e3da091c861199ee72b7",
+        #"b51cc7408bc47ad537c29fef899a73b784de41c2063d5aac5248623f3db3dd4131e1cd9af902d49b28bc38819ffb48eb",
+      ],
+    }
+  let include_indexes = [[0, 0, 1, 0], [0, 1, 0]]
+  check_issue_proof(
+    cm_compressed,
+    h_compressed,
+    hs_compressed,
+    commits_compressed,
+    proof,
+    include_indexes,
+  )
 }
 
 pub fn check_open_challenge_item(
@@ -405,12 +462,12 @@ pub fn calculate_Cw_item(
   c: Int,
   hs: List<G1Element>,
 ) -> List<G1Element> {
-  let first = head(total_rm)
-  if is_none(first) {
+  let commit_index = head(commits)
+  if is_none(commit_index) {
     []
   } else {
-    expect Some(first_) = first
-    expect Some(commit_index_) = head(commits)
+    expect Some(first_) = head(total_rm)
+    expect Some(commit_index_) = commit_index
     expect Some(c_sca) = scalar.new(c)
     let tmp = g1.scale(commit_index_, c_sca)
     expect Some(last_first_) = list.last(first_)
@@ -430,12 +487,12 @@ pub fn calculate_Cw_hs(
   hs: List<G1Element>,
   total_rm_elemnt: List<Int>,
 ) -> G1Element {
-  let first = head(total_rm_elemnt)
-  if is_none(first) {
+  let first_hs = head(hs)
+  if is_none(first_hs) {
     tmp
   } else {
-    expect Some(first_) = first
-    expect Some(first_hs_) = head(hs)
+    expect Some(first_) = head(total_rm_elemnt)
+    expect Some(first_hs_) = first_hs
     expect Some(first_hs_sca) = scalar.new(first_)
     let sum_f = g1.add(tmp, g1.scale(first_hs_, first_hs_sca))
     expect Some(tail_rm_) = tail(total_rm_elemnt)
@@ -468,6 +525,61 @@ pub fn to_challenge_issue(
   let sixth_c = concat(fifth_c, aw_bytes)
   let seventh_c = concat(sixth_c, cw_bytes)
   sha2_256(seventh_c)
+}
+
+test to_challenge_issue_c_test() {
+  let cm =
+    g1.decompress(
+      #"b3ff7f0d403bd9735aaaf54e14ab8409766572dd7343a04703e764fec9be90a082d7a5c2b92b9fca149412e982db8efd",
+    )
+  let h =
+    g1.decompress(
+      #"b8ed5b8f9dc605471fd4a9d373318d0a4b230722169aacdeda85a6ad0c0c3ebfe6fa58a16b062086368437cf8d45f185",
+    )
+  let bw =
+    g1.decompress(
+      #"87c87c8e20b91ebe8ba0f69391936c732f50cc987028841e38ac77a3fc98a55c01f6edb73b42e7359a03b48834a68c92",
+    )
+  let hs =
+    list_compressed_to_g1(
+      [
+        #"a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
+        #"865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c",
+      ],
+    )
+  let aw =
+    list_compressed_to_g1(
+      [
+        #"ab7a8b4bd2be7fd951d0312b147ffd401b61c180cebea122ecbc24ccb1d5247c910be7015f6e1044ebb36c82fb897684",
+        #"95b6a550db44fc6ec638d72c28f1fc5686ea764a5c2ca374eb8bcefbbb7ff6b6707edfa435aa3d5b410041f7a651820c",
+      ],
+    )
+  let cw =
+    list_compressed_to_g1(
+      [
+        #"8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de",
+        #"b33f8d0af6f8a5def6c26579645803e9d12cd4498ca4be50179566c5cdce4493fd36ee62b2016ad9ffb3b1e4f5ef5bef",
+      ],
+    )
+  let g1_bytes = g1_to_binary256(g1.generator)
+  let g2_bytes = g2_to_binary256(g2.generator)
+  let cm_bytes = g1_to_binary256(cm)
+  let h_bytes = g1_to_binary256(h)
+  let bw_bytes = g1_to_binary256(bw)
+  let hs_bytes = list_g1_to_binary256(hs)
+  let aw_bytes = list_g1_to_binary256(aw)
+  let cw_bytes = list_g1_to_binary256(cw)
+  let first_c = concat(g1_bytes, g2_bytes)
+  let second_c = concat(first_c, cm_bytes)
+  let third_c = concat(second_c, h_bytes)
+  let fourth_c = concat(third_c, bw_bytes)
+  let fifth_c = concat(fourth_c, hs_bytes)
+  let sixth_c = concat(fifth_c, aw_bytes)
+  let seventh_c = concat(sixth_c, cw_bytes)
+  let hash = sha2_256(seventh_c)
+  let c =
+    42535636952854378490874194418722333779152010990979182213475440387396116429547
+  c == from_bytearray_big_endian(hash) % scalar.field_prime
 }
 
 test to_challenge_issue_test() {

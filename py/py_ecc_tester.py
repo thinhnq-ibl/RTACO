@@ -85,7 +85,7 @@ def to_challenge(elements):
     for i in range(1, len(_list)):
         Cstring += _list[i]
     Chash =  sha256(Cstring).digest()
-    return int.from_bytes(Chash, "big", signed=False)
+    return int.from_bytes(Chash, "big", signed=False) % curve_order
 
 def compute_hash(params, cm):
     (G, o, g1, hs, g2, e) = params
@@ -179,7 +179,9 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
     h = hashG1(to_binary256(cm))
     # compute the witnesses commitments
     Aw = [add(multiply(g1, wos[i]), multiply(h, wm[i])) for i in range(len(private_m))]
+    # print("****Aw: ", [get_g1_bytes(x) for x in Aw])
     Bw = add(multiply(g1, wr), ec_sum([multiply(hs[i], wm[i]) for i in range(len(attributes))]))
+    # print("****Bw: ", get_g1_bytes(Bw))
     Cw = []
     for i in range(len(total_wm) - 1):
         (_, ttp_g, _, ttp_hs) = prevParams[i]
@@ -187,6 +189,7 @@ def make_pi_s(params, commitments, cm, os, r, public_m, private_m, all_attr, pre
         for j in range(len(total_wm[i]) - 1):
             tmp = add(tmp, multiply(ttp_hs[j], total_wm[i][j]))
         Cw.append(tmp)
+    # print("****Cw: ", [get_g1_bytes(x) for x in Cw])
     # create the challenge
     c = to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw)
     # create responses
@@ -211,14 +214,19 @@ def verify_pi_s(params, commitments, cm, prevParams, prevVcerts, proof, include_
             if include_indexes[i][j] == 1:
                 rm.append(int(total_rm[i][j]))
     rm = rm + total_rm[-1]
-
+    # print("****rm: ", rm)
     assert len(commitments) == len(ros)
     # re-compute h
     h = hashG1(to_binary256(cm))
+    print("------h: ", get_g1_bytes(h))
+    print("------cm: ", get_g1_bytes(cm))
     # re-compute witnesses commitments
     Aw = [add(multiply(commitments[i], c), add(multiply(g1, ros[i]), multiply(h, rm[i])))for i in range(len(commitments))]
+    print("------Aw: ", [get_g1_bytes(x) for x in Aw])
     Bw = add(multiply(cm, c), add(multiply(g1, rr), ec_sum([multiply(hs[i], rm[i]) for i in range(len(rm))])))
+    print("------Bw: ", get_g1_bytes(Bw))
     Cw = []
+    
     for i in range(len(total_rm) - 1):
         _, ttp_g, _, ttp_hs = prevParams[i]
         tmp = multiply(ttp_g, total_rm[i][-1])
@@ -226,6 +234,8 @@ def verify_pi_s(params, commitments, cm, prevParams, prevVcerts, proof, include_
             tmp = add(tmp, multiply(ttp_hs[j], total_rm[i][j]))
         tmp = add(tmp, multiply(prevVcerts[i][0], c))
         Cw.append(tmp)
+    print("------Cw: ", [get_g1_bytes(x) for x in Cw])
+    print("------c: ", c , to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw))
     return c == to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw)
 
 def make_pi_o(params, cm, C, r, s, aggr_vk, opk):

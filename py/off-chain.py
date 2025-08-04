@@ -196,6 +196,8 @@ send_Ew = [([Ew[i][0].coeffs[1].n,Ew[i][0].coeffs[0].n],[Ew[i][1].coeffs[1].n,Ew
 send_compressed_G2Points = (send_Dw, send_Ew)
 send_vcerts = [((prevVcerts[i][0][0].n, prevVcerts[i][0][1].n), prevVcerts[i][1]) for i in range(len(prevVcerts))]
 
+print("commitments", get_list_g1_bytes(commitments))
+
 pi_s_old = pi_s
 (c, rr, ros, total_rm) = pi_s_old
 print("c", c)
