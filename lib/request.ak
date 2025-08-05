@@ -278,6 +278,7 @@ pub fn request_cred(
   hs_compressed: List<ByteArray>,
   include_indexes: List<List<Int>>,
   cw: List<ByteArray>,
+  commits_compressed: List<ByteArray>,
 ) {
   // let commits = get_commits(vcerts)
   let commits =
@@ -291,7 +292,7 @@ pub fn request_cred(
       cm_compressed,
       h_compressed,
       hs_compressed,
-      commits,
+      commits_compressed,
       proof,
       include_indexes,
       cw,
@@ -381,6 +382,12 @@ test request_cred_test() {
       #"8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de",
       #"b33f8d0af6f8a5def6c26579645803e9d12cd4498ca4be50179566c5cdce4493fd36ee62b2016ad9ffb3b1e4f5ef5bef",
     ]
+
+  let commits =
+    [
+      #"83a30f27817b9a06550b8d7f81b5594281f35259660f30c9ebf4b09a7a249c644ab2918432e90b0d0c2887f25f14aceb",
+      #"b0b3013fd69e7d201c862e9e4e5308ba7d4d39a2a602c384660a0cfbddb09dc5c167a2d07ee02f8e73b9a996012b5992",
+    ]
   request_cred(
     proof,
     open_proof,
@@ -390,6 +397,7 @@ test request_cred_test() {
     hs_compressed,
     include_indexes,
     cw,
+    commits,
   )
 }
 

@@ -11,6 +11,7 @@ pub type Datum {
   hs_compressed: List<ByteArray>,
   include_indexes: List<List<Int>>,
   cw: List<ByteArray>,
+  commits_compressed: List<ByteArray>,
 }
 
 validator verify_vcert {
@@ -30,6 +31,7 @@ validator verify_vcert {
       hs_compressed,
       include_indexes,
       cw,
+      commits_compressed,
     } = data
     request_cred(
       iproof,
@@ -40,6 +42,7 @@ validator verify_vcert {
       hs_compressed,
       include_indexes,
       cw,
+      commits_compressed,
     )
   }
 
