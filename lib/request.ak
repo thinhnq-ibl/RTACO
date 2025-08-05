@@ -437,11 +437,8 @@ pub fn check_open_proof(
 ) {
   let hs = list_compressed_to_g1(hs_compressed)
   let h = g1.decompress(h_compressed)
-
   let dw = list_compressed_to_g2(proof.dw)
-
   let ew = list_compressed_to_g2(proof.ew)
-  trace ew
   check_open_challenge_item(h, hs, proof.c, dw, ew)
 }
 

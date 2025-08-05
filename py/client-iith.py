@@ -142,8 +142,8 @@ class IssueProof(PlutusData):
 @dataclass
 class OpenProof(PlutusData):
     CONSTR_ID = 1
-    dw: List[bytes]
-    ew: List[bytes]
+    dw: List[List[bytes]]
+    ew: List[List[bytes]]
     c: List[int]
 
 @dataclass
@@ -156,7 +156,7 @@ class Sign(PlutusData):
 @dataclass
 class Vcert(PlutusData):
     CONSTR_ID = 1
-    commit: bytes
+    commit: List[bytes]
     signature: Sign
 
 @dataclass
@@ -201,16 +201,34 @@ blindSignDtatum = BlindSignDatum(
         ]
     ),
     open=OpenProof(
-        dw=[
-            bytes.fromhex("b7d202145af60c01a1294e20a824ec0ff5a8bb3c8960a0862714fdad6f1d72afeb38c2ef9ede0efa80f4bc530e361c0512f07e97e697747ff1732948b6a9588f0502bc78d5ebcfbc0ccbd599f12fa73086711a758e32c29ed65671cc75a4b742"),
-            bytes.fromhex("b17404753763b1a7a2c8f3eda805c94e7e5726ca2d8850fcc64e7da63501f228ddbaba2646761505034b41133f106f00192f783e17209bfbf58196e6a81edf05d5694ea016a559aa8c1ea70a7e6a31320037b88e8f19d125bcadf9120e214fc6"),
-            bytes.fromhex("a9b246d918b61b40990060eed918839eed12404dcd4e8fee55fde61aa5f7f532e6aa46fb89a8558c5997497c130ba1c913fb095a31ee0b02fb61b2e991027909810cd6140056cd47dc6ab5a8f8f9cdd48bf71683fe6315854992041cc5f32426"),
+         dw = [
+        [
+          bytes.fromhex("b7d202145af60c01a1294e20a824ec0ff5a8bb3c8960a0862714fdad6f1d72afeb38c2ef9ede0efa80f4bc530e361c05"),
+          bytes.fromhex("12f07e97e697747ff1732948b6a9588f0502bc78d5ebcfbc0ccbd599f12fa73086711a758e32c29ed65671cc75a4b742"),
         ],
-        ew=[
-            bytes.fromhex("b21b44aa690efa4366df2bab175f0f29dd58f3f05848199f1870b9a857a20cc0de9d862a9e773f6c0733b7582a8d3dec0838b6c4c31121fc67a63f0a56f607cdbd9fbf6de1fbc81f89b2a0a2e967facc671c9e8bdf5341c5ab1b1b36e4a0618f"),
-            bytes.fromhex("a24e10a1f880d42e061513da1d224d009139b2aa1d52b7cc8b603c316a6a43f2d1a9862cf95cd59bf8aaf7e9fe5f0ccd0d24adec785a3adea053b05e3c8a0369f5b95568b2ef8092e4aafaef6d4d5546f43e05133d0624956f9e6264e070b17c"),
-            bytes.fromhex("974932069a948e5776dd4d7928b26840a8188012ced6894a454552ddb6abf2b2dc946e56b8c493f7bec43fe5e69070f70a01382b44ed8653af6190c303009f2bf51f60eaa0f171fb3a24274515202d81baf143e4b17e276723a40574449af4e9"),
+        [
+          bytes.fromhex("b17404753763b1a7a2c8f3eda805c94e7e5726ca2d8850fcc64e7da63501f228ddbaba2646761505034b41133f106f00"),
+          bytes.fromhex("192f783e17209bfbf58196e6a81edf05d5694ea016a559aa8c1ea70a7e6a31320037b88e8f19d125bcadf9120e214fc6"),
         ],
+        [
+          bytes.fromhex("a9b246d918b61b40990060eed918839eed12404dcd4e8fee55fde61aa5f7f532e6aa46fb89a8558c5997497c130ba1c9"),
+          bytes.fromhex("13fb095a31ee0b02fb61b2e991027909810cd6140056cd47dc6ab5a8f8f9cdd48bf71683fe6315854992041cc5f32426"),
+        ],
+      ],
+      ew= [
+        [
+          bytes.fromhex("b21b44aa690efa4366df2bab175f0f29dd58f3f05848199f1870b9a857a20cc0de9d862a9e773f6c0733b7582a8d3dec"),
+          bytes.fromhex("0838b6c4c31121fc67a63f0a56f607cdbd9fbf6de1fbc81f89b2a0a2e967facc671c9e8bdf5341c5ab1b1b36e4a0618f"),
+        ],
+        [
+          bytes.fromhex("a24e10a1f880d42e061513da1d224d009139b2aa1d52b7cc8b603c316a6a43f2d1a9862cf95cd59bf8aaf7e9fe5f0ccd"),
+          bytes.fromhex("0d24adec785a3adea053b05e3c8a0369f5b95568b2ef8092e4aafaef6d4d5546f43e05133d0624956f9e6264e070b17c"),
+        ],
+        [
+          bytes.fromhex("974932069a948e5776dd4d7928b26840a8188012ced6894a454552ddb6abf2b2dc946e56b8c493f7bec43fe5e69070f7"),
+          bytes.fromhex("0a01382b44ed8653af6190c303009f2bf51f60eaa0f171fb3a24274515202d81baf143e4b17e276723a40574449af4e9"),
+        ],
+      ],
         c = [
             13804325079850457725627142957951104827873126539730078258784195038440940880392,
             11726514466030405860930521000683610778958399959004350468181692188389284878278,
@@ -248,7 +266,7 @@ blindSignDtatum = BlindSignDatum(
         bytes.fromhex("865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c")
     ],
     include_indexes=[
-        [[0, 0, 1, 0], [0, 1, 0]]
+        [0, 0, 1, 0], [0, 1, 0]
     ],
     cw=[
         bytes.fromhex("8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de"),
