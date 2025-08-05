@@ -7,9 +7,9 @@ use aiken/option.{is_none}
 use aiken/primitive/bytearray.{concat}
 use aiken/primitive/int.{from_bytearray_big_endian}
 use bls.{
-  G2PointByteArray, Sign, do_ecdsa_verify, g1_to_binary256, g2_to_binary256,
-  list_bytearray_to_g1, list_compressed_to_g1, list_compressed_to_g2,
-  list_g1_to_binary256,
+  G1PointByteArray, G2PointByteArray, Sign, do_ecdsa_verify, g1_to_binary256,
+  g2_to_binary256, list_bytearray_to_g1, list_compressed_to_g1,
+  list_compressed_to_g2, list_g1_to_binary256,
 }
 
 pub type Vcert {
@@ -24,7 +24,7 @@ pub type IssueProof {
   rr: Int,
   ros: List<Int>,
   total_rm: List<List<Int>>,
-  pubkeys: List<ByteArray>,
+  pubkeys: List<G1PointByteArray>,
 }
 
 pub type OpenProof {
@@ -159,13 +159,13 @@ fn check_sk_item(first_item_index: Int, total_rm: List<List<Int>>) -> Bool {
 }
 
 pub fn check_issue_proof(
-  cm_compressed: ByteArray,
-  h_compressed: ByteArray,
-  hs_compressed: List<ByteArray>,
-  commits_compressed: List<ByteArray>,
+  cm_compressed: G1PointByteArray,
+  h_compressed: G1PointByteArray,
+  hs_compressed: List<G1PointByteArray>,
+  commits_compressed: List<G1PointByteArray>,
   proof: IssueProof,
   include_indexes: List<List<Int>>,
-  cw_bytes: List<ByteArray>,
+  cw_bytes: List<G1PointByteArray>,
 ) {
   let rm = get_rm(proof.total_rm, include_indexes)
   let commits = list_bytearray_to_g1(commits_compressed)
@@ -285,12 +285,12 @@ pub fn request_cred(
   proof: IssueProof,
   open_proof: OpenProof,
   vcerts: List<Vcert>,
-  cm_compressed: ByteArray,
-  h_compressed: ByteArray,
-  hs_compressed: List<ByteArray>,
+  cm_compressed: G1PointByteArray,
+  h_compressed: G1PointByteArray,
+  hs_compressed: List<G1PointByteArray>,
   include_indexes: List<List<Int>>,
-  cw: List<ByteArray>,
-  commits_compressed: List<ByteArray>,
+  cw: List<G1PointByteArray>,
+  commits_compressed: List<G1PointByteArray>,
 ) {
   let result1 = check_vcerts(proof, vcerts)
   let result2 =
@@ -431,8 +431,8 @@ test request_cred_test() {
 }
 
 pub fn check_open_proof(
-  h_compressed: ByteArray,
-  hs_compressed: List<ByteArray>,
+  h_compressed: G1PointByteArray,
+  hs_compressed: List<G1PointByteArray>,
   proof: OpenProof,
 ) {
   let hs = list_compressed_to_g1(hs_compressed)

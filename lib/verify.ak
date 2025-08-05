@@ -7,8 +7,8 @@ use aiken/crypto/bls12_381/scalar
 use aiken/primitive/bytearray.{concat}
 use aiken/primitive/int.{from_bytearray_big_endian}
 use bls.{
-  G2PointByteArray, g1_to_binary256, g2_to_binary256, group_pairing,
-  int_to_binary256, list_bytearray_to_g1, list_compressed_to_g2,
+  G1PointByteArray, G2PointByteArray, g1_to_binary256, g2_to_binary256,
+  group_pairing, int_to_binary256, list_bytearray_to_g1, list_compressed_to_g2,
   list_g1_to_binary256, list_g2_to_binary256, list_to_binary256, to_g2,
 }
 
@@ -33,7 +33,7 @@ pub fn verify_cred(
   beta: List<G2PointByteArray>,
   disclose_attr: List<Int>,
   timestamp: Int,
-  hs: List<ByteArray>,
+  hs: List<G1PointByteArray>,
 ) {
   expect Some(c_sca) = scalar.new(theta.proof.c)
   expect Some(rt_sca) = scalar.new(theta.proof.rt)

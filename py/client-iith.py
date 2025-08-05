@@ -291,6 +291,7 @@ print("############### Transaction created ###############")
 print(signed_tx)
 print("############### Submitting transaction ###############")
 submit_tx(signed_tx)
+# 05a4443c9a70c9cbfb9d6a87ae39772a7b3bf5e166ab62d0aeec647d93143789
 
 # Todo: #2
 # Using datum from request credential UTXO

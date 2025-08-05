@@ -186,6 +186,9 @@ test mod_inverse_works() {
   mod_inverse(3, 26) == 9
 }
 
+pub type G1PointByteArray =
+  ByteArray
+
 pub type G2PointByteArray =
   List<ByteArray>
 
