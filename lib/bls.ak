@@ -10,7 +10,7 @@ use aiken/builtin.{
   bls12_381_g2_hash_to_group, bls12_381_g2_scalar_mul, bls12_381_miller_loop,
   bls12_381_mul_miller_loop_result, bytearray_to_integer,
 }
-use aiken/collection/list.{head, tail}
+use aiken/collection/list.{head, last, tail}
 use aiken/crypto.{sha2_256}
 use aiken/crypto/bls12_381/g1 as g1
 use aiken/crypto/bls12_381/g2 as g2
@@ -186,6 +186,9 @@ test mod_inverse_works() {
   mod_inverse(3, 26) == 9
 }
 
+pub type G2PointByteArray =
+  List<ByteArray>
+
 pub type Sign {
   r: Int,
   s: Int,
@@ -319,18 +322,23 @@ pub fn list_compressed_to_g1(list: List<ByteArray>) -> List<G1Element> {
   }
 }
 
-pub fn list_compressed_to_g2(list: List<ByteArray>) -> List<G2Element> {
-  let first = head(list)
-  if is_none(first) {
-    []
-  } else {
-    expect Some(first_) = first
-    let g2_point = g2.decompress(first_)
-    let tail = tail(list)
-    expect Some(tail_) = tail
-    let tail_result = list_compressed_to_g2(tail_)
-    list.push(tail_result, g2_point)
-  }
+pub fn list_compressed_to_g2(
+  list_g2ba: List<G2PointByteArray>,
+) -> List<G2Element> {
+  list.map(
+    list_g2ba,
+    fn(list) {
+      expect Some(first_h) = head(list)
+      expect Some(first_l) = last(list)
+      g2.decompress(concat(first_h, first_l))
+    },
+  )
+}
+
+pub fn to_g2(g2b: G2PointByteArray) -> G2Element {
+  expect Some(first_h) = head(g2b)
+  expect Some(first_l) = last(g2b)
+  g2.decompress(concat(first_h, first_l))
 }
 
 test test_gen_challage() {

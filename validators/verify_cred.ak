@@ -1,12 +1,13 @@
+use bls.{G2PointByteArray}
 use cardano/transaction.{OutputReference, Transaction}
 use verify.{Theta, verify_cred}
 
 pub type Datum {
   theta: Theta,
   aggr: ByteArray,
-  alpha: ByteArray,
-  aw: ByteArray,
-  beta: List<ByteArray>,
+  alpha: G2PointByteArray,
+  aw: G2PointByteArray,
+  beta: List<G2PointByteArray>,
   disclose_attr: List<Int>,
   timestamp: Int,
   hs: List<ByteArray>,
