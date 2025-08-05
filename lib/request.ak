@@ -1,4 +1,4 @@
-use aiken/collection/list.{head, tail}
+use aiken/collection/list.{head, last, tail}
 use aiken/crypto.{sha2_256}
 use aiken/crypto/bls12_381/g1 as g1
 use aiken/crypto/bls12_381/g2 as g2
@@ -11,9 +11,12 @@ use bls.{
   list_compressed_to_g1, list_compressed_to_g2, list_g1_to_binary256,
 }
 
+pub type G2PointByteArray =
+  List<ByteArray>
+
 pub type Vcert {
-  // G1 point
-  commit: ByteArray,
+  // G2 point
+  commit: G2PointByteArray,
   // Sign struct
   signature: Sign,
 }
@@ -32,7 +35,6 @@ pub type OpenProof {
   // g2 point list
   ew: List<ByteArray>,
   c: List<Int>,
-  sigma: List<ByteArray>,
 }
 
 pub fn check_vcerts(iproof: IssueProof, vcerts: List<Vcert>) -> Bool {
@@ -50,8 +52,14 @@ fn check_vcert_item(vcerts: List<Vcert>, pks: List<G1Element>) -> Bool {
   } else {
     expect Some(first_vcert_) = first_vcert
     expect Some(first_pk_) = first_pk
+    expect Some(commit_h) = head(first_vcert_.commit)
+    expect Some(commit_l) = last(first_vcert_.commit)
     let check_result =
-      do_ecdsa_verify(first_pk_, first_vcert_.signature, first_vcert_.commit)
+      do_ecdsa_verify(
+        first_pk_,
+        first_vcert_.signature,
+        concat(commit_h, commit_l),
+      )
     if check_result == False {
       trace first_vcert_.commit
       False
@@ -106,9 +114,15 @@ test check_vcerts_test() {
       r_g1: #"b97f20c47b4d12e53f6cb898067b63532e53c906b200f2638db569a7d50977a7fbb53609e324b65a9934b3d08960d4fb",
     }
   let commit1 =
-    #"075320f826a216c87da892bfc8aaacd2a75f5ccdfa62b72de3491b0bf079201a2def1fc9f18234df324976fdaf267870112bdf0ec3b461ae5bf50d9d0cde259cfdaa4789a6a7595dc3a37a76d6bc7c11d14cfb7528a60ea753bba5e501af4d5a"
+    [
+      #"075320f826a216c87da892bfc8aaacd2a75f5ccdfa62b72de3491b0bf079201a2def1fc9f18234df324976fdaf267870",
+      #"112bdf0ec3b461ae5bf50d9d0cde259cfdaa4789a6a7595dc3a37a76d6bc7c11d14cfb7528a60ea753bba5e501af4d5a",
+    ]
   let commit2 =
-    #"03324843cb50de5ba1dc8202d2f122a079857340727e63ad1227c3c9068acbd6039d452a6cf8b49405bd895c528582f319de1c7c436db928c356fc685aa32832ade4583760476d176f366c0fd5b92d4b93256afd144d2f815abd721d497d2aee"
+    [
+      #"03324843cb50de5ba1dc8202d2f122a079857340727e63ad1227c3c9068acbd6039d452a6cf8b49405bd895c528582f3",
+      #"19de1c7c436db928c356fc685aa32832ade4583760476d176f366c0fd5b92d4b93256afd144d2f815abd721d497d2aee",
+    ]
   check_vcerts(
     iproof,
     [
@@ -280,12 +294,6 @@ pub fn request_cred(
   cw: List<ByteArray>,
   commits_compressed: List<ByteArray>,
 ) {
-  // let commits = get_commits(vcerts)
-  let commits =
-    [
-      #"83a30f27817b9a06550b8d7f81b5594281f35259660f30c9ebf4b09a7a249c644ab2918432e90b0d0c2887f25f14aceb",
-      #"b0b3013fd69e7d201c862e9e4e5308ba7d4d39a2a602c384660a0cfbddb09dc5c167a2d07ee02f8e73b9a996012b5992",
-    ]
   let result1 = check_vcerts(proof, vcerts)
   let result2 =
     check_issue_proof(
@@ -341,7 +349,6 @@ test request_cred_test() {
         #"a24e10a1f880d42e061513da1d224d009139b2aa1d52b7cc8b603c316a6a43f2d1a9862cf95cd59bf8aaf7e9fe5f0ccd0d24adec785a3adea053b05e3c8a0369f5b95568b2ef8092e4aafaef6d4d5546f43e05133d0624956f9e6264e070b17c",
         #"974932069a948e5776dd4d7928b26840a8188012ced6894a454552ddb6abf2b2dc946e56b8c493f7bec43fe5e69070f70a01382b44ed8653af6190c303009f2bf51f60eaa0f171fb3a24274515202d81baf143e4b17e276723a40574449af4e9",
       ],
-      sigma: [],
       c: [
         13804325079850457725627142957951104827873126539730078258784195038440940880392,
         11726514466030405860930521000683610778958399959004350468181692188389284878278,
@@ -351,7 +358,10 @@ test request_cred_test() {
   let vcerts =
     [
       Vcert {
-        commit: #"075320f826a216c87da892bfc8aaacd2a75f5ccdfa62b72de3491b0bf079201a2def1fc9f18234df324976fdaf267870112bdf0ec3b461ae5bf50d9d0cde259cfdaa4789a6a7595dc3a37a76d6bc7c11d14cfb7528a60ea753bba5e501af4d5a",
+        commit: [
+          #"075320f826a216c87da892bfc8aaacd2a75f5ccdfa62b72de3491b0bf079201a2def1fc9f18234df324976fdaf267870",
+          #"112bdf0ec3b461ae5bf50d9d0cde259cfdaa4789a6a7595dc3a37a76d6bc7c11d14cfb7528a60ea753bba5e501af4d5a",
+        ],
         signature: Sign {
           r: 1947564745249895947708144629914312558157305610980073189304752255321217468940983390413315295194393892376039785033790,
           s: 17355617863143591184525546256817223357573510192270296979117455415910592064385,
@@ -359,7 +369,10 @@ test request_cred_test() {
         },
       },
       Vcert {
-        commit: #"03324843cb50de5ba1dc8202d2f122a079857340727e63ad1227c3c9068acbd6039d452a6cf8b49405bd895c528582f319de1c7c436db928c356fc685aa32832ade4583760476d176f366c0fd5b92d4b93256afd144d2f815abd721d497d2aee",
+        commit: [
+          #"03324843cb50de5ba1dc8202d2f122a079857340727e63ad1227c3c9068acbd6039d452a6cf8b49405bd895c528582f3",
+          #"19de1c7c436db928c356fc685aa32832ade4583760476d176f366c0fd5b92d4b93256afd144d2f815abd721d497d2aee",
+        ],
         signature: Sign {
           r: 3924284939951961681834764047095286118299427666162894647982549458393534809915388538121180076697345644595416192308475,
           s: 30161833219843676097829195363654408677477538928028790969163359605163750361918,
@@ -440,7 +453,6 @@ test check_open_proof_test() {
         #"a24e10a1f880d42e061513da1d224d009139b2aa1d52b7cc8b603c316a6a43f2d1a9862cf95cd59bf8aaf7e9fe5f0ccd0d24adec785a3adea053b05e3c8a0369f5b95568b2ef8092e4aafaef6d4d5546f43e05133d0624956f9e6264e070b17c",
         #"974932069a948e5776dd4d7928b26840a8188012ced6894a454552ddb6abf2b2dc946e56b8c493f7bec43fe5e69070f70a01382b44ed8653af6190c303009f2bf51f60eaa0f171fb3a24274515202d81baf143e4b17e276723a40574449af4e9",
       ],
-      sigma: [],
     }
   check_open_proof(h_compressed, hs_compressed, proof)
 }
@@ -472,19 +484,6 @@ pub fn check_open_challenge_item(
     } else {
       False
     }
-  }
-}
-
-fn get_commits(vcerts: List<Vcert>) -> List<ByteArray> {
-  let first = head(vcerts)
-  if is_none(first) {
-    []
-  } else {
-    expect Some(first_) = first
-    let commit_ = first_.commit
-    expect Some(tail_) = tail(vcerts)
-    let tail_commits = get_commits(tail_)
-    list.push(tail_commits, commit_)
   }
 }
 
@@ -904,4 +903,10 @@ test to_challenge_open_test() {
       list_bytearray_to_g1(hs),
     )
   expect c == from_bytearray_big_endian(to_challenge_open_rs)
+}
+
+pub fn from_list_bytearray_to_G2_Point(g2_bytes: G2PointByteArray) -> G2Element {
+  expect Some(g2_h) = head(g2_bytes)
+  expect Some(g2_l) = last(g2_bytes)
+  g2.decompress(concat(g2_h, g2_l))
 }

@@ -3,6 +3,7 @@ from blockfrost import ApiUrls, BlockFrostApi
 from dotenv import load_dotenv
 from pycardano import Address, Network, crypto, ExtendedSigningKey, PlutusV3Script, TransactionBuilder, TransactionOutput, plutus_script_hash, BlockFrostChainContext, Redeemer, PlutusData
 import json
+import cbor2
 
 from typing import List, Dict
 from dataclasses import dataclass
@@ -95,7 +96,7 @@ for utxo in utxos:
 with open("../plutus.json", "r") as f:
     script_hex = json.load(f)
     validators = script_hex["validators"]
-    last_validator = filter(lambda x: x["title"] == "verify_simple_vcert.verify_simple_vcert.spend", validators)
+    last_validator = filter(lambda x: x["title"] == "iith.iith.spend", validators)
     last_validator = list(last_validator)[0]
     forty_two_script = PlutusV3Script(cbor2.loads(bytes.fromhex(last_validator["compiledCode"])))
 print(f"Script: {last_validator['title']}")
@@ -144,8 +145,6 @@ class OpenProof(PlutusData):
     dw: List[bytes]
     ew: List[bytes]
     c: List[int]
-    sigma: List[bytes]
-
 
 @dataclass
 class Sign(PlutusData):
@@ -170,10 +169,92 @@ class BlindSignDatum(PlutusData):
     h_compressed: bytes
     hs_compressed: List[bytes]
     include_indexes: List[List[int]]
+    cw: List[bytes]
+    commits_compressed: List[bytes]
 
 
+blindSignDtatum = BlindSignDatum(
+    iproof=IssueProof(
+        c=42535636952854378490874194418722333779152010990979182213475440387396116429547,
+        rr=40675462214123865742431951389911046237865684117786381568714250885257348136441,
+        ros=[
+            47925282862226222643927521835608820926632670018838597296086614014727602246558,
+            21687859965734279473419411257190997575311278370788120793865541862802550871605,
+        ],
+        total_rm=[
+            [
+                50308106295266800020532960251996643677383528606831312922664123595083067330785,
+                5095311348487787861645372845191969718727204196912877257125842030966424005608,
+                24215618229245167673429987719866984434968409701328374910407976599467102132405,
+                23117088388493107445729512963030794110283280127530426202939187508228779289686,
+            ],
+            [
+                50308106295266800020532960251996643677383528606831312922664123595083067330785,
+                40928904529511035926773476820862854867207669516607935231354640227867095612728,
+                25499875010848260697670552620696378616666315278639900420553745755017069746308,
+            ],
+            []
+        ],
+        pubkeys=[
+            bytes.fromhex("a97b2135da7799823236baea87402c5cc00e3a61c99e9abf7c2d9c0c29d1c50fd5753e3076c5e3da091c861199ee72b7"),
+            bytes.fromhex("b51cc7408bc47ad537c29fef899a73b784de41c2063d5aac5248623f3db3dd4131e1cd9af902d49b28bc38819ffb48eb")
+        ]
+    ),
+    open=OpenProof(
+        dw=[
+            bytes.fromhex("b7d202145af60c01a1294e20a824ec0ff5a8bb3c8960a0862714fdad6f1d72afeb38c2ef9ede0efa80f4bc530e361c0512f07e97e697747ff1732948b6a9588f0502bc78d5ebcfbc0ccbd599f12fa73086711a758e32c29ed65671cc75a4b742"),
+            bytes.fromhex("b17404753763b1a7a2c8f3eda805c94e7e5726ca2d8850fcc64e7da63501f228ddbaba2646761505034b41133f106f00192f783e17209bfbf58196e6a81edf05d5694ea016a559aa8c1ea70a7e6a31320037b88e8f19d125bcadf9120e214fc6"),
+            bytes.fromhex("a9b246d918b61b40990060eed918839eed12404dcd4e8fee55fde61aa5f7f532e6aa46fb89a8558c5997497c130ba1c913fb095a31ee0b02fb61b2e991027909810cd6140056cd47dc6ab5a8f8f9cdd48bf71683fe6315854992041cc5f32426"),
+        ],
+        ew=[
+            bytes.fromhex("b21b44aa690efa4366df2bab175f0f29dd58f3f05848199f1870b9a857a20cc0de9d862a9e773f6c0733b7582a8d3dec0838b6c4c31121fc67a63f0a56f607cdbd9fbf6de1fbc81f89b2a0a2e967facc671c9e8bdf5341c5ab1b1b36e4a0618f"),
+            bytes.fromhex("a24e10a1f880d42e061513da1d224d009139b2aa1d52b7cc8b603c316a6a43f2d1a9862cf95cd59bf8aaf7e9fe5f0ccd0d24adec785a3adea053b05e3c8a0369f5b95568b2ef8092e4aafaef6d4d5546f43e05133d0624956f9e6264e070b17c"),
+            bytes.fromhex("974932069a948e5776dd4d7928b26840a8188012ced6894a454552ddb6abf2b2dc946e56b8c493f7bec43fe5e69070f70a01382b44ed8653af6190c303009f2bf51f60eaa0f171fb3a24274515202d81baf143e4b17e276723a40574449af4e9"),
+        ],
+        c = [
+            13804325079850457725627142957951104827873126539730078258784195038440940880392,
+            11726514466030405860930521000683610778958399959004350468181692188389284878278,
+            51432526391402064059818130005060767434915237470275281612051755280949532972757,
+        ]
+    ),
+    vcerts=[
+        Vcert(
+            commit=bytes.fromhex("075320f826a216c87da892bfc8aaacd2a75f5ccdfa62b72de3491b0bf079201a2def1fc9f18234df324976fdaf267870112bdf0ec3b461ae5bf50d9d0cde259cfdaa4789a6a7595dc3a37a76d6bc7c11d14cfb7528a60ea753bba5e501af4d5a"),
+            signature=Sign(
+                r=1947564745249895947708144629914312558157305610980073189304752255321217468940983390413315295194393892376039785033790,
+                s=17355617863143591184525546256817223357573510192270296979117455415910592064385,
+                r_g1=bytes.fromhex("aca7513f4288ab39cdb45202f54678d9bd5d815b52295dc7f22b16c7572e13b93d96b6837288a909d801ce61a638f03e")
+            )
+        ),
+        Vcert(
+            commit=bytes.fromhex("03324843cb50de5ba1dc8202d2f122a079857340727e63ad1227c3c9068acbd6039d452a6cf8b49405bd895c528582f319de1c7c436db928c356fc685aa32832ade4583760476d176f366c0fd5b92d4b93256afd144d2f815abd721d497d2aee"),
+            signature=Sign(
+                r=3924284939951961681834764047095286118299427666162894647982549458393534809915388538121180076697345644595416192308475,
+                s=30161833219843676097829195363654408677477538928028790969163359605163750361918,
+                r_g1=bytes.fromhex("b97f20c47b4d12e53f6cb898067b63532e53c906b200f2638db569a7d50977a7fbb53609e324b65a9934b3d08960d4fb")
+            )
+        )
+    ],
+    cm_compressed=bytes.fromhex("b3ff7f0d403bd9735aaaf54e14ab8409766572dd7343a04703e764fec9be90a082d7a5c2b92b9fca149412e982db8efd"),
+    h_compressed=bytes.fromhex("b8ed5b8f9dc605471fd4a9d373318d0a4b230722169aacdeda85a6ad0c0c3ebfe6fa58a16b062086368437cf8d45f185"),
+    hs_compressed=[
+        bytes.fromhex("a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89"),
+        bytes.fromhex("865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c")
+    ],
+    include_indexes=[
+        [[0, 0, 1, 0], [0, 1, 0]]
+    ],
+    cw=[
+        bytes.fromhex("8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de"),
+        bytes.fromhex("b33f8d0af6f8a5def6c26579645803e9d12cd4498ca4be50179566c5cdce4493fd36ee62b2016ad9ffb3b1e4f5ef5bef"),
+    ],
+    commits_compressed=[
+        bytes.fromhex("83a30f27817b9a06550b8d7f81b5594281f35259660f30c9ebf4b09a7a249c644ab2918432e90b0d0c2887f25f14aceb"),
+        bytes.fromhex("b0b3013fd69e7d201c862e9e4e5308ba7d4d39a2a602c384660a0cfbddb09dc5c167a2d07ee02f8e73b9a996012b5992"),
+    ]
+)
 
-# blindSignDtatum = BlindSignDatum(
+datum_data = blindSignDtatum
 
 builder = TransactionBuilder(chain_context)
 builder.add_input_address(giver_address)

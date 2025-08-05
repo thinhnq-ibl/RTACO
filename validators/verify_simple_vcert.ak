@@ -4,7 +4,7 @@ use cardano/transaction.{OutputReference, Transaction}
 use request.{IssueProof, Vcert, check_vcerts}
 
 pub type VcertData {
-  commit: ByteArray,
+  commit: List<ByteArray>,
   r: Int,
   s: Int,
   r_g1: ByteArray,
