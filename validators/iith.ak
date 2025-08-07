@@ -27,89 +27,60 @@ pub type VerifyCredDatum {
 }
 
 pub type Redeemer {
-  mode: Int,
+  BlindSign
+  VerifyCred
 }
 
 // 44 for BlindSign, 45 for VerifyCred
 
 validator iith {
   spend(
-    _datum: Option<Data>,
-    redeemer: Data,
+    datum: Option<Data>,
+    redeemer: Redeemer,
     _utxo: OutputReference,
     _self: Transaction,
   ) {
-    expect Redeemer { mode } = redeemer
-    if mode == 44 {
-      True
-    } else {
-      False
+    when redeemer is {
+      BlindSign -> {
+        expect Some(data) = datum
+        expect BlindSignDatum {
+          iproof,
+          open,
+          vcerts,
+          cm_compressed,
+          h_compressed,
+          hs_compressed,
+          include_indexes,
+          cw,
+          commits_compressed,
+        } = data
+        request_cred(
+          iproof,
+          open,
+          vcerts,
+          cm_compressed,
+          h_compressed,
+          hs_compressed,
+          include_indexes,
+          cw,
+          commits_compressed,
+        )
+      }
+      VerifyCred -> {
+        expect Some(data) = datum
+        expect VerifyCredDatum {
+          theta,
+          aggr,
+          alpha,
+          aw,
+          beta,
+          disclose_attr,
+          timestamp,
+          hs,
+        } = data
+        verify_cred(theta, aggr, alpha, aw, beta, disclose_attr, timestamp, hs)
+      }
     }
-    // expect Some(data) = datum
-    // expect BlindSignDatum {
-    //   iproof,
-    //   open,
-    //   vcerts,
-    //   cm_compressed,
-    //   h_compressed,
-    //   hs_compressed,
-    //   include_indexes,
-    //   cw,
-    //   commits_compressed,
-    // } = data
-    // request_cred(
-    //   iproof,
-    //   open,
-    //   vcerts,
-    //   cm_compressed,
-    //   h_compressed,
-    //   hs_compressed,
-    //   include_indexes,
-    //   cw,
-    //   commits_compressed,
-    // )
-    // todo
-    // when redeemer is {
-    //   BlindSign -> {
-    //     expect Some(data) = datum
-    //     expect BlindSignDatum {
-    //       iproof,
-    //       open,
-    //       vcerts,
-    //       cm_compressed,
-    //       h_compressed,
-    //       hs_compressed,
-    //       include_indexes,
-    //       cw,
-    //       commits_compressed,
-    //     } = data
-    //     request_cred(
-    //       iproof,
-    //       open,
-    //       vcerts,
-    //       cm_compressed,
-    //       h_compressed,
-    //       hs_compressed,
-    //       include_indexes,
-    //       cw,
-    //       commits_compressed,
-    //     )
-    //   }
-    //   VerifyCred -> {
-    //     expect Some(data) = datum
-    //     expect VerifyCredDatum {
-    //       theta,
-    //       aggr,
-    //       alpha,
-    //       aw,
-    //       beta,
-    //       disclose_attr,
-    //       timestamp,
-    //       hs,
-    //     } = data
-    //     verify_cred(theta, aggr, alpha, aw, beta, disclose_attr, timestamp, hs)
-    //   }
-    // }
   }
 
   else(_) {
