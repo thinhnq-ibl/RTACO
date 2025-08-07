@@ -1,7 +1,7 @@
 import os
 from blockfrost import ApiUrls, BlockFrostApi
 from dotenv import load_dotenv
-from pycardano import Address, Network, crypto, ExtendedSigningKey, PlutusV3Script, TransactionBuilder, TransactionOutput, plutus_script_hash, BlockFrostChainContext, Redeemer, PlutusData
+from pycardano import Address, Network, crypto, ExtendedSigningKey, PlutusV3Script, TransactionBuilder, TransactionOutput, plutus_script_hash, BlockFrostChainContext, Redeemer, PlutusData, ExecutionUnits
 import json
 import cbor2
 
@@ -51,10 +51,10 @@ enterprise_address = Address(
 )
 print(enterprise_address)
 
-print(" ")
-print("Staking enabled address:")
-print("Payment Derivation path: m/1852'/1815'/0'/0/0")
-print("Staking Derivation path: m/1852'/1815'/0'/2/0")
+# print(" ")
+# print("Staking enabled address:")
+# print("Payment Derivation path: m/1852'/1815'/0'/0/0")
+# print("Staking Derivation path: m/1852'/1815'/0'/2/0")
 
 staking_enabled_address = Address(
     payment_part=payment_skey.to_verification_key().hash(),
@@ -100,8 +100,10 @@ with open("../plutus.json", "r") as f:
     last_validator = list(last_validator)[0]
     forty_two_script = PlutusV3Script(cbor2.loads(bytes.fromhex(last_validator["compiledCode"])))
 print(f"Script: {last_validator['title']}")
+print(f"Hash: {last_validator['hash']}")
 
 script_hash = plutus_script_hash(forty_two_script)
+print(f"Script hash: {script_hash}")
 
 script_address = Address(script_hash, network = cardano_network)
 
@@ -120,7 +122,7 @@ def wait_for_tx(tx_id):
 
 def submit_tx(tx):
     print("############### Transaction created ###############")
-    print(tx)
+    # print(tx)
     print(tx.to_cbor_hex())
     print("############### Submitting transaction ###############")
     chain_context.submit_tx(tx)
@@ -132,7 +134,7 @@ def submit_tx(tx):
 
 @dataclass
 class IssueProof(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     c: int
     rr: int
     ros: List[int]
@@ -141,27 +143,27 @@ class IssueProof(PlutusData):
 
 @dataclass
 class OpenProof(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     dw: List[List[bytes]]
     ew: List[List[bytes]]
     c: List[int]
 
 @dataclass
 class Sign(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     r: int
     s: int
     r_g1: bytes
 
 @dataclass
 class Vcert(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     commit: List[bytes]
     signature: Sign
 
 @dataclass
 class BlindSignDatum(PlutusData):
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     iproof: IssueProof
     open: OpenProof
     vcerts: List[Vcert]
@@ -172,6 +174,10 @@ class BlindSignDatum(PlutusData):
     cw: List[bytes]
     commits_compressed: List[bytes]
 
+@dataclass
+class Redeem(PlutusData):
+    CONSTR_ID = 0
+    mode: int
 
 blindSignDtatum = BlindSignDatum(
     iproof=IssueProof(
@@ -280,161 +286,65 @@ blindSignDtatum = BlindSignDatum(
 
 datum_data = blindSignDtatum
 
-builder = TransactionBuilder(chain_context)
-builder.add_input_address(giver_address)
+def request_credential(chain_context, payment_skey, giver_address, script_address):
+    builder = TransactionBuilder(chain_context)
+    builder.add_input_address(giver_address)
 
-builder.add_output(TransactionOutput(script_address, 50000000, datum = datum_data))
+    datum_data = 1
 
-signed_tx = builder.build_and_sign([payment_skey], giver_address)
+    builder.add_output(TransactionOutput(script_address, 50000000, datum = datum_data))
 
-print("############### Transaction created ###############")
-print(signed_tx)
-print("############### Submitting transaction ###############")
-submit_tx(signed_tx)
-# 05a4443c9a70c9cbfb9d6a87ae39772a7b3bf5e166ab62d0aeec647d93143789
+    signed_tx = builder.build_and_sign([payment_skey], giver_address)
 
+    print("############### Submitting transaction ###############")
+    submit_tx(signed_tx)
+    # 616e05ae68b8befde5bf425aa95e1950a43d29e38a3f91936f74cecb2675fc9f
+# request_credential(chain_context, payment_skey, giver_address, script_address)
 # Todo: #2
 # Using datum from request credential UTXO
 # Create a transaction to issue blind sign + verify request credential = partial credential
 # Aggregate partial credentials into a full credential
 
+def issue_blind_sign(chain_context, payment_skey, script_address):
+    # Spend the utxo with datum 42 sitting at the script address
+    utxo_to_spend = None
+    for utxo in chain_context.utxos(script_address):
+        if utxo.input.transaction_id.to_primitive()==  bytes.fromhex("6bce32f4a9121b86617179651abe912487da05035367d64422ab2d4fef75470e"):
+            # print(utxo)
+            utxo_to_spend = utxo
+            break
+    print("utxo_to_spend", utxo_to_spend)
+
+    # # Find the reference script utxo
+    # reference_script_utxo = None
+    # for utxo in chain_context.utxos(giver_address):
+    #     if utxo.output.script and utxo.output.script == forty_two_script:
+    #         reference_script_utxo = utxo
+    #         break
+    # # print("reference_script_utxo", reference_script_utxo)
+
+   
+
+    taker_address = staking_enabled_address
+
+    redeemer = Redeemer(Redeem(mode=44), ExecutionUnits(10000000, 10000000))
+
+    print(f"Datum CBOR: {redeemer.to_cbor().hex()}")
+
+    builder = TransactionBuilder(chain_context)
+    builder.add_script_input(utxo_to_spend, script=forty_two_script, datum=None, redeemer=redeemer)
+    # builder.add_input_address(taker_address)
+
+    take_output = TransactionOutput(taker_address, 40123456)
+    builder.add_output(take_output)
+    builder.required_signers = [payment_skey.to_verification_key().hash()]
+    signed_tx = builder.build_and_sign([payment_skey], taker_address)
+
+    print("############### Submitting transaction ###############")
+    submit_tx(signed_tx)
+
+issue_blind_sign(chain_context, payment_skey, script_address)
 # Todo: #3
 # Using datum from blind sign UTXO
 # Create a transaction to verify full credential
 ###
-
-
-# @dataclass
-# class G2Point(PlutusData):
-#     CONSTR_ID = 1
-#     x: bytes
-#     y: bytes
-
-
-# @dataclass
-# class Sign(PlutusData):
-#     CONSTR_ID = 1
-#     r: int
-#     s: int
-#     r_g1: bytes
-
-# @dataclass
-# class Vcert(PlutusData):
-#     CONSTR_ID = 1
-#     commit: G2Point
-#     signature: Sign
-
-# @dataclass
-# class MyDatum(PlutusData):
-#     CONSTR_ID = 1
-#     vCert: List[Vcert]
-
-# @dataclass
-# class MyRedeemer(PlutusData):
-#     CONSTR_ID = 1
-#     iProof: IssueProof
-
-# sign1 = Sign(
-# r = 1405393218543153634611558277146205543651389828460482046569307751654236783901042705626443752376987448075822652265738,
-# s = 38202479084295088188067894688129388712852808125955621239765113527621075572534,
-# r_g1 = bytes.fromhex("89218ac9d46dbef17651a764dd5e0ee7414b040221e3d0f188642129acfea1a17862de38851b2483095449c4732d150a")# Convert pubkeyUncompress to bytes
-# )
-# vcert1 = Vcert(
-# commit = G2Point(
-#     x = bytes.fromhex("1669f6cef337b4373a0f3e6307c6cdfb44517a36e125d7866ee9e838f4f5455cca63ce114d25b62ae4e597dc78c4db45"),
-#     y = bytes.fromhex("170d8abb0611028477e44388db31dccbee44f308b8f5cd934727ede4202b807fe1e7ba3c0d7c0680c9213dd84a29576d")
-# ),
-# signature = sign1
-# )
-# sign2 = Sign(
-# r = 2552680529624568173590066327177950774551146809542008094226796730622167382728536331628983497397925589240933200869214,
-# s = 42372284252738667106345738865448192044614864058854813921958423275374058347560,
-# r_g1 = bytes.fromhex("9095c91e320d01fad00d33f26f19cfaa6e9d4a64a820bc2a854c72f3c72e3d47d55c418374daa130818e43c73a02b75e")  # Convert pubkeyUncompress to bytes
-# )
-
-# vcert2 = Vcert(
-#     commit = G2Point(
-#         x = bytes.fromhex("08f174c5102f45f9a4becc60fd8561d5948240ca3494830f20c143b4e116902bf633ebab064d90b920394a1588636aba"),
-#         y = bytes.fromhex("0e794a1e4e852485931858df9b034535078f94d6f68e4da286130dbef7d15d4cf5768718d703227c04dab741ef2b078e")
-#     ),
-#     signature = sign2
-# )
-
-# iproof = IssueProof(
-#     c = 111028293681481776174710511636606709440469689910069175151354337820721184534253,
-#     rr = 5050437177520903155847248449104124878646040665278897517070821451493842774601,
-#     ros = [
-#         49744196328279248815796712426546829894584294309244497450305853101602225222529,
-#         29782732702853354121904336237005215317539472786765989838419548536149186648559,
-#         3986513954939188089344606671398402557201798092878666912131712831328580791987,
-#         42926437779922011362364629289975177979465250943458230974890693324059432914956,
-#     ],
-#     total_rm = [
-#         [
-#             28570405751608929143275229779994869610628602755456909429086846981825913832910,              
-#             13507742991005023007096234598351915058180043055507780815574349619528610865134,
-#             26806696748710448407371037207606330670021875901994732626874438952060518010483,
-#             14337009862152980476725691075380459026334552202534707298997180022700568755898,
-#         ],
-#         [
-#             28570405751608929143275229779994869610628602755456909429086846981825913832910,
-#             45279309888158677857503732152612499548654948313017471839403896507493988578648,
-#             18631698991280989165794156185809282554249027473066654851015905870822852378043,          
-#         ],
-#     ],
-#     pubkeys = [
-#         bytes.fromhex("968cc0fcd3879a0b7b1f1f70fe60a7c5ea3aa45fcbb2d4963c5dec7b9efa5ec23be6ebf59f285d904d734afdf2f0147e"),
-#         bytes.fromhex("896b2e6fab0e737e1e299da5ea2cf9046883aaea3b4271bc0463f6cbe964be5b54f09325ee02caa704f7e71c03cd392a")
-#     ]
-# )
-
-# datum_data = MyDatum(vCert = [vcert1, vcert2])
-# redeemer_data = MyRedeemer(iProof = iproof)
-
-# # ----------- Send ADA to the script address ---------------
-# # builder = TransactionBuilder(chain_context)
-# # builder.add_input_address(giver_address)
-
-# # builder.add_output(TransactionOutput(script_address, 50000000, datum = 44))
-
-# # signed_tx = builder.build_and_sign([payment_skey], giver_address)
-
-# # print("############### Transaction created ###############")
-# # print(signed_tx)
-# # print("############### Submitting transaction ###############")
-# # submit_tx(signed_tx)
-
-# # ----------- Taker take ---------------
-# redeemer = Redeemer(44)
-
-# utxo_to_spend = None
-
-# # Spend the utxo with datum 42 sitting at the script address
-# for utxo in chain_context.utxos(script_address):
-#     if utxo.input.transaction_id.to_primitive()==  bytes.fromhex("fa2218001218f4b163752575bd4ec24d473fe373dd96e7d6eb9f074b5fbbbebb"):
-#         print(utxo)
-#         utxo_to_spend = utxo
-#         break
-# print("utxo_to_spend", utxo_to_spend)
-# # Find the reference script utxo
-# reference_script_utxo = None
-# for utxo in chain_context.utxos(giver_address):
-#     if utxo.output.script and utxo.output.script == forty_two_script:
-#         reference_script_utxo = utxo
-#         break
-# # print("reference_script_utxo", reference_script_utxo)
-# taker_address = staking_enabled_address
-
-# builder = TransactionBuilder(chain_context)
-# builder.add_script_input(utxo_to_spend, script=forty_two_script, redeemer=redeemer)
-
-# take_output = TransactionOutput(taker_address, 40123456)
-# builder.add_output(take_output)
-# builder.required_signers = [payment_skey.to_verification_key().hash()]
-# signed_tx = builder.build_and_sign([payment_skey], taker_address)
-
-# print("############### Transaction created ###############")
-# print(signed_tx)
-# print("############### Submitting transaction ###############")
-# submit_tx(signed_tx)
-# # 9ecd2676f167d7e91a9a23d56a349eb4c7ed3132b4bb45e96084503fff08ad15

@@ -238,6 +238,7 @@ def verify_pi_s(params, commitments, cm, prevParams, prevVcerts, proof, include_
         tmp = add(tmp, multiply(prevVcerts[i][0], c))
         Cw.append(tmp)
     print("------Cw: ", [get_g1_bytes(x) for x in Cw])
+    print("------hs: ", [get_g1_bytes(x) for x in hs])
     print("------c: ", c , to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw))
     return c == to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw)
 

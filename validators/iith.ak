@@ -31,6 +31,8 @@ pub type Redeemer {
   VerifyCred
 }
 
+// 44 for BlindSign, 45 for VerifyCred
+
 validator iith {
   spend(
     datum: Option<Data>,
