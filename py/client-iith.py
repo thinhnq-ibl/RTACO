@@ -327,10 +327,12 @@ def issue_blind_sign(chain_context, payment_skey, script_address):
 
     taker_address = staking_enabled_address
 
-    redeemer = Redeemer(Redeem(mode=44), ExecutionUnits(5000000, 1000000))
+    redeemer = Redeemer(Redeem(mode=44), ExecutionUnits(10000000, 10000000))
+
+    print(f"Datum CBOR: {redeemer.to_cbor().hex()}")
 
     builder = TransactionBuilder(chain_context)
-    builder.add_script_input(utxo_to_spend, script=forty_two_script, redeemer=redeemer)
+    builder.add_script_input(utxo_to_spend, script=forty_two_script, datum=None, redeemer=redeemer)
     # builder.add_input_address(taker_address)
 
     take_output = TransactionOutput(taker_address, 40123456)
