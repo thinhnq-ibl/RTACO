@@ -1,7 +1,7 @@
 import os
 from blockfrost import ApiUrls, BlockFrostApi
 from dotenv import load_dotenv
-from pycardano import Address, Network, crypto, ExtendedSigningKey, PlutusV3Script, TransactionBuilder, TransactionOutput, plutus_script_hash, BlockFrostChainContext, Redeemer, PlutusData, ExecutionUnits
+from pycardano import Address, Network, crypto, ExtendedSigningKey, PlutusV3Script, TransactionBuilder, TransactionId, TransactionOutput, plutus_script_hash, BlockFrostChainContext, Redeemer, PlutusData, ExecutionUnits
 import json
 import cbor2
 
@@ -149,13 +149,16 @@ class HelloWorldRedeemer(PlutusData):
 # print("############### Submitting transaction ###############")
 # submit_tx(signed_tx)
 # time.sleep(3)
-# 2f833683002f205a55e7cbdedf078c754a9308ad9013d511a4d1bd30d7b54a66
+# 47589b98de3b83ff24e92ba63597006cd5500bc110463eeeb8dd471cda08b8b0
 
 # ----------- Send ADA to the script address ---------------
 
 redeemer = Redeemer(HelloWorldRedeemer(msg=b"Hello, World!"), ExecutionUnits(1000000, 1000000))
 
-utxo_to_spend = chain_context.utxos(script_address)[0]
+utxo_to_spends = chain_context.utxos(script_address)
+
+print("UTXO to spend:", utxo_to_spends[0].input.transaction_id == TransactionId(bytearray.fromhex('b8c28236c58b0cce4eec71273734c6de2952614b50227988bb3626337205b4a3')))
+utxo_to_spend = [x for x in utxo_to_spends if x.input.transaction_id == TransactionId(bytearray.fromhex('47589b98de3b83ff24e92ba63597006cd5500bc110463eeeb8dd471cda08b8b0'))][0]
 
 builder = TransactionBuilder(chain_context)
 
