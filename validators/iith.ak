@@ -3,18 +3,10 @@ use cardano/transaction.{OutputReference, Transaction}
 use request.{IssueProof, OpenProof, Vcert, request_cred}
 use verify.{Theta, verify_cred}
 
-pub type OpenProof1 {
-  // g2 point list
-  dw: List<G2PointByteArray>,
-  // // g2 point list
-  ew: List<G2PointByteArray>,
-  c: List<Int>,
-}
-
 pub type BlindSignDatum {
   iproof: IssueProof,
   open: OpenProof,
-  // vcerts: List<Vcert>,
+  vcerts: List<Vcert>,
   cm_compressed: ByteArray,
   h_compressed: ByteArray,
   hs_compressed: List<ByteArray>,
@@ -54,6 +46,7 @@ validator iith {
         expect BlindSignDatum {
           iproof,
           open,
+          vcerts,
           cm_compressed,
           h_compressed,
           hs_compressed,
