@@ -106,7 +106,7 @@ const datum = Data.to(new Constr(0, [
     ]
   ]),
   new Constr(0, [
-    [
+      [
         [
           "b7d202145af60c01a1294e20a824ec0ff5a8bb3c8960a0862714fdad6f1d72afeb38c2ef9ede0efa80f4bc530e361c05",
           "12f07e97e697747ff1732948b6a9588f0502bc78d5ebcfbc0ccbd599f12fa73086711a758e32c29ed65671cc75a4b742",
@@ -120,7 +120,7 @@ const datum = Data.to(new Constr(0, [
           "13fb095a31ee0b02fb61b2e991027909810cd6140056cd47dc6ab5a8f8f9cdd48bf71683fe6315854992041cc5f32426",
         ],
       ],
-       [
+      [
         [
           "b21b44aa690efa4366df2bab175f0f29dd58f3f05848199f1870b9a857a20cc0de9d862a9e773f6c0733b7582a8d3dec",
           "0838b6c4c31121fc67a63f0a56f607cdbd9fbf6de1fbc81f89b2a0a2e967facc671c9e8bdf5341c5ab1b1b36e4a0618f",
@@ -131,39 +131,39 @@ const datum = Data.to(new Constr(0, [
         ],
         [
           "974932069a948e5776dd4d7928b26840a8188012ced6894a454552ddb6abf2b2dc946e56b8c493f7bec43fe5e69070f7",
-          "0a01382b44ed8653af6190c303009f2bf51f60eaa0f171fb3a24274515202d81baf143e4b17e276723a40574449af4e9", 
+          "0a01382b44ed8653af6190c303009f2bf51f60eaa0f171fb3a24274515202d81baf143e4b17e276723a40574449af4e9",
         ],
       ],
-        [
-            13804325079850457725627142957951104827873126539730078258784195038440940880392n,
-            11726514466030405860930521000683610778958399959004350468181692188389284878278n,
-            51432526391402064059818130005060767434915237470275281612051755280949532972757n,
-        ]
-  ]),
-  new Constr(0, [
-    new Constr(0, [
       [
-          "075320f826a216c87da892bfc8aaacd2a75f5ccdfa62b72de3491b0bf079201a2def1fc9f18234df324976fdaf267870",
-          "112bdf0ec3b461ae5bf50d9d0cde259cfdaa4789a6a7595dc3a37a76d6bc7c11d14cfb7528a60ea753bba5e501af4d5a",
-      ],
-      new Constr(0, [
-        1947564745249895947708144629914312558157305610980073189304752255321217468940n,
-        17355617863143591184525546256817223357573510192270296979117455415910592064385n,
-        "aca7513f4288ab39cdb45202f54678d9bd5d815b52295dc7f22b16c7572e13b93d96b6837288a909d801ce61a638f03e"
-      ])
-    ]),
-    new Constr(0, [
-      [
-          "03324843cb50de5ba1dc8202d2f122a079857340727e63ad1227c3c9068acbd6039d452a6cf8b49405bd895c528582f3",
-          "19de1c7c436db928c356fc685aa32832ade4583760476d176f366c0fd5b92d4b93256afd144d2f815abd721d497d2aee",
-      ],
-      new Constr(0, [
-          39242849399519616818347640470952861182994276616289466762894647982549458393534809915388538121180076697345644595416192308475n,
-          30161833219843676097829195363654408677477538928028790969163359605163750361918n,
-          "b97f20c47b4d12e53f6cb898067b63532e53c906b200f2638db569a7d50977a7fbb53609e324b65a9934b3d08960d4fb"
-      ])
-    ])
+          13804325079850457725627142957951104827873126539730078258784195038440940880392n,
+          11726514466030405860930521000683610778958399959004350468181692188389284878278n,
+          51432526391402064059818130005060767434915237470275281612051755280949532972757n,
+      ]
   ]),
+  // new Constr(0, [
+  //   new Constr(0, [
+  //     [
+  //         "075320f826a216c87da892bfc8aaacd2a75f5ccdfa62b72de3491b0bf079201a2def1fc9f18234df324976fdaf267870",
+  //         "112bdf0ec3b461ae5bf50d9d0cde259cfdaa4789a6a7595dc3a37a76d6bc7c11d14cfb7528a60ea753bba5e501af4d5a",
+  //     ],
+  //     new Constr(0, [
+  //       1947564745249895947708144629914312558157305610980073189304752255321217468940n,
+  //       17355617863143591184525546256817223357573510192270296979117455415910592064385n,
+  //       "aca7513f4288ab39cdb45202f54678d9bd5d815b52295dc7f22b16c7572e13b93d96b6837288a909d801ce61a638f03e"
+  //     ])
+  //   ]),
+  //   new Constr(0, [
+  //     [
+  //         "03324843cb50de5ba1dc8202d2f122a079857340727e63ad1227c3c9068acbd6039d452a6cf8b49405bd895c528582f3",
+  //         "19de1c7c436db928c356fc685aa32832ade4583760476d176f366c0fd5b92d4b93256afd144d2f815abd721d497d2aee",
+  //     ],
+  //     new Constr(0, [
+  //         39242849399519616818347640470952861182994276616289466762894647982549458393534809915388538121180076697345644595416192308475n,
+  //         30161833219843676097829195363654408677477538928028790969163359605163750361918n,
+  //         "b97f20c47b4d12e53f6cb898067b63532e53c906b200f2638db569a7d50977a7fbb53609e324b65a9934b3d08960d4fb"
+  //     ])
+  //   ])
+  // ]),
   "b3ff7f0d403bd9735aaaf54e14ab8409766572dd7343a04703e764fec9be90a082d7a5c2b92b9fca149412e982db8efd",
   "b8ed5b8f9dc605471fd4a9d373318d0a4b230722169aacdeda85a6ad0c0c3ebfe6fa58a16b062086368437cf8d45f185",
   [
@@ -182,16 +182,16 @@ const datum = Data.to(new Constr(0, [
       "b0b3013fd69e7d201c862e9e4e5308ba7d4d39a2a602c384660a0cfbddb09dc5c167a2d07ee02f8e73b9a996012b5992",
   ]
 ]));
-const redeemer = Data.to(new Constr(0, [])); // Redeemer for the script, can be empty or contain specific data
 
 // Removed TypeScript type alias, only keep DatumType as the schema object
 const DatumType = DatumSchema;
 
 const scriptAddress = await validatorToAddress("Preprod", spendingValidator);
 
-console.log("Script address:", scriptAddress);
+// console.log("Script address:", scriptAddress);
 
 let lockFund = async () => {
+  console.log("Locking funds...");
   const tx = await lucid
     .newTx()
     .pay.ToContract(
@@ -203,18 +203,17 @@ let lockFund = async () => {
 
   const signedTx = await tx.sign.withWallet().complete();
 
-  // const txHash = await signedTx.submit();
-  // console.log("Transaction submitted successfully:", txHash);
+  const txHash = await signedTx.submit();
+  console.log("Transaction submitted successfully:", txHash);
+  // 14d4e1087a0780315ce3447384ef4386f81b3e06a41536d2f8da3a6c5981a573
 };
 
-let spendFund = async (publicKeyHash, spend_val) => {
+let spendFund = async (publicKeyHash, spend_val, tx_id) => {
+  console.log("Spending funds...");
   // Find the UTxO we want to spend
   const allUTxOs = await lucid.utxosAt(scriptAddress);
   const ownerUTxO = allUTxOs.find((utxo) => {
-    if (utxo.datum) {
-      const datum = Data.from(utxo.datum, DatumType);
-      return datum.owner === publicKeyHash;
-    }
+    return utxo.txHash == tx_id
   });
 
   console.log("Owner UTxO:", ownerUTxO);
@@ -223,6 +222,8 @@ let spendFund = async (publicKeyHash, spend_val) => {
     console.error("No UTxO found for the owner.");
     return;
   }
+
+  const redeemer = Data.to(new Constr(0, [])); // Redeemer for the script, can be empty or contain specific data
 
   // Spend script UTxO
   const tx = await lucid
@@ -238,5 +239,5 @@ let spendFund = async (publicKeyHash, spend_val) => {
   console.log("Transaction submitted successfully:", txHash);
 };
 
-lockFund();
-// spendFund(pubKeyHash, spendingValidator);
+// lockFund();
+spendFund(pubKeyHash, spendingValidator, "f31459c16a72c5006d90fa2d216d08643e21deeb261a2af99840b0c85b862441");
