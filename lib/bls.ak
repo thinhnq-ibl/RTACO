@@ -311,7 +311,7 @@ pub fn int_to_binary256(int_value: Int) -> ByteArray {
   bytearray.from_int_big_endian(int_value, 48)
 }
 
-pub fn list_compressed_to_g1(list: List<ByteArray>) -> List<G1Element> {
+pub fn list_compressed_to_g1(list: List<G1PointByteArray>) -> List<G1Element> {
   let first = head(list)
   if is_none(first) {
     []

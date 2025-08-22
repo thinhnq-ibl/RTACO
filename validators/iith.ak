@@ -54,19 +54,18 @@ validator iith {
           cw,
           commits_compressed,
         } = data
-        True
+        request_cred(
+          iproof,
+          open,
+          vcerts,
+          cm_compressed,
+          h_compressed,
+          hs_compressed,
+          include_indexes,
+          cw,
+          commits_compressed,
+        )
       }
-      //     request_cred(
-      //       iproof,
-      //       open,
-      //       vcerts,
-      //       cm_compressed,
-      //       h_compressed,
-      //       hs_compressed,
-      //       include_indexes,
-      //       cw,
-      //       commits_compressed,
-      //     )
       VerifyCred -> True
     }
     // when redeemer is {
