@@ -240,4 +240,4 @@ let spendFund = async (publicKeyHash, spend_val, tx_id) => {
 };
 
 // lockFund();
-spendFund(pubKeyHash, spendingValidator, "4834f473c2909cd9274b163a2f3350fef775e147c0cdb78890a2813e4f62bbfd");
+spendFund(pubKeyHash, spendingValidator, "345c95a94db5c62da52c95271cfcbe9c60b8c5e4a6362b2ede1fcc2bef9eb057");

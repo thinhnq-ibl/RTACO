@@ -66,26 +66,21 @@ validator iith {
           commits_compressed,
         )
       }
-      VerifyCred -> True
+      VerifyCred -> {
+        expect Some(data) = datum
+        expect VerifyCredDatum {
+          theta,
+          aggr,
+          alpha,
+          aw,
+          beta,
+          disclose_attr,
+          timestamp,
+          hs,
+        } = data
+        verify_cred(theta, aggr, alpha, aw, beta, disclose_attr, timestamp, hs)
+      }
     }
-    // when redeemer is {
-    //   BlindSign -> {
-    //   }
-    //   VerifyCred -> {
-    //     expect Some(data) = datum
-    //     expect VerifyCredDatum {
-    //       theta,
-    //       aggr,
-    //       alpha,
-    //       aw,
-    //       beta,
-    //       disclose_attr,
-    //       timestamp,
-    //       hs,
-    //     } = data
-    //     verify_cred(theta, aggr, alpha, aw, beta, disclose_attr, timestamp, hs)
-    //   }
-    // }
   }
 
   else(_) {
