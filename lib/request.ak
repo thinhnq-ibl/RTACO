@@ -304,7 +304,7 @@ pub fn request_cred(
       cw,
     )
   let result3 = check_open_proof(h_compressed, hs_compressed, open_proof)
-  result1
+  result1 && result2 && result3
 }
 
 test request_cred_test() {
