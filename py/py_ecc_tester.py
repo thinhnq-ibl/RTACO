@@ -231,7 +231,7 @@ def verify_pi_s(params, commitments, cm, prevParams, prevVcerts, proof, include_
     for i in range(len(total_rm) - 1):
         _, ttp_g, _, ttp_hs = prevParams[i]
         tmp = multiply(ttp_g, total_rm[i][-1])
-        print("------combine_hs[j]: ", [get_g1_bytes(x) for x in ttp_hs])
+        print("------combine_hs: ", [get_g1_bytes(x) for x in ttp_hs])
         for j in range(len(total_rm[i])-1):
             tmp = add(tmp, multiply(ttp_hs[j], total_rm[i][j]))
         tmp = add(tmp, multiply(prevVcerts[i][0], c))

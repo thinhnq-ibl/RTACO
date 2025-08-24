@@ -1,4 +1,3 @@
-use bls.{G2PointByteArray}
 use cardano/transaction.{OutputReference, Transaction}
 use request.{IssueProof, OpenProof, Vcert, request_cred}
 use verify.{Theta, verify_cred}
@@ -19,12 +18,12 @@ pub type BlindSignDatum {
 pub type VerifyCredDatum {
   theta: Theta,
   aggr: ByteArray,
-  alpha: G2PointByteArray,
-  aw: G2PointByteArray,
-  beta: List<G2PointByteArray>,
+  alpha: List<ByteArray>,
+  aw: List<ByteArray>,
+  beta: List<List<ByteArray>>,
   disclose_attr: List<Int>,
   timestamp: Int,
-  hs: List<ByteArray>,
+  hs_compressed: List<ByteArray>,
 }
 
 pub type Redeemer {
@@ -79,9 +78,18 @@ validator iith {
           beta,
           disclose_attr,
           timestamp,
-          hs,
+          hs_compressed,
         } = data
-        verify_cred(theta, aggr, alpha, aw, beta, disclose_attr, timestamp, hs)
+        verify_cred(
+          theta,
+          aggr,
+          alpha,
+          aw,
+          beta,
+          disclose_attr,
+          timestamp,
+          hs_compressed,
+        )
       }
     }
   }

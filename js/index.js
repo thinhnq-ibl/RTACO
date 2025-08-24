@@ -251,4 +251,4 @@ let spendFund = async (publicKeyHash, spend_val, tx_id) => {
 };
 
 // lockFund();
-spendFund(pubKeyHash, spendingValidator, "cc2a8f1125a7fdc1b26430af87db542127a179013a54b6804f0ff46f0474330b");
+// spendFund(pubKeyHash, spendingValidator, "cc2a8f1125a7fdc1b26430af87db542127a179013a54b6804f0ff46f0474330b");
