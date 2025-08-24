@@ -57,9 +57,7 @@ pub fn group_pairing(g1: G1Element, g2: G2Element) {
 /// G2Element - The compressed BLS12_381 signature for the given message.
 pub fn sign(sk: ByteArray, message: ByteArray) -> G2Element {
   let s = bytearray_to_integer(True, sk)
-
   let hash = bls12_381_g2_hash_to_group(message, dst_basic_G2)
-  trace hash
   bls12_381_g2_scalar_mul(s, hash)
 }
 

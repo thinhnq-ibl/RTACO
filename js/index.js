@@ -71,8 +71,9 @@ const BlindSignDatum = Data.Object({
     h_compressed: Data.Bytes(),
     hs_compressed: Data.Array(Data.Bytes()),
     include_indexes: Data.Array(Data.Array(Data.Integer())),
-    cw: Data.Array(Data.Bytes()),
+    combine_hs_compressed: Data.Array(Data.Array(Data.Bytes())),
     commits_compressed: Data.Array(Data.Bytes()),
+    combine_commits_compressed: Data.Array(Data.Bytes()),
 });
 
 const DatumSchema = BlindSignDatum
@@ -174,13 +175,23 @@ const datum = Data.to(new Constr(0, [
       [0n, 0n, 1n, 0n], [0n, 1n, 0n]
   ],
   [
-      "8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de",
-      "b33f8d0af6f8a5def6c26579645803e9d12cd4498ca4be50179566c5cdce4493fd36ee62b2016ad9ffb3b1e4f5ef5bef",
+    [
+      "afcccdf181372ae095c90ab978b2644ea70a26a9882f958f4b444198526a08df0ac0d2f3a22def8fe9bc90dd6c026fc3",
+      "a96a8434d5128874888977d279af969e6de98ff9d4abd5a640dd8ab425db07c0d7fa89c49681b7dc39f14de669cd2482",
+      "a8bd2ff8845790d820c3c180fc29cf57545cf5d37db7eb06cf0a0d4ae2f8fa32bcce4fe84828ab57126658c40402761f",
+    ],
+    [
+      "86fa463aeca16b8a4b40983734410be0108e1d708fde32ca51eae6b971f6cd24555b7372a7a84238ab1941205a8b2c4d",
+      "9728604cdc4edd3950b0b9c815a7f08cdd9bf2983b9a049b79c1150036ae0c9b036c3000b291c805942d2bfc741cc5f3",
+    ],
   ],
   [
       "83a30f27817b9a06550b8d7f81b5594281f35259660f30c9ebf4b09a7a249c644ab2918432e90b0d0c2887f25f14aceb",
       "b0b3013fd69e7d201c862e9e4e5308ba7d4d39a2a602c384660a0cfbddb09dc5c167a2d07ee02f8e73b9a996012b5992",
-  ]
+  ],[
+      "a75320f826a216c87da892bfc8aaacd2a75f5ccdfa62b72de3491b0bf079201a2def1fc9f18234df324976fdaf267870",
+      "a3324843cb50de5ba1dc8202d2f122a079857340727e63ad1227c3c9068acbd6039d452a6cf8b49405bd895c528582f3",
+    ]
 ]));
 
 // Removed TypeScript type alias, only keep DatumType as the schema object
@@ -240,4 +251,4 @@ let spendFund = async (publicKeyHash, spend_val, tx_id) => {
 };
 
 // lockFund();
-spendFund(pubKeyHash, spendingValidator, "345c95a94db5c62da52c95271cfcbe9c60b8c5e4a6362b2ede1fcc2bef9eb057");
+spendFund(pubKeyHash, spendingValidator, "cc2a8f1125a7fdc1b26430af87db542127a179013a54b6804f0ff46f0474330b");

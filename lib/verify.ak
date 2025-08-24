@@ -53,7 +53,6 @@ pub fn verify_cred(
   expect Some(sigma_last) = list.last(theta.sigma)
   let coord1 = h
   let coord2 = g1.add(sigma_last, theta.nu)
-  trace aggr
   let aggr_point =
     if aggr != #"" {
       g2.decompress(aggr)
