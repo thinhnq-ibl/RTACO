@@ -1,55 +1,55 @@
-use bls.{Sign}
-use cardano/transaction.{OutputReference, Transaction, placeholder}
-use request.{IssueProof, OpenProof, Vcert, request_cred}
+// use bls.{Sign}
+// use cardano/transaction.{OutputReference, Transaction, placeholder}
+// use request.{IssueProof, OpenProof, Vcert, request_cred}
 
-pub type Datum {
-  iproof: IssueProof,
-  open: OpenProof,
-  vcerts: List<Vcert>,
-  cm_compressed: ByteArray,
-  h_compressed: ByteArray,
-  hs_compressed: List<ByteArray>,
-  include_indexes: List<List<Int>>,
-  cw: List<ByteArray>,
-  commits_compressed: List<ByteArray>,
-}
+// pub type Datum {
+//   iproof: IssueProof,
+//   open: OpenProof,
+//   vcerts: List<Vcert>,
+//   cm_compressed: ByteArray,
+//   h_compressed: ByteArray,
+//   hs_compressed: List<ByteArray>,
+//   include_indexes: List<List<Int>>,
+//   list_hs_compressed: List<List<ByteArray>>,
+//   commits_compressed: List<ByteArray>,
+// }
 
-validator verify_vcert {
-  spend(
-    datum: Option<Data>,
-    _redeemer: Data,
-    _utxo: OutputReference,
-    _self: Transaction,
-  ) {
-    expect Some(data) = datum
-    expect Datum {
-      iproof,
-      open,
-      vcerts,
-      cm_compressed,
-      h_compressed,
-      hs_compressed,
-      include_indexes,
-      cw,
-      commits_compressed,
-    } = data
-    request_cred(
-      iproof,
-      open,
-      vcerts,
-      cm_compressed,
-      h_compressed,
-      hs_compressed,
-      include_indexes,
-      cw,
-      commits_compressed,
-    )
-  }
+// validator verify_vcert {
+//   spend(
+//     datum: Option<Data>,
+//     _redeemer: Data,
+//     _utxo: OutputReference,
+//     _self: Transaction,
+//   ) {
+//     expect Some(data) = datum
+//     expect Datum {
+//       iproof,
+//       open,
+//       vcerts,
+//       cm_compressed,
+//       h_compressed,
+//       hs_compressed,
+//       include_indexes,
+//       list_hs_compressed,
+//       commits_compressed,
+//     } = data
+//     request_cred(
+//       iproof,
+//       open,
+//       vcerts,
+//       cm_compressed,
+//       h_compressed,
+//       hs_compressed,
+//       include_indexes,
+//       list_hs_compressed,
+//       commits_compressed,
+//     )
+//   }
 
-  else(_) {
-    fail
-  }
-}
+//   else(_) {
+//     fail
+//   }
+// }
 // todo
 // test verify_vcert_test() {
 //   let iproof =

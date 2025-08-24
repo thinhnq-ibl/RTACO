@@ -225,19 +225,18 @@ def verify_pi_s(params, commitments, cm, prevParams, prevVcerts, proof, include_
     print("------cm: ", get_g1_bytes(cm))
     # re-compute witnesses commitments
     Aw = [add(multiply(commitments[i], c), add(multiply(g1, ros[i]), multiply(h, rm[i])))for i in range(len(commitments))]
-    print("------Aw: ", [get_g1_bytes(x) for x in Aw])
     Bw = add(multiply(cm, c), add(multiply(g1, rr), ec_sum([multiply(hs[i], rm[i]) for i in range(len(rm))])))
-    print("------Bw: ", get_g1_bytes(Bw))
     Cw = []
     
     for i in range(len(total_rm) - 1):
         _, ttp_g, _, ttp_hs = prevParams[i]
         tmp = multiply(ttp_g, total_rm[i][-1])
+        print("------combine_hs[j]: ", [get_g1_bytes(x) for x in ttp_hs])
         for j in range(len(total_rm[i])-1):
             tmp = add(tmp, multiply(ttp_hs[j], total_rm[i][j]))
         tmp = add(tmp, multiply(prevVcerts[i][0], c))
+        print("------combine_commitment: ", get_g1_bytes(prevVcerts[i][0]))
         Cw.append(tmp)
-    print("------Cw: ", [get_g1_bytes(x) for x in Cw])
     print("------hs: ", [get_g1_bytes(x) for x in hs])
     print("------c: ", c , to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw))
     return c == to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw)

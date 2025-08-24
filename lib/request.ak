@@ -59,7 +59,6 @@ fn check_vcert_item(vcerts: List<Vcert>, pks: List<G1Element>) -> Bool {
         concat(commit_h, commit_l),
       )
     if check_result == False {
-      trace first_vcert_.commit
       False
     } else {
       expect Some(tail_vcerts_) = tail(vcerts)
@@ -165,17 +164,19 @@ pub fn check_issue_proof(
   commits_compressed: List<G1PointByteArray>,
   proof: IssueProof,
   include_indexes: List<List<Int>>,
-  cw_bytes: List<G1PointByteArray>,
+  list_hs_compressed: List<List<G1PointByteArray>>,
+  combine_commits_compressed: List<G1PointByteArray>,
 ) {
   let rm = get_rm(proof.total_rm, include_indexes)
   let commits = list_bytearray_to_g1(commits_compressed)
+  let combine_commits = list_bytearray_to_g1(combine_commits_compressed)
   let hs = list_bytearray_to_g1(hs_compressed)
   let h = g1.decompress(h_compressed)
   let cm = g1.decompress(cm_compressed)
   let aw = calculate_Aw(commits, proof.c, proof.ros, h, rm)
   let bw = calculate_Bw(proof.c, proof.rr, rm, cm, hs)
-  // let cw = calculate_Cw(proof.total_rm, commits, proof.c, hs)
-  let cw = list_bytearray_to_g1(cw_bytes)
+  let list_hs = list.map(list_hs_compressed, list_bytearray_to_g1)
+  let cw = calculate_Cw(proof.total_rm, combine_commits, proof.c, list_hs)
   proof.c == from_bytearray_big_endian(
     to_challenge_issue(cm, h, bw, hs, aw, cw),
   ) % scalar.field_prime
@@ -195,6 +196,11 @@ test check_issue_proof_test() {
     [
       #"83a30f27817b9a06550b8d7f81b5594281f35259660f30c9ebf4b09a7a249c644ab2918432e90b0d0c2887f25f14aceb",
       #"b0b3013fd69e7d201c862e9e4e5308ba7d4d39a2a602c384660a0cfbddb09dc5c167a2d07ee02f8e73b9a996012b5992",
+    ]
+  let combine_commits_compressed =
+    [
+      #"a75320f826a216c87da892bfc8aaacd2a75f5ccdfa62b72de3491b0bf079201a2def1fc9f18234df324976fdaf267870",
+      #"a3324843cb50de5ba1dc8202d2f122a079857340727e63ad1227c3c9068acbd6039d452a6cf8b49405bd895c528582f3",
     ]
   let proof =
     IssueProof {
@@ -225,10 +231,22 @@ test check_issue_proof_test() {
     }
 
   let include_indexes = [[0, 0, 1, 0], [0, 1, 0]]
-  let cw =
+  // let cw =
+  //   [
+  //     #"8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de",
+  //     #"b33f8d0af6f8a5def6c26579645803e9d12cd4498ca4be50179566c5cdce4493fd36ee62b2016ad9ffb3b1e4f5ef5bef",
+  //   ]
+  let list_hs =
     [
-      #"8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de",
-      #"b33f8d0af6f8a5def6c26579645803e9d12cd4498ca4be50179566c5cdce4493fd36ee62b2016ad9ffb3b1e4f5ef5bef",
+      [
+        #"afcccdf181372ae095c90ab978b2644ea70a26a9882f958f4b444198526a08df0ac0d2f3a22def8fe9bc90dd6c026fc3",
+        #"a96a8434d5128874888977d279af969e6de98ff9d4abd5a640dd8ab425db07c0d7fa89c49681b7dc39f14de669cd2482",
+        #"a8bd2ff8845790d820c3c180fc29cf57545cf5d37db7eb06cf0a0d4ae2f8fa32bcce4fe84828ab57126658c40402761f",
+      ],
+      [
+        #"86fa463aeca16b8a4b40983734410be0108e1d708fde32ca51eae6b971f6cd24555b7372a7a84238ab1941205a8b2c4d",
+        #"9728604cdc4edd3950b0b9c815a7f08cdd9bf2983b9a049b79c1150036ae0c9b036c3000b291c805942d2bfc741cc5f3",
+      ],
     ]
   check_issue_proof(
     cm_compressed,
@@ -237,7 +255,8 @@ test check_issue_proof_test() {
     commits_compressed,
     proof,
     include_indexes,
-    cw,
+    list_hs,
+    combine_commits_compressed,
   )
 }
 
@@ -289,8 +308,9 @@ pub fn request_cred(
   h_compressed: G1PointByteArray,
   hs_compressed: List<G1PointByteArray>,
   include_indexes: List<List<Int>>,
-  cw: List<G1PointByteArray>,
+  combine_hs_compressed: List<List<G1PointByteArray>>,
   commits_compressed: List<G1PointByteArray>,
+  combine_commits_compressed: List<G1PointByteArray>,
 ) {
   let result1 = check_vcerts(proof, vcerts)
   let result2 =
@@ -301,7 +321,8 @@ pub fn request_cred(
       commits_compressed,
       proof,
       include_indexes,
-      cw,
+      combine_hs_compressed,
+      combine_commits_compressed,
     )
   let result3 = check_open_proof(h_compressed, hs_compressed, open_proof)
   result1 && result2 && result3
@@ -406,16 +427,33 @@ test request_cred_test() {
       #"865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c",
     ]
   let include_indexes = [[0, 0, 1, 0], [0, 1, 0]]
-  let cw =
-    [
-      #"8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de",
-      #"b33f8d0af6f8a5def6c26579645803e9d12cd4498ca4be50179566c5cdce4493fd36ee62b2016ad9ffb3b1e4f5ef5bef",
-    ]
 
+  // let cw =
+  //   [
+  //     #"8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de",
+  //     #"b33f8d0af6f8a5def6c26579645803e9d12cd4498ca4be50179566c5cdce4493fd36ee62b2016ad9ffb3b1e4f5ef5bef",
+  //   ]
   let commits =
     [
       #"83a30f27817b9a06550b8d7f81b5594281f35259660f30c9ebf4b09a7a249c644ab2918432e90b0d0c2887f25f14aceb",
       #"b0b3013fd69e7d201c862e9e4e5308ba7d4d39a2a602c384660a0cfbddb09dc5c167a2d07ee02f8e73b9a996012b5992",
+    ]
+  let combine_commits =
+    [
+      #"a75320f826a216c87da892bfc8aaacd2a75f5ccdfa62b72de3491b0bf079201a2def1fc9f18234df324976fdaf267870",
+      #"a3324843cb50de5ba1dc8202d2f122a079857340727e63ad1227c3c9068acbd6039d452a6cf8b49405bd895c528582f3",
+    ]
+  let list_hs =
+    [
+      [
+        #"afcccdf181372ae095c90ab978b2644ea70a26a9882f958f4b444198526a08df0ac0d2f3a22def8fe9bc90dd6c026fc3",
+        #"a96a8434d5128874888977d279af969e6de98ff9d4abd5a640dd8ab425db07c0d7fa89c49681b7dc39f14de669cd2482",
+        #"a8bd2ff8845790d820c3c180fc29cf57545cf5d37db7eb06cf0a0d4ae2f8fa32bcce4fe84828ab57126658c40402761f",
+      ],
+      [
+        #"86fa463aeca16b8a4b40983734410be0108e1d708fde32ca51eae6b971f6cd24555b7372a7a84238ab1941205a8b2c4d",
+        #"9728604cdc4edd3950b0b9c815a7f08cdd9bf2983b9a049b79c1150036ae0c9b036c3000b291c805942d2bfc741cc5f3",
+      ],
     ]
   request_cred(
     proof,
@@ -425,8 +463,9 @@ test request_cred_test() {
     h_compressed,
     hs_compressed,
     include_indexes,
-    cw,
+    list_hs,
     commits,
+    combine_commits,
   )
 }
 
@@ -567,7 +606,6 @@ test calculate_Aw_test() {
       ),
     ]
   let result = calculate_Aw(commitments, c, ros, h_point, rm)
-  // trace result
   head(result) == head(aw) && tail(result) == tail(aw)
 }
 
@@ -641,7 +679,6 @@ test calculate_Bw_test() {
       #"87c87c8e20b91ebe8ba0f69391936c732f50cc987028841e38ac77a3fc98a55c01f6edb73b42e7359a03b48834a68c92",
     )
   let result = calculate_Bw(c, rr, rm, cm_point, hs)
-  // trace result
   result == bw
 }
 
@@ -666,11 +703,85 @@ pub fn calculate_Bw_item(
 
 pub fn calculate_Cw(
   total_rm: List<List<Int>>,
-  commits: List<G1Element>,
+  combine_commits: List<G1Element>,
   c: Int,
-  hs: List<G1Element>,
+  list_hs: List<List<G1Element>>,
 ) -> List<G1Element> {
-  calculate_Cw_item(total_rm, commits, c, hs)
+  expect Some(total_rm_t) = list.init(total_rm)
+  calculate_Cw_item(total_rm_t, combine_commits, c, list_hs)
+}
+
+test calculate_Cw_test() {
+  let proof =
+    IssueProof {
+      c: 42535636952854378490874194418722333779152010990979182213475440387396116429547,
+      rr: 40675462214123865742431951389911046237865684117786381568714250885257348136441,
+      ros: [
+        47925282862226222643927521835608820926632670018838597296086614014727602246558,
+        21687859965734279473419411257190997575311278370788120793865541862802550871605,
+      ],
+      total_rm: [
+        [
+          50308106295266800020532960251996643677383528606831312922664123595083067330785,
+          5095311348487787861645372845191969718727204196912877257125842030966424005608,
+          24215618229245167673429987719866984434968409701328374910407976599467102132405,
+          23117088388493107445729512963030794110283280127530426202939187508228779289686,
+        ],
+        [
+          50308106295266800020532960251996643677383528606831312922664123595083067330785,
+          40928904529511035926773476820862854867207669516607935231354640227867095612728,
+          25499875010848260697670552620696378616666315278639900420553745755017069746308,
+        ],
+        [],
+      ],
+      pubkeys: [
+        #"a97b2135da7799823236baea87402c5cc00e3a61c99e9abf7c2d9c0c29d1c50fd5753e3076c5e3da091c861199ee72b7",
+        #"b51cc7408bc47ad537c29fef899a73b784de41c2063d5aac5248623f3db3dd4131e1cd9af902d49b28bc38819ffb48eb",
+      ],
+    }
+  let cw =
+    [
+      g1.decompress(
+        #"8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de",
+      ),
+      g1.decompress(
+        #"b33f8d0af6f8a5def6c26579645803e9d12cd4498ca4be50179566c5cdce4493fd36ee62b2016ad9ffb3b1e4f5ef5bef",
+      ),
+    ]
+  let list_hs =
+    [
+      [
+        #"afcccdf181372ae095c90ab978b2644ea70a26a9882f958f4b444198526a08df0ac0d2f3a22def8fe9bc90dd6c026fc3",
+        #"a96a8434d5128874888977d279af969e6de98ff9d4abd5a640dd8ab425db07c0d7fa89c49681b7dc39f14de669cd2482",
+        #"a8bd2ff8845790d820c3c180fc29cf57545cf5d37db7eb06cf0a0d4ae2f8fa32bcce4fe84828ab57126658c40402761f",
+      ],
+      [
+        #"86fa463aeca16b8a4b40983734410be0108e1d708fde32ca51eae6b971f6cd24555b7372a7a84238ab1941205a8b2c4d",
+        #"9728604cdc4edd3950b0b9c815a7f08cdd9bf2983b9a049b79c1150036ae0c9b036c3000b291c805942d2bfc741cc5f3",
+      ],
+    ]
+
+  let combine_commits =
+    [
+      g1.decompress(
+        #"a75320f826a216c87da892bfc8aaacd2a75f5ccdfa62b72de3491b0bf079201a2def1fc9f18234df324976fdaf267870",
+      ),
+      g1.decompress(
+        #"a3324843cb50de5ba1dc8202d2f122a079857340727e63ad1227c3c9068acbd6039d452a6cf8b49405bd895c528582f3",
+      ),
+    ]
+  let result =
+    calculate_Cw(
+      proof.total_rm,
+      combine_commits,
+      proof.c,
+      list.map(list_hs, list_bytearray_to_g1),
+    )
+  expect Some(result_head) = head(result)
+  expect Some(cw_head) = head(cw)
+  expect Some(result_tail) = tail(result)
+  expect Some(cw_tail) = tail(cw)
+  result_head == cw_head && result_tail == cw_tail
 }
 
 // todo
@@ -720,7 +831,6 @@ pub fn calculate_Cw(
 //       ),
 //     ]
 //   let result = calculate_Cw(total_rm, commits, c, hs)
-//   // trace result
 //   head(result) == head(cw) && tail(result) == tail(cw)
 // }
 
@@ -728,24 +838,27 @@ pub fn calculate_Cw_item(
   total_rm: List<List<Int>>,
   commits: List<G1Element>,
   c: Int,
-  hs: List<G1Element>,
+  list_hs: List<List<G1Element>>,
 ) -> List<G1Element> {
-  let commit_index = head(commits)
-  if is_none(commit_index) {
+  let first = head(total_rm)
+  if is_none(first) {
     []
   } else {
-    expect Some(first_) = head(total_rm)
-    expect Some(commit_index_) = commit_index
+    expect Some(commit_index) = head(commits)
     expect Some(c_sca) = scalar.new(c)
-    let tmp = g1.scale(commit_index_, c_sca)
+    expect Some(first_) = first
+    let tmp = g1.scale(commit_index, c_sca)
     expect Some(last_first_) = list.last(first_)
     expect Some(init_first_) = list.init(first_)
     expect Some(last_first_scalar) = scalar.new(last_first_)
+    expect Some(hs) = head(list_hs)
     let updated_tmp = g1.add(tmp, g1.scale(g1.generator, last_first_scalar))
     let first_item = calculate_Cw_hs(updated_tmp, hs, init_first_)
     expect Some(tail_rm_) = tail(total_rm)
     expect Some(tail_commits_) = tail(commits)
-    let tail_result = calculate_Cw_item(tail_rm_, tail_commits_, c, hs)
+    expect Some(tail_list_hs_) = tail(list_hs)
+    let tail_result =
+      calculate_Cw_item(tail_rm_, tail_commits_, c, tail_list_hs_)
     list.push(tail_result, first_item)
   }
 }
@@ -755,14 +868,13 @@ pub fn calculate_Cw_hs(
   hs: List<G1Element>,
   total_rm_elemnt: List<Int>,
 ) -> G1Element {
-  let first_hs = head(hs)
-  if is_none(first_hs) {
+  if list.is_empty(hs) {
     tmp
   } else {
-    expect Some(first_) = head(total_rm_elemnt)
-    expect Some(first_hs_) = first_hs
-    expect Some(first_hs_sca) = scalar.new(first_)
-    let sum_f = g1.add(tmp, g1.scale(first_hs_, first_hs_sca))
+    expect Some(first_rm) = head(total_rm_elemnt)
+    expect Some(first_hs_) = head(hs)
+    expect Some(first_rm_sca) = scalar.new(first_rm)
+    let sum_f = g1.add(tmp, g1.scale(first_hs_, first_rm_sca))
     expect Some(tail_rm_) = tail(total_rm_elemnt)
     expect Some(tail_hs_) = tail(hs)
     calculate_Cw_hs(sum_f, tail_hs_, tail_rm_)
