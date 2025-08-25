@@ -214,7 +214,6 @@ def verify_pi_s(params, commitments, cm, prevParams, prevVcerts, proof, include_
             if include_indexes[i][j] == 1:
                 rm.append(int(total_rm[i][j]))
     rm = rm + total_rm[-1]
-    print("------rm: ", rm)
     assert len(commitments) == len(ros)
     # re-compute h
     h = hashG1(to_binary256(cm))
@@ -226,11 +225,9 @@ def verify_pi_s(params, commitments, cm, prevParams, prevVcerts, proof, include_
     for i in range(len(total_rm) - 1):
         _, ttp_g, _, ttp_hs = prevParams[i]
         tmp = multiply(ttp_g, total_rm[i][-1])
-        print("------combine_hs: ", [get_g1_bytes(x) for x in ttp_hs])
         for j in range(len(total_rm[i])-1):
             tmp = add(tmp, multiply(ttp_hs[j], total_rm[i][j]))
         tmp = add(tmp, multiply(prevVcerts[i][0], c))
-        print("------combine_commitment: ", get_g1_bytes(prevVcerts[i][0]))
         Cw.append(tmp)
     return c == to_challenge([g1, g2, cm, h, Bw]+hs+Aw+Cw)
 

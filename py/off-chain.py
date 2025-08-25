@@ -206,8 +206,6 @@ print([c, rr, ros, total_rm, [get_g1_bytes(pk),get_g1_bytes(pk2)]])
 (c, rr, rs) = pi_o
 print("open proof", "dw", "ew", "c")
 print([get_list_g2_bytes(Dw), get_list_g2_bytes(Ew), c])
-# print("dw", get_list_g2_bytes(Dw))
-# print("ew", get_list_g2_bytes(Ew))
 
 print("list vcert")
 print(
@@ -226,6 +224,13 @@ print(
     ]
 )
 
+combine_hs = []
+combine_commitments = []
+for i in range(len(total_rm) - 1):
+    _, ttp_g, _, ttp_hs = prevParams[i]
+    combine_hs.append([get_g1_bytes(x) for x in ttp_hs])
+    combine_commitments.append(get_g1_bytes(prevVcerts[i][0]))
+
 print("cm_compressed",
   "h_compressed",
   "hs_compressed",
@@ -240,9 +245,9 @@ print([
     get_g1_bytes(h),
     get_list_g1_bytes(hs),
     include_indexes,
-    [],
+    combine_hs,
     get_list_g1_bytes(commitments),
-    []
+    combine_commitments
 ])
 
 pi_s = list(pi_s)
@@ -257,54 +262,40 @@ pi_s = tuple(pi_s)
 # print("cm_compressed", i2osp(compress_G1((send_cm[0], send_cm[1], FQO(1))),48).hex())
 # print("hs_compressed", [i2osp(compress_G1((hs[i][0].n, hs[i][1].n, FQO(1))),48).hex() for i in range(len(hs))])
 
-#h from cm
-
 # validator 1
 Lambda2 = (cm, commitments)
-# #print("sk", sk)
 blind_sig = BlindSignAttr(validator_params, sk[0], Lambda2, [])
 
 send_h = [blind_sig[0][0].n, blind_sig[0][1].n]
 send_t = [blind_sig[1][0].n, blind_sig[1][1].n]
-
-# print("send_h_compress: ", i2osp(compress_G1((send_h[0], send_h[1], FQO(1))),48).hex())
-# #print("send_t: ", send_t)
 
 h = (FQ(send_h[0]), FQ(send_h[1]))
 t = (FQ(send_t[0]), FQ(send_t[1]))
 
 blind_sig = (h, t)
 sigma = Unblind(validator_params, aggregate_vk, blind_sig, os)
-print("sigma: ", sigma)
 
 # validator 2
 # Lambda2 = (cm, commitments)
-# #print("sk", sk)
 blind_sig2 = BlindSignAttr(validator_params, sk[1], Lambda2, [])
 
 send_h2 = [blind_sig2[0][0].n, blind_sig2[0][1].n]
 send_t2 = [blind_sig2[1][0].n, blind_sig2[1][1].n]
-
-# #print("send_h: ", send_h2)
-# #print("send_t: ", send_t2)
 
 h2 = (FQ(send_h2[0]), FQ(send_h2[1]))
 t2 = (FQ(send_t2[0]), FQ(send_t2[1]))
 
 blind_sig2 = (h2, t2)
 sigma2 = Unblind(validator_params, aggregate_vk, blind_sig2, os)
-# #print("sigma: ", sigma)
 
 signs = []
 signs.append(sigma)
 signs.append(sigma2)
 
 aggr_sig = AggCred(validator_params, signs)
-# #print("aggr_sig: ", aggr_sig)
 
 credential["credential"] = aggr_sig
 verify_proof = verify_pi_s(validator_params, commitments, cm, prevParams, prevVcerts, pi_s_old, include_indexes)
-# print("Verify pi_s: ", verify_proof)
 
 disclose_index = [0,0]
 disclose_attr = []
@@ -315,17 +306,17 @@ encoded_public_m = []
 Theta, aggr = ProveCred(validator_params, aggregate_vk, aggr_sig, encoded_private_m, disclose_index, disclose_attr, disclose_attr_enc, encoded_public_m)
 (kappa, nu, rand_sig, proof, Aw, _timestamp) = Theta
 
-print("kappa", get_g2_bytes(kappa))
-print("nu", get_g1_bytes(nu))
-print("rand_sig", get_g1_bytes(rand_sig[0]), get_g1_bytes(rand_sig[1]))
-# print("proof", proof)
 (c, rm, rt) = proof
-print("c", c)
-print("rm", rm)
-print("rt", rt)
-print("aggr", aggr)
-print("_timestamp", _timestamp)
+print("Theta", "kappa", "nu", "sigma", "proof")
+print([
+    get_g2_bytes(kappa),
+    get_g1_bytes(nu),
+    [get_g1_bytes(rand_sig[0]),
+    get_g1_bytes(rand_sig[1])],
+    [c,rm, rt]
+])
 
+print("aggr", aggr)
 (g2, alpha, _, beta) = aggregate_vk
 print("alpha", get_g2_bytes(alpha))
 print("beta", get_list_g2_bytes(beta))
