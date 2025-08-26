@@ -428,11 +428,6 @@ test request_cred_test() {
     ]
   let include_indexes = [[0, 0, 1, 0], [0, 1, 0]]
 
-  // let cw =
-  //   [
-  //     #"8bf40d9b47562565fbe0bbbf2c12f0ea74da8be42010895d003c5f770cf757f18bbadd34e00e97dca0d9b2bf128738de",
-  //     #"b33f8d0af6f8a5def6c26579645803e9d12cd4498ca4be50179566c5cdce4493fd36ee62b2016ad9ffb3b1e4f5ef5bef",
-  //   ]
   let commits =
     [
       #"83a30f27817b9a06550b8d7f81b5594281f35259660f30c9ebf4b09a7a249c644ab2918432e90b0d0c2887f25f14aceb",
@@ -1005,4 +1000,11 @@ pub fn from_list_bytearray_to_G2_Point(g2_bytes: G2PointByteArray) -> G2Element 
   expect Some(g2_h) = head(g2_bytes)
   expect Some(g2_l) = last(g2_bytes)
   g2.decompress(concat(g2_h, g2_l))
+}
+
+pub fn pubkey_contains(
+  pubkeys: List<G1PointByteArray>,
+  all_pubkeys: List<G1PointByteArray>,
+) -> Bool {
+  list.all(pubkeys, fn(pk) { list.has(all_pubkeys, pk) })
 }
