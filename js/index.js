@@ -230,7 +230,6 @@ let lockFund = async () => {
   console.log("Locking funds...");
   const tx = await lucid
     .newTx()
-    .readFrom(utxos)
     .pay.ToContract(
       scriptAddress,
       { kind: "inline", value: datum },
@@ -284,4 +283,4 @@ let spendFund = async (publicKeyHash, spend_val, tx_id, ref_tx, ref_index) => {
 
 // oracle()
 // lockFund();
-spendFund(pubKeyHash, spendingValidator, "42169fceb4b0f4ca2a3159cef6f6945f96f74d4bb932c701f9480a2baec1f4cb", "07962753a8b4a2473056c16542d3efa66ff841b757cba45720397a99751bc976", 0);
+spendFund(pubKeyHash, spendingValidator, "cd3e99e516501b82d7df63c78e3340f4eec5ef890bfdf85d22acb3b0d571039f", "4214aaea8aeeb51590e42de8188ceacf9d56c8176f065a61fcfcfb466e798191", 0);
