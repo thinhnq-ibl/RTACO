@@ -273,6 +273,7 @@ h = (FQ(send_h[0]), FQ(send_h[1]))
 t = (FQ(send_t[0]), FQ(send_t[1]))
 
 blind_sig = (h, t)
+print("blind_sig", get_g1_bytes(h), get_g1_bytes(t))
 sigma = Unblind(validator_params, aggregate_vk, blind_sig, os)
 
 # validator 2
@@ -286,6 +287,7 @@ h2 = (FQ(send_h2[0]), FQ(send_h2[1]))
 t2 = (FQ(send_t2[0]), FQ(send_t2[1]))
 
 blind_sig2 = (h2, t2)
+print("blind_sig2",  get_g1_bytes(h2), get_g1_bytes(t2))
 sigma2 = Unblind(validator_params, aggregate_vk, blind_sig2, os)
 
 signs = []
