@@ -1,6 +1,11 @@
-use cardano/transaction.{OutputReference, Transaction}
-use request.{IssueProof, OpenProof, Vcert, request_cred}
+use aiken/collection/list
+use cardano/transaction.{InlineDatum, OutputReference, Transaction}
+use request.{IssueProof, OpenProof, Vcert, pubkey_contains, request_cred}
 use verify.{Theta, verify_cred}
+
+pub type CADatum {
+  pubkeys: List<ByteArray>,
+}
 
 pub type BlindSignDatum {
   iproof: IssueProof,
@@ -38,7 +43,7 @@ validator iith {
     datum: Option<Data>,
     redeemer: Redeemer,
     _utxo: OutputReference,
-    _self: Transaction,
+    self: Transaction,
   ) {
     when redeemer is {
       BlindSign -> {
@@ -55,6 +60,10 @@ validator iith {
           commits_compressed,
           combine_commits_compressed,
         } = data
+        expect Some(input_ref) = list.head(self.reference_inputs)
+        expect InlineDatum(datum) = input_ref.output.datum
+        expect CADatum { pubkeys } = datum
+        expect pubkey_contains(iproof.pubkeys, pubkeys)
         request_cred(
           iproof,
           open,
