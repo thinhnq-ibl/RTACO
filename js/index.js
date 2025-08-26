@@ -78,6 +78,14 @@ const BlindSignDatum = Data.Object({
 
 const DatumSchema = BlindSignDatum
 
+const oracle_datum = Data.to(new Constr(0, [
+    [
+      "a97b2135da7799823236baea87402c5cc00e3a61c99e9abf7c2d9c0c29d1c50fd5753e3076c5e3da091c861199ee72b7",
+      "b51cc7408bc47ad537c29fef899a73b784de41c2063d5aac5248623f3db3dd4131e1cd9af902d49b28bc38819ffb48eb"
+    ]
+  ])
+);
+
 const datum = Data.to(new Constr(0, [
   new Constr(0, [
     42535636952854378490874194418722333779152010990979182213475440387396116429547n,
@@ -200,10 +208,29 @@ const scriptAddress = await validatorToAddress("Preprod", spendingValidator);
 
 // console.log("Script address:", scriptAddress);
 
+let oracle = async () => {
+  console.log("Oracle...");
+  const tx = await lucid
+    .newTx()
+    .pay.ToContract(
+      scriptAddress,
+      { kind: "inline", value: oracle_datum },
+      { lovelace: 10_000_000n }
+    )
+    .complete();
+
+  const signedTx = await tx.sign.withWallet().complete();
+
+  const txHash = await signedTx.submit();
+  console.log("Transaction submitted successfully:", txHash);
+  // 14d4e1087a0780315ce3447384ef4386f81b3e06a41536d2f8da3a6c5981a573
+};
+
 let lockFund = async () => {
   console.log("Locking funds...");
   const tx = await lucid
     .newTx()
+    .readFrom(utxos)
     .pay.ToContract(
       scriptAddress,
       { kind: "inline", value: datum },
@@ -218,7 +245,12 @@ let lockFund = async () => {
   // 14d4e1087a0780315ce3447384ef4386f81b3e06a41536d2f8da3a6c5981a573
 };
 
-let spendFund = async (publicKeyHash, spend_val, tx_id) => {
+let spendFund = async (publicKeyHash, spend_val, tx_id, ref_tx, ref_index) => {
+  let utxos = await lucid.utxosByOutRef([{ txHash: ref_tx, outputIndex: ref_index }]);
+  if(utxos.length === 0) {
+    console.error("No UTxOs found");
+    return;
+  }
   console.log("Spending funds...");
   // Find the UTxO we want to spend
   const allUTxOs = await lucid.utxosAt(scriptAddress);
@@ -239,6 +271,7 @@ let spendFund = async (publicKeyHash, spend_val, tx_id) => {
   const tx = await lucid
     .newTx()
     .collectFrom([ownerUTxO], redeemer) // Provide the redeemer argument
+    .readFrom(utxos)
     .attach.SpendingValidator(spend_val) // Attach validator
     .addSigner(address) // Add the public key hash as a signer
     .complete();
@@ -249,5 +282,6 @@ let spendFund = async (publicKeyHash, spend_val, tx_id) => {
   console.log("Transaction submitted successfully:", txHash);
 };
 
+// oracle()
 // lockFund();
-// spendFund(pubKeyHash, spendingValidator, "cc2a8f1125a7fdc1b26430af87db542127a179013a54b6804f0ff46f0474330b");
+spendFund(pubKeyHash, spendingValidator, "42169fceb4b0f4ca2a3159cef6f6945f96f74d4bb932c701f9480a2baec1f4cb", "07962753a8b4a2473056c16542d3efa66ff841b757cba45720397a99751bc976", 0);
