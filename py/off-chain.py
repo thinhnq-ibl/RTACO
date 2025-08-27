@@ -1,6 +1,7 @@
 from TTP import *
 from py_ecc_tester import *
 import datetime
+import json
 
 out = {}
 ##################################
@@ -323,4 +324,7 @@ tf = VerifyCred(validator_params, aggregate_vk, Theta, disclose_index, encoded_d
 # print("Verify Cred : ",tf)
 # print(tf)
 out.setdefault("verify_cred", 1 if tf else 0)
-print(out)
+
+json_formatted_str = json.dumps(out)
+
+print(json_formatted_str)

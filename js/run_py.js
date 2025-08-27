@@ -1,9 +1,11 @@
 import { PythonShell } from "python-shell";
 
-PythonShell.run("../py/off-chain.py", { mode: "text" }).then((messages) => {
+export const runPythonScript = async () => {
+  const messages = await PythonShell.run("../py/off-chain.py", {
+    mode: "text",
+  });
   if (messages) {
-    console.log(messages[0]);
-    result = JSON.parse(messages[0]);
+    return JSON.parse(messages);
   }
-  console.log("finished");
-});
+  return null;
+};
