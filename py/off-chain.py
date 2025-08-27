@@ -201,7 +201,12 @@ send_vcerts = [((prevVcerts[i][0][0].n, prevVcerts[i][0][1].n), prevVcerts[i][1]
 
 pi_s_old = pi_s
 (c, rr, ros, total_rm) = pi_s_old
-out.setdefault("issue_proof", [c, rr, ros, total_rm, [get_g1_bytes(pk),get_g1_bytes(pk2)]])
+out.setdefault("issue_proof", 
+               [str(c), 
+                str(rr), 
+                [str(x) for x in ros], 
+                [[str(x) for x in sublist] for sublist in total_rm], 
+                [get_g1_bytes(pk), get_g1_bytes(pk2)]])
 
 (c, rr, rs) = pi_o
 out.setdefault("open_proof", [get_list_g2_bytes(Dw), get_list_g2_bytes(Ew), c])

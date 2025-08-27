@@ -113,11 +113,11 @@ let start = async () => {
     issue_proof_3.push(issue_proof_3_item);
   }
 
-  console.log("Index BigNum:", issue_proof_2, issue_proof_3, open_proof_3, include_indexes_bignum);
+  console.log("Index BigNum:",  BigInt(py_result.issue_proof[1]), issue_proof_2, issue_proof_3, open_proof_3, include_indexes_bignum);
   const datum = Data.to(new Constr(0, [
       new Constr(0, [
-        42535636952854378490874194418722333779152010990979182213475440387396116429547n,
-        40675462214123865742431951389911046237865684117786381568714250885257348136441n,
+        BigInt(py_result.issue_proof[0]),
+        BigInt(py_result.issue_proof[1]),
         [
           47925282862226222643927521835608820926632670018838597296086614014727602246558n,
           21687859965734279473419411257190997575311278370788120793865541862802550871605n,
@@ -302,5 +302,5 @@ let spendFund = async (publicKeyHash, spend_val, tx_id, ref_tx, ref_index) => {
 // let tx_oracle = await oracle()
 let tx_oracle_id = "a577dc82b8cfa625ee0bf24a0511823fdb82881e41a6c8e59c0b38f4520c69c7"
 // let lock_tx = await lockFund();
-let lock_tx_id = "09f1e54d2723219238a921078e1d9b4891cd4b9da97771c5e421090cee697a48"
+let lock_tx_id = "fa5d6e3c4d112cd6eb35b21bc671d58a766529e0bb99ea8f725ecb11584bb7f7"
 await spendFund(pubKeyHash, spendingValidator, lock_tx_id, tx_oracle_id, 0);
