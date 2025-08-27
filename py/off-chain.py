@@ -209,7 +209,7 @@ out.setdefault("issue_proof",
                 [get_g1_bytes(pk), get_g1_bytes(pk2)]])
 
 (c, rr, rs) = pi_o
-out.setdefault("open_proof", [get_list_g2_bytes(Dw), get_list_g2_bytes(Ew), c])
+out.setdefault("open_proof", [get_list_g2_bytes(Dw), get_list_g2_bytes(Ew), [str(x) for x in c]])
 
 out.setdefault("list_vcert", [
         [
