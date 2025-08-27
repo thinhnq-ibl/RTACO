@@ -173,7 +173,6 @@ const datum = Data.to(new Constr(0, [
     ])
   ],
   "b3ff7f0d403bd9735aaaf54e14ab8409766572dd7343a04703e764fec9be90a082d7a5c2b92b9fca149412e982db8efd",
-  "b8ed5b8f9dc605471fd4a9d373318d0a4b230722169aacdeda85a6ad0c0c3ebfe6fa58a16b062086368437cf8d45f185",
   [
       "a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
       "865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c"
@@ -283,4 +282,4 @@ let spendFund = async (publicKeyHash, spend_val, tx_id, ref_tx, ref_index) => {
 
 // oracle()
 // lockFund();
-spendFund(pubKeyHash, spendingValidator, "cd3e99e516501b82d7df63c78e3340f4eec5ef890bfdf85d22acb3b0d571039f", "4214aaea8aeeb51590e42de8188ceacf9d56c8176f065a61fcfcfb466e798191", 0);
+spendFund(pubKeyHash, spendingValidator, "b68dcbf700a8f84f4adeb11489e4a1be465a148343cbf737453b42fa59b5db7e", "4214aaea8aeeb51590e42de8188ceacf9d56c8176f065a61fcfcfb466e798191", 0);
