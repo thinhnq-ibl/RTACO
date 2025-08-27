@@ -10,7 +10,10 @@
   "description": "",
   "dependencies": {
     "@evolution-sdk/lucid": "^2.0.1",
-    "crypto": "^1.0.1"
+    "crypto": "^1.0.1",
+    "install": "^0.13.0",
+    "npm": "^10.9.3",
+    "python-shell": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.2.1",
