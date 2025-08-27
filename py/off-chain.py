@@ -200,35 +200,15 @@ send_vcerts = [((prevVcerts[i][0][0].n, prevVcerts[i][0][1].n), prevVcerts[i][1]
 
 pi_s_old = pi_s
 (c, rr, ros, total_rm) = pi_s_old
-# print("issue proof", "c", "rr", "ros", "total_rm", "pub")
-# print([c, rr, ros, total_rm, [get_g1_bytes(pk),get_g1_bytes(pk2)]])
 out.setdefault("issue_proof", [c, rr, ros, total_rm, [get_g1_bytes(pk),get_g1_bytes(pk2)]])
 
 (c, rr, rs) = pi_o
-# print("open proof", "dw", "ew", "c")
-# print([get_list_g2_bytes(Dw), get_list_g2_bytes(Ew), c])
 out.setdefault("open_proof", [get_list_g2_bytes(Dw), get_list_g2_bytes(Ew), c])
 
-# print("list vcert")
-# print(
-#     [
-#         [ ((commit[0].n).to_bytes(48, 'big').hex() , (commit[1].n).to_bytes(48, 'big').hex()), 
-#             [signature[0], signature[1], get_g1_bytes(signature[2])]
-#         ],
-#         [
-#             ((commit2[0].n).to_bytes(48, 'big').hex() , (commit2[1].n).to_bytes(48, 'big').hex()), 
-#             [
-#                 signature2[0],
-#                 signature2[1],
-#                 get_g1_bytes(signature2[2])
-#             ]
-#         ]
-#     ]
-# )
 out.setdefault("list_vcert", [
-    [
-        ((commit[0].n).to_bytes(48, 'big').hex() , (commit[1].n).to_bytes(48, 'big').hex()), 
-        [signature[0], signature[1], get_g1_bytes(signature[2])]
+        [
+            ((commit[0].n).to_bytes(48, 'big').hex() , (commit[1].n).to_bytes(48, 'big').hex()), 
+            [signature[0], signature[1], get_g1_bytes(signature[2])]
         ],
         [
             ((commit2[0].n).to_bytes(48, 'big').hex() , (commit2[1].n).to_bytes(48, 'big').hex()), 
@@ -248,27 +228,8 @@ for i in range(len(total_rm) - 1):
     combine_hs.append([get_g1_bytes(x) for x in ttp_hs])
     combine_commitments.append(get_g1_bytes(prevVcerts[i][0]))
 
-# print("cm_compressed",
-#   "h_compressed",
-#   "hs_compressed",
-#   "include_indexes",
-#   "combine_hs_compressed",
-#   "commits_compressed",
-#   "combine_commits_compressed")
-h = hashG1(to_binary256(cm))
 (_, _, _, hs, _, _) = validator_params
-# print([
-#     get_g1_bytes(cm),
-#     get_g1_bytes(h),
-#     get_list_g1_bytes(hs),
-#     include_indexes,
-#     combine_hs,
-#     get_list_g1_bytes(commitments),
-#     combine_commitments
-# ])
-
 out.setdefault("cm_compressed", get_g1_bytes(cm))
-out.setdefault("h_compressed", get_g1_bytes(h))
 out.setdefault("hs_compressed", get_list_g1_bytes(hs))
 out.setdefault("include_indexes", include_indexes)
 out.setdefault("combine_hs_compressed", combine_hs)
