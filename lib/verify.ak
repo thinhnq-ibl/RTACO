@@ -27,7 +27,7 @@ pub type Theta {
 
 pub fn verify_cred(
   theta: Theta,
-  aggr: ByteArray,
+  aggr: List<ByteArray>,
   alpha: G2PointByteArray,
   aw: G2PointByteArray,
   beta: List<G2PointByteArray>,
@@ -54,8 +54,8 @@ pub fn verify_cred(
   let coord1 = h
   let coord2 = g1.add(sigma_last, theta.nu)
   let aggr_point =
-    if aggr != #"" {
-      g2.decompress(aggr)
+    if list.length(aggr) != 0 {
+      to_g2(aggr)
     } else {
       g2.zero
     }
@@ -93,7 +93,7 @@ test verify_cred_test() {
         rt: 34386718347699404645595550243171262552307584501849354162591548582147168255223,
       },
     }
-  let aggr = #""
+  let aggr = []
   let alpha =
     [
       #"a277357a6c44f5080f27ce2964d0b0e7c3e590d0e48dc0e032436ae15cbd435082e2266baed48398432ab43446337c21",

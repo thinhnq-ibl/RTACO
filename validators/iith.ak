@@ -21,7 +21,7 @@ pub type BlindSignDatum {
 
 pub type VerifyCredDatum {
   theta: Theta,
-  aggr: ByteArray,
+  aggr: List<ByteArray>,
   alpha: List<ByteArray>,
   aw: List<ByteArray>,
   beta: List<List<ByteArray>>,

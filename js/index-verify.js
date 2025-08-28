@@ -85,16 +85,13 @@ let start = async () => {
         BigInt(py_result.theta[3][2]),
       ])
     ]),
-    "",
+    py_result.aggr,
     py_result.aggr_vk[0],
     py_result.theta[4],
     py_result.aggr_vk[1],
     py_result.aggr_vk[2],
     BigInt(py_result.aggr_vk[3]),
-    [
-      "a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
-      "865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c",
-    ]
+    py_result.hs_compressed
   ]));
   // console.log("Datum:", py_result.commits_compressed);
   return { datum, oracle_datum}
@@ -160,6 +157,6 @@ let spendFund = async (publicKeyHash, spend_val, tx_id) => {
   console.log("Transaction submitted successfully:", txHash);
 };
 
-// let lock_tx = await lockFund();
-let lock_tx_id = "b86568e6c7519f64f0bdefa3cf1d2b8cbdf7e6bdad55544576a748140d5020f2"
+//let lock_tx = await lockFund();
+let lock_tx_id = "2f19564b827845d2ee31f543ec5deae16105f520b071464a6a22d26854c32091"
 spendFund(pubKeyHash, spendingValidator, lock_tx_id);
