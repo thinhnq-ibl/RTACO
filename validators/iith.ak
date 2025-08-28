@@ -45,7 +45,16 @@ pub type MintRedeemer {
 validator iith {
   mint(rdmr: MintRedeemer, policy_id: PolicyId, transaction: Transaction) {
     when rdmr is {
-      ReqCredentialMint -> True
+      ReqCredentialMint -> {
+        let Transaction { inputs, reference_inputs, outputs, .. } = transaction
+        expect Some(main_output) = list.head(outputs)
+        expect InlineDatum(data) = main_output.datum
+        expect BlindSignDatum { iproof, .. } = data
+        expect Some(input_ref) = list.head(reference_inputs)
+        expect InlineDatum(datum) = input_ref.output.datum
+        expect CADatum { pubkeys } = datum
+        pubkey_contains(iproof.pubkeys, pubkeys)
+      }
       BlindSignMint -> True
       VerifyCredMint -> True
     }
