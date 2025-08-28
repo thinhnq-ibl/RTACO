@@ -1,4 +1,5 @@
 use aiken/collection/list
+use cardano/assets.{PolicyId}
 use cardano/transaction.{InlineDatum, OutputReference, Transaction}
 use request.{IssueProof, OpenProof, Vcert, pubkey_contains, request_cred}
 use verify.{Theta, verify_cred}
@@ -35,9 +36,21 @@ pub type Redeemer {
   VerifyCred
 }
 
-// 44 for BlindSign, 45 for VerifyCred
+pub type MintRedeemer {
+  ReqCredentialMint
+  BlindSignMint
+  VerifyCredMint
+}
 
 validator iith {
+  mint(rdmr: MintRedeemer, policy_id: PolicyId, transaction: Transaction) {
+    when rdmr is {
+      ReqCredentialMint -> True
+      BlindSignMint -> True
+      VerifyCredMint -> True
+    }
+  }
+
   spend(
     datum: Option<Data>,
     redeemer: Redeemer,
