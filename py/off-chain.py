@@ -311,7 +311,7 @@ Theta, aggr = ProveCred(validator_params, aggregate_vk, aggr_sig, encoded_privat
 #     get_g1_bytes(rand_sig[1])],
 #     [c,rm, rt]
 # ])
-out.setdefault("theta", [get_g2_bytes(kappa), get_g1_bytes(nu), [get_g1_bytes(rand_sig[0]), get_g1_bytes(rand_sig[1])], [c,rm, rt]])
+out.setdefault("theta", [get_g2_bytes(kappa), get_g1_bytes(nu), [get_g1_bytes(rand_sig[0]), get_g1_bytes(rand_sig[1])], [str(c),[str(i) for i in rm], str(rt)], get_g2_bytes(Aw)])
 
 # print("aggr", aggr)
 (g2, alpha, _, beta) = aggregate_vk

@@ -65,83 +65,32 @@ const VerifyCredDatum = Data.Object({
 
 let start = async () => {
   const py_result = await runPythonScript();
-  console.log("Python script result:", py_result.issue_proof[4]);
+  console.log("Python script result:", py_result);
   const oracle_datum = Data.to(new Constr(0, [
       py_result.issue_proof[4]
     ])
   );
-  let include_indexes_bignum = [];
-  for (let i = 0; i < py_result.include_indexes.length; i++) {
-    let include_indexes_bignum_item = []
-    for (let j = 0; j < py_result.include_indexes[i].length; j++) {
-      include_indexes_bignum_item.push(BigInt(py_result.include_indexes[i][j]));
-    }
-    include_indexes_bignum.push(include_indexes_bignum_item);
-  }
-
-  let open_proof_3 = []
-  for (let i = 0; i < py_result.open_proof[2].length; i++) {
-    open_proof_3.push(BigInt(py_result.open_proof[2][i]));
-  }
-
-  let issue_proof_2 = []
-  for (let i = 0; i < py_result.issue_proof[2].length; i++) {
-    issue_proof_2.push(BigInt(py_result.issue_proof[2][i]));
-  }
-
-  let issue_proof_3 = []
-  for (let i = 0; i < py_result.issue_proof[3].length; i++) {
-    let issue_proof_3_item = []
-    for (let j = 0; j < py_result.issue_proof[3][i].length; j++) {
-      issue_proof_3_item.push(BigInt(py_result.issue_proof[3][i][j]));
-    }
-    issue_proof_3.push(issue_proof_3_item);
-  }
-
-  let vcerts = []
-  for (let i = 0; i < py_result.list_vcert.length; i++) {
-    vcerts.push(
-      new Constr(0, [
-        py_result.list_vcert[i][0],
-        new Constr(0, [
-          BigInt(py_result.list_vcert[i][1][0]),
-          BigInt(py_result.list_vcert[i][1][1]),
-          py_result.list_vcert[i][1][2]
-        ])
-      ])
-    )
-  }
-
-  // console.log("Index BigNum:",  BigInt(py_result.issue_proof[1]), issue_proof_2, issue_proof_3, open_proof_3, include_indexes_bignum);
+  
   const datum = Data.to(new Constr(0, [
     new Constr(0, [
-      [
-        "878a8ad400fad9651450254eb59e00d32430106965d2d3c17a7888152249440ff00cfb731c9e70ab05b2b1794fd4f296",
-        "0b07b8c368b4f00072bc7e6b9c74723e6fd6ffbe59bb7889da38d51a52e5f6086f3d60033ea8567114f9409f3d230a9b",
-      ],
-      "a6e229247ef0dea50213e7245216c948d3e8471a32d2a65a6d74e6edf4911bc04bd7165f227cd4358ad0da8f745ab843",
-      [
-      "a818baa56c6c069f45b09833057480298637af3eb20f2aed46314dff3ecce01d47d35cf27cf57e511b248daaa24245ea",
-        "9117e4f0f81c8483d8cd6967ce547e1af18bfe85e0cf59aba25b3c6668b2e3a740e49131a5c7e8bfef4466c3a58e6f28",
-      ],
+      py_result.theta[0],
+      py_result.theta[1],
+      py_result.theta[2],
       new Constr(0, [
-        43953825675714075024391357470089393824546011683396945525107498247681984930981n,
+        BigInt(py_result.theta[3][0]),
         [
-          33201398774658044924842383368859864201050291569118115993700463891168183954704n,
-          1886665901031710547374862922187803698730842134686358055213993339908120500534n,
+          BigInt(py_result.theta[3][1][0]),
+          BigInt(py_result.theta[3][1][1]),
         ],
-        34386718347699404645595550243171262552307584501849354162591548582147168255223n,
+        BigInt(py_result.theta[3][2]),
       ])
     ]),
     "",
     py_result.aggr_vk[0],
-    [
-      "861a318ec595e5b1b366ba6066558bf89cd2a93f5885b678486ffa58ccf9beea1f129e7bac57b1ea13cb9a2bc4d58eb1",
-      "0a92d4217f1e2df21207347602d9e0f9edbaf3ee2f7b148bee82e7e3448b82a96810196a751570cabf559e73ed26f376",
-    ],
+    py_result.theta[4],
     py_result.aggr_vk[1],
-    [],
-    1753846862n,
+    py_result.aggr_vk[2],
+    BigInt(py_result.aggr_vk[3]),
     [
       "a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
       "865341b6a4affbe3b795d2d3c71781ad7267849fe2b24e728e13524d60d08e5a1681344b20268ea337d2fa2c1c3bbd7c",
@@ -212,5 +161,5 @@ let spendFund = async (publicKeyHash, spend_val, tx_id) => {
 };
 
 // let lock_tx = await lockFund();
-let lock_tx_id = "efb8369c9fe35dff31010896da4d3041b51f88580e2ba294a77ab41e93ce4770"
+let lock_tx_id = "b86568e6c7519f64f0bdefa3cf1d2b8cbdf7e6bdad55544576a748140d5020f2"
 spendFund(pubKeyHash, spendingValidator, lock_tx_id);
