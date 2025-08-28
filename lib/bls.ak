@@ -176,7 +176,7 @@ fn go(a: Int, m: Int, x: Int, y: Int, m0: Int) -> Int {
   }
 }
 
-test mod_inverse_works() {
+test mod_inverse_test() {
   // 3 * 9 ≡ 1 mod 26
   mod_inverse(3, 26) == 9
 }
@@ -445,4 +445,11 @@ test check_group_pairing_test() {
   let g1s = [pp1, neg_pp1]
   let g2s = [p2, p2]
   expect check_group_pairing(g1s, g2s) == True
+}
+
+pub fn hash_g1(g1_point: G1Element) -> G1Element {
+  let g1_bytes = sha2_256(g1_to_binary256(g1_point))
+  expect Some(scalar_val) =
+    scalar.new(from_bytearray_big_endian(g1_bytes) % scalar.field_prime)
+  g1.scale(g1.generator, scalar_val)
 }

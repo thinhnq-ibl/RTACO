@@ -26,22 +26,6 @@ def genRandom():
 	o = int(curve_order)
 	return random.randint(2, o)
 
-# def FindYforX(x) :
-#     beta = (pow(x, 3, field_modulus) + 4) % field_modulus
-#     y = pow(beta, (field_modulus + 1) //4, field_modulus)
-#     return (beta, y)
-
-# def hashG1(byte_string):
-# 	o = int(curve_order)
-# 	beta = 0
-# 	y = 0
-# 	x = int.from_bytes(byte_string, "big") % o
-# 	while True :
-# 		(beta, y) = FindYforX(x)
-# 		if beta == pow(y, 2, field_modulus) :
-# 			return (FQ(x), FQ(y))
-# 		x = (x + 1) % field_modulus
-
 def hashG1(byte_string):
     h = sha256(byte_string).digest()
     x = int.from_bytes(h, 'big') % curve_order
@@ -238,7 +222,7 @@ def get_g1_bytes(point):
 def get_g2_bytes(point):
     commit2Uncompress = (FQO2([point[0].coeffs[0].n, point[0].coeffs[1].n]), FQO2([point[1].coeffs[0].n, point[1].coeffs[1].n]), FQO2.one())
     commit2Compress = compress_G2(commit2Uncompress)
-    return i2osp(commit2Compress[0], 48).hex() + i2osp(commit2Compress[1], 48).hex()
+    return [i2osp(commit2Compress[0], 48).hex(), i2osp(commit2Compress[1], 48).hex()]
 
 def get_list_g1_bytes(points):
     ret = []
@@ -252,5 +236,5 @@ def get_list_g2_bytes(points):
     for point in points:
         commit2Uncompress = (FQO2([point[0].coeffs[0].n, point[0].coeffs[1].n]), FQO2([point[1].coeffs[0].n, point[1].coeffs[1].n]), FQO2.one())
         commit2Compress = compress_G2(commit2Uncompress)
-        ret.append(i2osp(commit2Compress[0], 48).hex() + i2osp(commit2Compress[1], 48).hex())
+        ret.append([i2osp(commit2Compress[0], 48).hex(), i2osp(commit2Compress[1], 48).hex()])
     return ret

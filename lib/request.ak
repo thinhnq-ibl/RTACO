@@ -8,7 +8,7 @@ use aiken/primitive/bytearray.{concat}
 use aiken/primitive/int.{from_bytearray_big_endian}
 use bls.{
   G1PointByteArray, G2PointByteArray, Sign, do_ecdsa_verify, g1_to_binary256,
-  g2_to_binary256, list_bytearray_to_g1, list_compressed_to_g1,
+  g2_to_binary256, hash_g1, list_bytearray_to_g1, list_compressed_to_g1,
   list_compressed_to_g2, list_g1_to_binary256,
 }
 
@@ -159,7 +159,6 @@ fn check_sk_item(first_item_index: Int, total_rm: List<List<Int>>) -> Bool {
 
 pub fn check_issue_proof(
   cm_compressed: G1PointByteArray,
-  h_compressed: G1PointByteArray,
   hs_compressed: List<G1PointByteArray>,
   commits_compressed: List<G1PointByteArray>,
   proof: IssueProof,
@@ -171,8 +170,8 @@ pub fn check_issue_proof(
   let commits = list_bytearray_to_g1(commits_compressed)
   let combine_commits = list_bytearray_to_g1(combine_commits_compressed)
   let hs = list_bytearray_to_g1(hs_compressed)
-  let h = g1.decompress(h_compressed)
   let cm = g1.decompress(cm_compressed)
+  let h = hash_g1(cm)
   let aw = calculate_Aw(commits, proof.c, proof.ros, h, rm)
   let bw = calculate_Bw(proof.c, proof.rr, rm, cm, hs)
   let list_hs = list.map(list_hs_compressed, list_bytearray_to_g1)
@@ -185,8 +184,6 @@ pub fn check_issue_proof(
 test check_issue_proof_test() {
   let cm_compressed =
     #"b3ff7f0d403bd9735aaaf54e14ab8409766572dd7343a04703e764fec9be90a082d7a5c2b92b9fca149412e982db8efd"
-  let h_compressed =
-    #"b8ed5b8f9dc605471fd4a9d373318d0a4b230722169aacdeda85a6ad0c0c3ebfe6fa58a16b062086368437cf8d45f185"
   let hs_compressed =
     [
       #"a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
@@ -250,7 +247,6 @@ test check_issue_proof_test() {
     ]
   check_issue_proof(
     cm_compressed,
-    h_compressed,
     hs_compressed,
     commits_compressed,
     proof,
@@ -305,7 +301,6 @@ pub fn request_cred(
   open_proof: OpenProof,
   vcerts: List<Vcert>,
   cm_compressed: G1PointByteArray,
-  h_compressed: G1PointByteArray,
   hs_compressed: List<G1PointByteArray>,
   include_indexes: List<List<Int>>,
   combine_hs_compressed: List<List<G1PointByteArray>>,
@@ -316,7 +311,6 @@ pub fn request_cred(
   let result2 =
     check_issue_proof(
       cm_compressed,
-      h_compressed,
       hs_compressed,
       commits_compressed,
       proof,
@@ -324,7 +318,7 @@ pub fn request_cred(
       combine_hs_compressed,
       combine_commits_compressed,
     )
-  let result3 = check_open_proof(h_compressed, hs_compressed, open_proof)
+  let result3 = check_open_proof(cm_compressed, hs_compressed, open_proof)
   result1 && result2 && result3
 }
 
@@ -419,8 +413,6 @@ test request_cred_test() {
     ]
   let cm_compressed =
     #"b3ff7f0d403bd9735aaaf54e14ab8409766572dd7343a04703e764fec9be90a082d7a5c2b92b9fca149412e982db8efd"
-  let h_compressed =
-    #"b8ed5b8f9dc605471fd4a9d373318d0a4b230722169aacdeda85a6ad0c0c3ebfe6fa58a16b062086368437cf8d45f185"
   let hs_compressed =
     [
       #"a090cfe9261fdcfbe1b0b3f74256e57f6a5bdd98c13b0e09f9484838b02239a0ab8b883b7910585c13918f995eb8df89",
@@ -455,7 +447,6 @@ test request_cred_test() {
     open_proof,
     vcerts,
     cm_compressed,
-    h_compressed,
     hs_compressed,
     include_indexes,
     combine_hs,
@@ -465,20 +456,20 @@ test request_cred_test() {
 }
 
 pub fn check_open_proof(
-  h_compressed: G1PointByteArray,
+  cm_compressed: G1PointByteArray,
   hs_compressed: List<G1PointByteArray>,
   proof: OpenProof,
 ) {
   let hs = list_compressed_to_g1(hs_compressed)
-  let h = g1.decompress(h_compressed)
+  let h = hash_g1(g1.decompress(cm_compressed))
   let dw = list_compressed_to_g2(proof.dw)
   let ew = list_compressed_to_g2(proof.ew)
   check_open_challenge_item(h, hs, proof.c, dw, ew)
 }
 
 test check_open_proof_test() {
-  let h_compressed =
-    #"b8ed5b8f9dc605471fd4a9d373318d0a4b230722169aacdeda85a6ad0c0c3ebfe6fa58a16b062086368437cf8d45f185"
+  let cm_compressed =
+    #"b3ff7f0d403bd9735aaaf54e14ab8409766572dd7343a04703e764fec9be90a082d7a5c2b92b9fca149412e982db8efd"
   // G1 point
   let hs_compressed =
     [
@@ -522,7 +513,7 @@ test check_open_proof_test() {
         ],
       ],
     }
-  check_open_proof(h_compressed, hs_compressed, proof)
+  check_open_proof(cm_compressed, hs_compressed, proof)
 }
 
 pub fn check_open_challenge_item(

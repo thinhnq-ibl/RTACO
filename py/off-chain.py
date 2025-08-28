@@ -1,8 +1,9 @@
 from TTP import *
 from py_ecc_tester import *
 import datetime
+import json
 
-
+out = {}
 ##################################
 ## create vcert
 ##################################
@@ -200,24 +201,26 @@ send_vcerts = [((prevVcerts[i][0][0].n, prevVcerts[i][0][1].n), prevVcerts[i][1]
 
 pi_s_old = pi_s
 (c, rr, ros, total_rm) = pi_s_old
-print("issue proof", "c", "rr", "ros", "total_rm", "pub")
-print([c, rr, ros, total_rm, [get_g1_bytes(pk),get_g1_bytes(pk2)]])
+out.setdefault("issue_proof", 
+               [str(c), 
+                str(rr), 
+                [str(x) for x in ros], 
+                [[str(x) for x in sublist] for sublist in total_rm], 
+                [get_g1_bytes(pk), get_g1_bytes(pk2)]])
 
 (c, rr, rs) = pi_o
-print("open proof", "dw", "ew", "c")
-print([get_list_g2_bytes(Dw), get_list_g2_bytes(Ew), c])
+out.setdefault("open_proof", [get_list_g2_bytes(Dw), get_list_g2_bytes(Ew), [str(x) for x in c]])
 
-print("list vcert")
-print(
-    [
-        [ ((commit[0].n).to_bytes(48, 'big').hex() , (commit[1].n).to_bytes(48, 'big').hex()), 
-            [signature[0], signature[1], get_g1_bytes(signature[2])]
+out.setdefault("list_vcert", [
+        [
+            [(commit[0].n).to_bytes(48, 'big').hex() , (commit[1].n).to_bytes(48, 'big').hex()], 
+            [str(signature[0]), str(signature[1]), get_g1_bytes(signature[2])]
         ],
         [
-            ((commit2[0].n).to_bytes(48, 'big').hex() , (commit2[1].n).to_bytes(48, 'big').hex()), 
+            [(commit2[0].n).to_bytes(48, 'big').hex() , (commit2[1].n).to_bytes(48, 'big').hex()], 
             [
-                signature2[0],
-                signature2[1],
+                str(signature2[0]),
+                str(signature2[1]),
                 get_g1_bytes(signature2[2])
             ]
         ]
@@ -231,24 +234,13 @@ for i in range(len(total_rm) - 1):
     combine_hs.append([get_g1_bytes(x) for x in ttp_hs])
     combine_commitments.append(get_g1_bytes(prevVcerts[i][0]))
 
-print("cm_compressed",
-  "h_compressed",
-  "hs_compressed",
-  "include_indexes",
-  "combine_hs_compressed",
-  "commits_compressed",
-  "combine_commits_compressed")
-h = hashG1(to_binary256(cm))
 (_, _, _, hs, _, _) = validator_params
-print([
-    get_g1_bytes(cm),
-    get_g1_bytes(h),
-    get_list_g1_bytes(hs),
-    include_indexes,
-    combine_hs,
-    get_list_g1_bytes(commitments),
-    combine_commitments
-])
+out.setdefault("cm_compressed", get_g1_bytes(cm))
+out.setdefault("hs_compressed", get_list_g1_bytes(hs))
+out.setdefault("include_indexes", include_indexes)
+out.setdefault("combine_hs_compressed", combine_hs)
+out.setdefault("commits_compressed", get_list_g1_bytes(commitments))
+out.setdefault("combine_commits_compressed", combine_commitments)
 
 pi_s = list(pi_s)
 pi_s.append(combination)
@@ -273,7 +265,8 @@ h = (FQ(send_h[0]), FQ(send_h[1]))
 t = (FQ(send_t[0]), FQ(send_t[1]))
 
 blind_sig = (h, t)
-print("blind_sig", get_g1_bytes(h), get_g1_bytes(t))
+# print("blind_sig", get_g1_bytes(h), get_g1_bytes(t))
+out.setdefault("blind_sig1", [get_g1_bytes(h), get_g1_bytes(t)])
 sigma = Unblind(validator_params, aggregate_vk, blind_sig, os)
 
 # validator 2
@@ -287,7 +280,8 @@ h2 = (FQ(send_h2[0]), FQ(send_h2[1]))
 t2 = (FQ(send_t2[0]), FQ(send_t2[1]))
 
 blind_sig2 = (h2, t2)
-print("blind_sig2",  get_g1_bytes(h2), get_g1_bytes(t2))
+# print("blind_sig2",  get_g1_bytes(h2), get_g1_bytes(t2))
+out.setdefault("blind_sig2", [get_g1_bytes(h2), get_g1_bytes(t2)])
 sigma2 = Unblind(validator_params, aggregate_vk, blind_sig2, os)
 
 signs = []
@@ -309,27 +303,33 @@ Theta, aggr = ProveCred(validator_params, aggregate_vk, aggr_sig, encoded_privat
 (kappa, nu, rand_sig, proof, Aw, _timestamp) = Theta
 
 (c, rm, rt) = proof
-print("Theta", "kappa", "nu", "sigma", "proof")
-print([
-    get_g2_bytes(kappa),
-    get_g1_bytes(nu),
-    [get_g1_bytes(rand_sig[0]),
-    get_g1_bytes(rand_sig[1])],
-    [c,rm, rt]
-])
+# print("Theta", "kappa", "nu", "sigma", "proof")
+# print([
+#     get_g2_bytes(kappa),
+#     get_g1_bytes(nu),
+#     [get_g1_bytes(rand_sig[0]),
+#     get_g1_bytes(rand_sig[1])],
+#     [c,rm, rt]
+# ])
+out.setdefault("theta", [get_g2_bytes(kappa), get_g1_bytes(nu), [get_g1_bytes(rand_sig[0]), get_g1_bytes(rand_sig[1])], [str(c),[str(i) for i in rm], str(rt)], get_g2_bytes(Aw)])
 
-print("aggr", aggr)
+out.setdefault("aggr", get_g2_bytes(aggr) if aggr is not None else [])
 (g2, alpha, _, beta) = aggregate_vk
-print("alpha", get_g2_bytes(alpha))
-print("beta", get_list_g2_bytes(beta))
-print("disclose_attr", disclose_attr)
-print("timestamp", _timestamp)
-
+# print("alpha", get_g2_bytes(alpha))
+# print("beta", get_list_g2_bytes(beta))
+# print("disclose_attr", disclose_attr)
+# print("timestamp", _timestamp)
+out.setdefault("aggr_vk", [ get_g2_bytes(alpha), get_list_g2_bytes(beta), disclose_attr, str(_timestamp)])
 
 # Aw, _timestamp, proof = proof_v
 encoded_disclosed_attr = []
 #Sending to SP_verify for verifying the proof. 
 # SP_RequestService(credential, user_addr,disclose_index,aggr_sig,Theta,encoded_disclosed_attr,encoded_public_m,aggregate_vk)
 tf = VerifyCred(validator_params, aggregate_vk, Theta, disclose_index, encoded_disclosed_attr, encoded_public_m)
-print("Verify Cred : ",tf)
-print(tf)
+# print("Verify Cred : ",tf)
+# print(tf)
+out.setdefault("verify_cred", 1 if tf else 0)
+
+json_formatted_str = json.dumps(out)
+
+print(json_formatted_str)

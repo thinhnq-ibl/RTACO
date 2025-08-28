@@ -495,8 +495,6 @@ def opener_keygen(params):
     f = multiply(g2, z)
     return (f, z)
 
-
-
 def open_cred(params, rand_sig, T, reg, opener_, indexes, no, to, aggr_vk):
     (G, o, g1, hs, g2, e) = params
     _, alpha, _, beta = aggr_vk 

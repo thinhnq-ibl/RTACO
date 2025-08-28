@@ -12,7 +12,6 @@ pub type BlindSignDatum {
   open: OpenProof,
   vcerts: List<Vcert>,
   cm_compressed: ByteArray,
-  h_compressed: ByteArray,
   hs_compressed: List<ByteArray>,
   include_indexes: List<List<Int>>,
   combine_hs_compressed: List<List<ByteArray>>,
@@ -22,7 +21,7 @@ pub type BlindSignDatum {
 
 pub type VerifyCredDatum {
   theta: Theta,
-  aggr: ByteArray,
+  aggr: List<ByteArray>,
   alpha: List<ByteArray>,
   aw: List<ByteArray>,
   beta: List<List<ByteArray>>,
@@ -53,7 +52,6 @@ validator iith {
           open,
           vcerts,
           cm_compressed,
-          h_compressed,
           hs_compressed,
           include_indexes,
           combine_hs_compressed,
@@ -69,7 +67,6 @@ validator iith {
           open,
           vcerts,
           cm_compressed,
-          h_compressed,
           hs_compressed,
           include_indexes,
           combine_hs_compressed,
