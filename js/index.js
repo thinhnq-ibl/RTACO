@@ -8,7 +8,6 @@ import {
 
 import { getAddressDetails, validatorToAddress } from "@evolution-sdk/utils";
 import plutusScript from "../plutus.json"  with { type: 'json' };// Assuming you have a JSON file with the Plutus script
-import { exit } from "process";
 
 import { runPythonScript } from "./run_py.js";
 
@@ -80,7 +79,7 @@ const DatumSchema = BlindSignDatum
 
 let start = async () => {
   const py_result = await runPythonScript();
-  console.log("Python script result:", py_result.issue_proof[4]);
+  // console.log("Python script result:", py_result.issue_proof[4]);
   const oracle_datum = Data.to(new Constr(0, [
       py_result.issue_proof[4]
     ])
@@ -150,7 +149,7 @@ let start = async () => {
       py_result.combine_commits_compressed
     ]
   ));
-  console.log("Datum:", py_result.commits_compressed);
+  // console.log("Datum:", py_result.commits_compressed);
   return { datum, oracle_datum}
 }
 

@@ -311,7 +311,7 @@ Theta, aggr = ProveCred(validator_params, aggregate_vk, aggr_sig, encoded_privat
 #     get_g1_bytes(rand_sig[1])],
 #     [c,rm, rt]
 # ])
-out.setdefault("Theta", [get_g2_bytes(kappa), get_g1_bytes(nu), [get_g1_bytes(rand_sig[0]), get_g1_bytes(rand_sig[1])], [c,rm, rt]])
+out.setdefault("theta", [get_g2_bytes(kappa), get_g1_bytes(nu), [get_g1_bytes(rand_sig[0]), get_g1_bytes(rand_sig[1])], [c,rm, rt]])
 
 # print("aggr", aggr)
 (g2, alpha, _, beta) = aggregate_vk
@@ -319,7 +319,7 @@ out.setdefault("Theta", [get_g2_bytes(kappa), get_g1_bytes(nu), [get_g1_bytes(ra
 # print("beta", get_list_g2_bytes(beta))
 # print("disclose_attr", disclose_attr)
 # print("timestamp", _timestamp)
-out.setdefault("aggr_vk", [ get_g2_bytes(alpha), get_list_g2_bytes(beta), disclose_attr, _timestamp])
+out.setdefault("aggr_vk", [ get_g2_bytes(alpha), get_list_g2_bytes(beta), disclose_attr, str(_timestamp)])
 
 # Aw, _timestamp, proof = proof_v
 encoded_disclosed_attr = []

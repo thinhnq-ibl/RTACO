@@ -222,7 +222,7 @@ def get_g1_bytes(point):
 def get_g2_bytes(point):
     commit2Uncompress = (FQO2([point[0].coeffs[0].n, point[0].coeffs[1].n]), FQO2([point[1].coeffs[0].n, point[1].coeffs[1].n]), FQO2.one())
     commit2Compress = compress_G2(commit2Uncompress)
-    return i2osp(commit2Compress[0], 48).hex() + i2osp(commit2Compress[1], 48).hex()
+    return [i2osp(commit2Compress[0], 48).hex(), i2osp(commit2Compress[1], 48).hex()]
 
 def get_list_g1_bytes(points):
     ret = []
