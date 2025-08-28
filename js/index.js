@@ -113,7 +113,21 @@ let start = async () => {
     issue_proof_3.push(issue_proof_3_item);
   }
 
-  console.log("Index BigNum:",  BigInt(py_result.issue_proof[1]), issue_proof_2, issue_proof_3, open_proof_3, include_indexes_bignum);
+  let vcerts = []
+  for (let i = 0; i < py_result.list_vcert.length; i++) {
+    vcerts.push(
+      new Constr(0, [
+        py_result.list_vcert[i][0],
+        new Constr(0, [
+          BigInt(py_result.list_vcert[i][1][0]),
+          BigInt(py_result.list_vcert[i][1][1]),
+          py_result.list_vcert[i][1][2]
+        ])
+      ])
+    )
+  }
+
+  // console.log("Index BigNum:",  BigInt(py_result.issue_proof[1]), issue_proof_2, issue_proof_3, open_proof_3, include_indexes_bignum);
   const datum = Data.to(new Constr(0, [
       new Constr(0, [
         BigInt(py_result.issue_proof[0]),
@@ -127,30 +141,7 @@ let start = async () => {
         py_result.open_proof[1],
         open_proof_3
       ]),
-      [
-        new Constr(0, [
-          [
-              "075320f826a216c87da892bfc8aaacd2a75f5ccdfa62b72de3491b0bf079201a2def1fc9f18234df324976fdaf267870",
-              "112bdf0ec3b461ae5bf50d9d0cde259cfdaa4789a6a7595dc3a37a76d6bc7c11d14cfb7528a60ea753bba5e501af4d5a",
-          ],
-          new Constr(0, [
-            1947564745249895947708144629914312558157305610980073189304752255321217468940983390413315295194393892376039785033790n,
-            17355617863143591184525546256817223357573510192270296979117455415910592064385n,
-            "aca7513f4288ab39cdb45202f54678d9bd5d815b52295dc7f22b16c7572e13b93d96b6837288a909d801ce61a638f03e"
-          ])
-        ]),
-        new Constr(0, [
-          [
-            "03324843cb50de5ba1dc8202d2f122a079857340727e63ad1227c3c9068acbd6039d452a6cf8b49405bd895c528582f3",
-            "19de1c7c436db928c356fc685aa32832ade4583760476d176f366c0fd5b92d4b93256afd144d2f815abd721d497d2aee",
-          ],
-          new Constr(0, [
-            3924284939951961681834764047095286118299427666162894647982549458393534809915388538121180076697345644595416192308475n,
-            30161833219843676097829195363654408677477538928028790969163359605163750361918n,
-            "b97f20c47b4d12e53f6cb898067b63532e53c906b200f2638db569a7d50977a7fbb53609e324b65a9934b3d08960d4fb"
-          ])
-        ])
-      ],
+      vcerts,
       py_result.cm_compressed,
       py_result.hs_compressed,
       include_indexes_bignum,
@@ -253,5 +244,5 @@ let spendFund = async (publicKeyHash, spend_val, tx_id, ref_tx, ref_index) => {
 // let tx_oracle = await oracle()
 let tx_oracle_id = "a577dc82b8cfa625ee0bf24a0511823fdb82881e41a6c8e59c0b38f4520c69c7"
 // let lock_tx = await lockFund();
-let lock_tx_id = "cacf370f8a2f3cc90758b12d60554e88aa2d0de2eaa7665a946ee95607c90305"
+let lock_tx_id = "060ce03b66671837d5fe8605f03ae94adbb8f2d88777b51116f91742edf68ab1"
 await spendFund(pubKeyHash, spendingValidator, lock_tx_id, tx_oracle_id, 0);

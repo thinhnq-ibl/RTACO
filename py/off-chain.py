@@ -213,14 +213,14 @@ out.setdefault("open_proof", [get_list_g2_bytes(Dw), get_list_g2_bytes(Ew), [str
 
 out.setdefault("list_vcert", [
         [
-            ((commit[0].n).to_bytes(48, 'big').hex() , (commit[1].n).to_bytes(48, 'big').hex()), 
-            [signature[0], signature[1], get_g1_bytes(signature[2])]
+            [(commit[0].n).to_bytes(48, 'big').hex() , (commit[1].n).to_bytes(48, 'big').hex()], 
+            [str(signature[0]), str(signature[1]), get_g1_bytes(signature[2])]
         ],
         [
-            ((commit2[0].n).to_bytes(48, 'big').hex() , (commit2[1].n).to_bytes(48, 'big').hex()), 
+            [(commit2[0].n).to_bytes(48, 'big').hex() , (commit2[1].n).to_bytes(48, 'big').hex()], 
             [
-                signature2[0],
-                signature2[1],
+                str(signature2[0]),
+                str(signature2[1]),
                 get_g1_bytes(signature2[2])
             ]
         ]
