@@ -190,7 +190,6 @@ let mintReq = async (tx_oracle_id, tx_oracle_index) => {
   const txHash = await signedTx.submit();
   await lucid.awaitTx(txHash);
   console.log("Transaction submitted successfully:", txHash);
-  // 14d4e1087a0780315ce3447384ef4386f81b3e06a41536d2f8da3a6c5981a573
   return txHash;
 };
 
@@ -237,27 +236,6 @@ let get_blind_sign = async (tx_blind_sign_id, tx_blind_sign_index) => {
   console.log("Blind sign datum:", datum.fields[0]);
 };
 
-let mintVerifyReq = async() =>{
-  console.log("Minting verify req ...");
-  const { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_datum } = await start();
-  const tx = await lucid
-    .newTx()
-    .pay.ToContract(
-      scriptAddress,
-      { kind: "inline", value: verify_datum },
-      { lovelace: 5_000_000n }
-    )
-    .complete();
-
-  const signedTx = await tx.sign.withWallet().complete();
-
-  const txHash = await signedTx.submit();
-  await lucid.awaitTx(txHash);
-  console.log("Transaction submitted successfully:", txHash);
-  // 14d4e1087a0780315ce3447384ef4386f81b3e06a41536d2f8da3a6c5981a573
-  return txHash;
-}
-
 let mintVerify = async (verify_id, verify_index) => {
   console.log("Minting verify ...");
   const { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_datum } = await start();
@@ -286,7 +264,6 @@ let mintVerify = async (verify_id, verify_index) => {
   const txHash = await signedTx.submit();
   await lucid.awaitTx(txHash);
   console.log("Transaction submitted successfully:", txHash);
-  // 14d4e1087a0780315ce3447384ef4386f81b3e06a41536d2f8da3a6c5981a573
   return txHash;
 }
 
@@ -300,6 +277,4 @@ let blind_sig2 = "8d972a05b4e1a71332513b29b2cc9ea8c7d754fe31f292b91690d66e2c4b1e
 // get_blind_sign(blind_sig1, 0);
 // get_blind_sign(blind_sig2, 0);
 
-// mintVerifyReq()
-let mint_verify_tx = "31e161a2e27beae0e61d2af54413824c69c0ae32cb71946058d6eed881eca264"
-mintVerify(mint_verify_tx,0);
+mintVerify();

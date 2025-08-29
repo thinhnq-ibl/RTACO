@@ -1,5 +1,5 @@
 use aiken/collection/list
-use bls.{list_compressed_to_g1, to_g1, to_g2}
+use bls.{list_compressed_to_g1, to_g1}
 use cardano/assets.{PolicyId}
 use cardano/transaction.{InlineDatum, OutputReference, Transaction}
 use request.{IssueProof, OpenProof, Vcert, pubkey_contains, request_cred}
