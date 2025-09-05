@@ -72,6 +72,7 @@ zkpok = GenZKPoK(params, prevParams, prevVcerts, prevAttributes, commit)
 new_attribute = ["Justin", value_date]
 new_encode_str = [1,2]
 new_encoded_attribute = encode_attributes(new_attribute, new_encode_str)
+# hide msk and r when verifying the zkpok
 verify_zkp = VerifyZKPoK(params, prevParams, prevVcerts, new_encoded_attribute, commit, zkpok)
 # print ("verify_zkp", verify_zkp)
 signature = SignCommitment(params, sk, commit)
@@ -82,7 +83,7 @@ signature = SignCommitment(params, sk, commit)
 # } )
 
 vcert = {}
-vcert["attributes"] = encoded_attribute
+vcert["attributes"] = new_encoded_attribute
 vcert["commit"] = commit
 vcert["signature"] = signature
 
@@ -126,7 +127,7 @@ commit2 = GenCommitment(params2, encoded_attribute2)
 # raw commit2
 # print("commit2", ((commit2[0].n).to_bytes(48, 'big').hex() , (commit2[1].n).to_bytes(48, 'big').hex()))
 
-prevAttributes2 = [encoded_attribute]
+prevAttributes2 = [new_encoded_attribute]
 prevAttributes2.append([encoded_attribute2[0], encoded_attribute2[-1]])
 
 prevParams2 = [params]
@@ -143,7 +144,7 @@ signature2 = SignCommitment(params2, sk2, commit2)
 # } )
 
 vcert2 = {}
-vcert2["attributes"] = encoded_attribute2
+vcert2["attributes"] = [100000]
 vcert2["commit"] = commit2
 vcert2["signature"] = signature2
 ######################################
@@ -183,19 +184,19 @@ Lambda, os = PrepareCredRequest(validator_params, aggregate_vk, to, no, opks, pr
 
 
 #anything with "send" appended is making that particular variable as SC compatible.
-send_cm = (cm[0].n, cm[1].n)
-send_commitments = [(commitments[i][0].n, commitments[i][1].n) for i in range(len(commitments))]
-send_ciphershares= [([([C[i][j][0].coeffs[1].n,C[i][j][0].coeffs[0].n],[C[i][j][1].coeffs[1].n, C[i][j][1].coeffs[0].n]) for j in range(2)],) for i in range(len(C))]
-send_compressed_cipher = (send_commitments, send_ciphershares)
+# send_cm = (cm[0].n, cm[1].n)
+# send_commitments = [(commitments[i][0].n, commitments[i][1].n) for i in range(len(commitments))]
+# send_ciphershares= [([([C[i][j][0].coeffs[1].n,C[i][j][0].coeffs[0].n],[C[i][j][1].coeffs[1].n, C[i][j][1].coeffs[0].n]) for j in range(2)],) for i in range(len(C))]
+# send_compressed_cipher = (send_commitments, send_ciphershares)
 private_m = [19980512, 100000]
 
-send_hp =  [[(hp[i][j-1][0].n, hp[i][j-1][1].n) for j in range(1, to)] for i in range(len(private_m))]
-send_hr = [(hr[i][0].n, hr[i][1].n) for i in range(len(hr))]
-send_bo = [([bo[i][0].coeffs[1].n,bo[i][0].coeffs[0].n],[bo[i][1].coeffs[1].n,bo[i][1].coeffs[0].n]) for i in range(len(bo))]
-send_Dw = [([Dw[i][0].coeffs[1].n,Dw[i][0].coeffs[0].n],[Dw[i][1].coeffs[1].n,Dw[i][1].coeffs[0].n]) for i in range(len(Dw))]
-send_Ew = [([Ew[i][0].coeffs[1].n,Ew[i][0].coeffs[0].n],[Ew[i][1].coeffs[1].n,Ew[i][1].coeffs[0].n]) for i in range(len(Ew))]
-send_compressed_G2Points = (send_Dw, send_Ew)
-send_vcerts = [((prevVcerts[i][0][0].n, prevVcerts[i][0][1].n), prevVcerts[i][1]) for i in range(len(prevVcerts))]
+# send_hp =  [[(hp[i][j-1][0].n, hp[i][j-1][1].n) for j in range(1, to)] for i in range(len(private_m))]
+# send_hr = [(hr[i][0].n, hr[i][1].n) for i in range(len(hr))]
+# send_bo = [([bo[i][0].coeffs[1].n,bo[i][0].coeffs[0].n],[bo[i][1].coeffs[1].n,bo[i][1].coeffs[0].n]) for i in range(len(bo))]
+# send_Dw = [([Dw[i][0].coeffs[1].n,Dw[i][0].coeffs[0].n],[Dw[i][1].coeffs[1].n,Dw[i][1].coeffs[0].n]) for i in range(len(Dw))]
+# send_Ew = [([Ew[i][0].coeffs[1].n,Ew[i][0].coeffs[0].n],[Ew[i][1].coeffs[1].n,Ew[i][1].coeffs[0].n]) for i in range(len(Ew))]
+# send_compressed_G2Points = (send_Dw, send_Ew)
+# send_vcerts = [((prevVcerts[i][0][0].n, prevVcerts[i][0][1].n), prevVcerts[i][1]) for i in range(len(prevVcerts))]
 
 # print("commitments", get_list_g1_bytes(commitments))
 
@@ -293,9 +294,9 @@ aggr_sig = AggCred(validator_params, signs)
 credential["credential"] = aggr_sig
 verify_proof = verify_pi_s(validator_params, commitments, cm, prevParams, prevVcerts, pi_s_old, include_indexes)
 
-disclose_index = [0,0]
-disclose_attr = []
-disclose_attr_enc = []
+disclose_index = [1,1]
+disclose_attr = [19980512, 100000]
+disclose_attr_enc = [2,2]
 encoded_private_m = [19980512, 100000]
 encoded_public_m = []
 # proving the possession of AC (Off-chain by user) private_m, disclose_index, disclose_attr, disclose_attr_enc, public_m
@@ -322,7 +323,7 @@ out.setdefault("aggr", get_g2_bytes(aggr) if aggr is not None else [])
 out.setdefault("aggr_vk", [ get_g2_bytes(alpha), get_list_g2_bytes(beta), disclose_attr, str(_timestamp)])
 
 # Aw, _timestamp, proof = proof_v
-encoded_disclosed_attr = []
+encoded_disclosed_attr = encode_attributes(disclose_attr, disclose_attr_enc)
 #Sending to SP_verify for verifying the proof. 
 # SP_RequestService(credential, user_addr,disclose_index,aggr_sig,Theta,encoded_disclosed_attr,encoded_public_m,aggregate_vk)
 tf = VerifyCred(validator_params, aggregate_vk, Theta, disclose_index, encoded_disclosed_attr, encoded_public_m)
