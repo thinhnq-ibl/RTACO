@@ -339,6 +339,10 @@ pub fn to_g2(g2b: G2PointByteArray) -> G2Element {
   g2.decompress(concat(first_h, first_l))
 }
 
+pub fn to_g1(g1b: ByteArray) -> G1Element {
+  g1.decompress(g1b)
+}
+
 test test_gen_challage() {
   let g1_list =
     [
