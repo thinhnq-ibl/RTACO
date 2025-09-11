@@ -98,6 +98,11 @@ schemaOrder2.append(key)
 schema2.setdefault(key, {"type" : encoding_type_map["2"], "visibility": "private"})
 encoding2.setdefault(key, 2)
 
+key = "organization"
+schemaOrder2.append(key)
+schema2.setdefault(key, {"type" : encoding_type_map["1"], "visibility": "private"})
+encoding2.setdefault(key, 1)
+
 key = "salary"
 schemaOrder2.append(key)
 schema2.setdefault(key, {"type" : encoding_type_map["2"], "visibility": "private"})
@@ -119,8 +124,8 @@ pk2, sk2 = ttpKeyGen(params2)
 # print("pubkeyUncompress2", get_g1_bytes(pk2))
 
 r2 = genRandom()
-attribute2 = [msk, 100000, r2]
-encode_str2 = [2,2,2]
+attribute2 = [msk, "company a", 100000, r2]
+encode_str2 = [2,1,2,2]
 
 encoded_attribute2 = encode_attributes(attribute2, encode_str2)
 commit2 = GenCommitment(params2, encoded_attribute2)
@@ -133,7 +138,7 @@ prevAttributes2.append([encoded_attribute2[0], encoded_attribute2[-1]])
 prevParams2 = [params]
 prevVcerts2 = [(commit, signature)]
 zkpok2 = GenZKPoK(params2, prevParams2, prevVcerts2, prevAttributes2, commit2)
-verify_zkp2 = VerifyZKPoK(params2, prevParams2, prevVcerts2, [100000], commit2, zkpok2)
+verify_zkp2 = VerifyZKPoK(params2, prevParams2, prevVcerts2, ["company a", 100000], commit2, zkpok2)
 # print ("verify_zkp2", verify_zkp2)
 signature2 = SignCommitment(params2, sk2, commit2)
 
@@ -144,7 +149,7 @@ signature2 = SignCommitment(params2, sk2, commit2)
 # } )
 
 vcert2 = {}
-vcert2["attributes"] = [100000]
+vcert2["attributes"] = ["company a", 100000]
 vcert2["commit"] = commit2
 vcert2["signature"] = signature2
 ######################################
@@ -177,7 +182,7 @@ prevVcerts = [(vcert["commit"], vcert["signature"]), (vcert2["commit"], vcert2["
 prevParams = [params, params2]
 all_encoded_attr = [encoded_attribute, encoded_attribute2]
 
-include_indexes = [[0, 0, 1, 0], [0, 1, 0]]
+include_indexes = [[0, 0, 1, 0], [0, 0, 1, 0]]
 Lambda, os = PrepareCredRequest(validator_params, aggregate_vk, to, no, opks, prevParams, all_encoded_attr, include_indexes, public_m=[])
 
 (cm, commitments, pi_s, hp, C, pi_o, Dw, Ew, hr, bo) = Lambda
