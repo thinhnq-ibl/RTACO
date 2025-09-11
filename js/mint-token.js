@@ -198,7 +198,9 @@ let mintBlindSign = async (tx_mint_req_id, tx_mint_req_index, id) => {
     console.error("No UTxOs found");
     return;
   }
-  
+
+  // console.log(utxos[0].datum)
+
   const redeemer = Data.to(new Constr(1, []));
   const tx = await lucid
     .newTx()
@@ -237,16 +239,9 @@ let mintVerify = async (verify_id, verify_index) => {
   console.log("Minting verify ...");
   const { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_datum } = await start();
 
-  let utxos = await lucid.utxosByOutRef([{ txHash: verify_id, outputIndex: verify_index }]);
-  if(utxos.length === 0) {
-    console.error("No UTxOs found");
-    return;
-  }
-
   const redeemer = verify_datum
   const tx = await lucid
     .newTx()
-    // .readFrom(utxos)
     .attach.MintingPolicy(mintValidator)
     .mintAssets({ [mint_asset_unit]: 1n }, redeemer)
     .pay.ToContract(
@@ -265,13 +260,13 @@ let mintVerify = async (verify_id, verify_index) => {
 }
 
 // oracle();
-let oracle_tx = "d541716d687a86a1d60a97caeda0db32c48ed7d2dbd0e17a2117eb589fb771e3"
+let oracle_tx = "2f29ea2d7367ccc16cd1a8bcfab0f520c2b762f735c41f4a5869747b59cf0a9f"
 // mintReq(oracle_tx, 0);
-let mint_req_tx = "026c9307991b76c120c7f91f476702326138cc7d6731a05a50ad332f6e739409"
-mintBlindSign(mint_req_tx, 0, 2);
+let mint_req_tx = "eab0c5269e3375f0f69de68cd794775e81697b2d739f4956ed6148b1bf198587"
+// mintBlindSign(mint_req_tx, 0, 1);
 let blind_sig1 = "8738bcb2020363b371202717f26ed237676069f4d5154148b587583cb8d8bde9";
 let blind_sig2 = "8d972a05b4e1a71332513b29b2cc9ea8c7d754fe31f292b91690d66e2c4b1e0c";
 // get_blind_sign(blind_sig1, 0);
 // get_blind_sign(blind_sig2, 0);
 
-// mintVerify();
+mintVerify();
