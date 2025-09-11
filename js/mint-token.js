@@ -123,10 +123,7 @@ let start = async () => {
       py_result.theta[2],
       new Constr(0, [
         BigInt(py_result.theta[3][0]),
-        [
-          BigInt(py_result.theta[3][1][0]),
-          BigInt(py_result.theta[3][1][1]),
-        ],
+        py_result.theta[3][1].map(x => BigInt(x)),
         BigInt(py_result.theta[3][2]),
       ])
     ]),
@@ -134,7 +131,7 @@ let start = async () => {
     py_result.aggr_vk[0],
     py_result.theta[4],
     py_result.aggr_vk[1],
-    py_result.aggr_vk[2],
+    py_result.aggr_vk[2].map(x => BigInt(x)),
     BigInt(py_result.aggr_vk[3]),
     py_result.hs_compressed
   ]));
@@ -268,13 +265,13 @@ let mintVerify = async (verify_id, verify_index) => {
 }
 
 // oracle();
-let oracle_tx = "9e6a1644b189143fce36781cc20e688c024328ce9c36659b0e420ee069560718"
+let oracle_tx = "d541716d687a86a1d60a97caeda0db32c48ed7d2dbd0e17a2117eb589fb771e3"
 // mintReq(oracle_tx, 0);
-let mint_req_tx = "1441e9105989418c52e8476ca8ad3bde3431034f0ae196b779c1db4b2f631e0e"
-// mintBlindSign(mint_req_tx, 0, 2);
+let mint_req_tx = "026c9307991b76c120c7f91f476702326138cc7d6731a05a50ad332f6e739409"
+mintBlindSign(mint_req_tx, 0, 2);
 let blind_sig1 = "8738bcb2020363b371202717f26ed237676069f4d5154148b587583cb8d8bde9";
 let blind_sig2 = "8d972a05b4e1a71332513b29b2cc9ea8c7d754fe31f292b91690d66e2c4b1e0c";
 // get_blind_sign(blind_sig1, 0);
 // get_blind_sign(blind_sig2, 0);
 
-mintVerify();
+// mintVerify();
