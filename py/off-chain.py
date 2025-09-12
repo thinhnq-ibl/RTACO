@@ -272,6 +272,7 @@ t = (FQ(send_t[0]), FQ(send_t[1]))
 
 blind_sig = (h, t)
 # print("blind_sig", get_g1_bytes(h), get_g1_bytes(t))
+# print("test decompress", h == get_g1_from_string(get_g1_bytes(h)))
 out.setdefault("blind_sig1", [get_g1_bytes(h), get_g1_bytes(t)])
 sigma = Unblind(validator_params, aggregate_vk, blind_sig, os)
 

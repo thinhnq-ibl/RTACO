@@ -91,7 +91,7 @@ let start = async () => {
     )
   }
 
-  const datum = Data.to(new Constr(0, [
+  const datum = [
       new Constr(1, []),
       new Constr(0, [
         BigInt(py_result.issue_proof[0]),
@@ -113,10 +113,9 @@ let start = async () => {
       py_result.commits_compressed,
       py_result.combine_commits_compressed
     ]
-  ));
 
-  const blind_sign_1_datum = Data.to(new Constr(0, [py_result.blind_sig1]));
-  const blind_sign_2_datum = Data.to(new Constr(0, [py_result.blind_sig2]));
+  const blind_sign_1_datum = py_result.blind_sig1;
+  const blind_sign_2_datum = py_result.blind_sig2;
 
   const verify_redeemer = Data.to(new Constr(2, [
     new Constr(0, [
@@ -171,6 +170,14 @@ let mintReq = async (tx_oracle_id, tx_oracle_index) => {
     return;
   }
 
+  const mint_datum = Data.to(new Constr(0, [
+    ...datum,
+    utxos[0].txHash, 
+    BigInt(utxos[0].outputIndex),
+  ]));
+
+  // console.log("Mint datum:", mint_datum);
+
   const redeemer = Data.to(new Constr(0, []));
   const tx = await lucid
     .newTx()
@@ -179,7 +186,7 @@ let mintReq = async (tx_oracle_id, tx_oracle_index) => {
     .mintAssets({ [mint_asset_unit]: 1n }, redeemer)
     .pay.ToContract(
       scriptAddress,
-      { kind: "inline", value: datum },
+      { kind: "inline", value: mint_datum },
       { [mint_asset_unit]: 1n, lovelace: 5_000_000n }
     )
     .complete();
@@ -201,7 +208,14 @@ let mintBlindSign = async (tx_mint_req_id, tx_mint_req_index, id) => {
     return;
   }
 
-  // console.log(utxos[0].datum)
+  // console.log(Data.from(utxos[0].datum));
+
+  let datum_blind_sign = ""
+  if (id == 1) {
+    datum_blind_sign = Data.to(new Constr(0, [new Constr(2,[]), blind_sign_1_datum, utxos[0].txHash, BigInt(utxos[0].outputIndex)])) // mint utxo
+  } else {
+    datum_blind_sign = Data.to(new Constr(0, [new Constr(2,[]), blind_sign_2_datum, utxos[0].txHash, BigInt(utxos[0].outputIndex)]))
+  }
 
   const redeemer = Data.to(new Constr(1, []));
   const tx = await lucid
@@ -211,7 +225,7 @@ let mintBlindSign = async (tx_mint_req_id, tx_mint_req_index, id) => {
     .mintAssets({ [mint_asset_unit]: 1n }, redeemer)
     .pay.ToContract(
       scriptAddress,
-      { kind: "inline", value: id == 1 ? blind_sign_1_datum : blind_sign_2_datum },
+      { kind: "inline", value: datum_blind_sign },
       { [mint_asset_unit]: 1n, lovelace: 5_000_000n }
     )
     .complete();
@@ -234,7 +248,7 @@ let get_blind_sign = async (tx_blind_sign_id, tx_blind_sign_index) => {
   let utxo = utxos[0];
   let datum_raw = utxo.datum;
   let datum = Data.from(datum_raw);
-  console.log("Blind sign datum:", datum.fields[0]);
+  console.log("Blind sign datum:", datum.fields);
 };
 
 let mintVerify = async () => {
@@ -262,13 +276,14 @@ let mintVerify = async () => {
 }
 
 // oracle();
-let oracle_tx = "45d820b7cca41ea2de61b51ef423e07a997d7a806161dead8b74084729fee5bc"
+let oracle_tx = "41262b11f57e120a4944fc5b90ab3230798afbc34f8e3e227e90407bf357d4a0"
 // mintReq(oracle_tx, 0);
-let mint_req_tx = "fda4a285e9f6d43f0cfafee52420a0cc86051a801b611c51f6408a0cce2196d1"
-// mintBlindSign(mint_req_tx, 0, 1);
-let blind_sig1 = "8738bcb2020363b371202717f26ed237676069f4d5154148b587583cb8d8bde9";
-let blind_sig2 = "8d972a05b4e1a71332513b29b2cc9ea8c7d754fe31f292b91690d66e2c4b1e0c";
+let mint_req_tx = "dd9e3d99b5487ccde14ef831ccb89ab22fb09c4b2e781e780bcc9adfcb2fa704"
+// mintBlindSign(mint_req_tx, 0, 2);
+
+let blind_sig1 = "4843865fbbc8c00a02d63f9cdd678eba0c90e9bf00a791afdab7400024d27596";
+let blind_sig2 = "4a7d78c96624b7d18feea61934be394968d3a2995360600209ebfe4cc28ff283";
 // get_blind_sign(blind_sig1, 0);
 // get_blind_sign(blind_sig2, 0);
 
-mintVerify();
+// mintVerify();

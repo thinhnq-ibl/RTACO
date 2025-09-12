@@ -26,6 +26,8 @@ pub type BlindSignDatum {
   combine_hs_compressed: List<List<ByteArray>>,
   commits_compressed: List<ByteArray>,
   combine_commits_compressed: List<ByteArray>,
+  oracle_hash: ByteArray,
+  oracle_index: Int,
 }
 
 pub type Redeemer {
@@ -84,6 +86,8 @@ validator iith {
           combine_hs_compressed,
           commits_compressed,
           combine_commits_compressed,
+          oracle_hash,
+          oracle_index,
         } = datum
         expect datum_type == BlindSignDatumType
         request_cred(
