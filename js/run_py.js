@@ -1,8 +1,12 @@
 import { PythonShell } from "python-shell";
 
-export const runPythonScript = async () => {
-  const messages = await PythonShell.run("../py/off-chain.py", {
+export const runPythonScript = async (
+  path = "../py/off-chain.py",
+  args = []
+) => {
+  const messages = await PythonShell.run(path, {
     mode: "text",
+    args: args,
   });
   if (messages) {
     return JSON.parse(messages);
