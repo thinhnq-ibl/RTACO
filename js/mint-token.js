@@ -45,7 +45,7 @@ let start = async () => {
   const py_result = await runPythonScript();
   // console.log("Python script result:", py_result.issue_proof[4]);
   const oracle_datum = Data.to(new Constr(0, [
-      0n,
+      new Constr(0, []),
       py_result.issue_proof[4]
     ])
   );
@@ -92,7 +92,7 @@ let start = async () => {
   }
 
   const datum = Data.to(new Constr(0, [
-      1n,
+      new Constr(1, []),
       new Constr(0, [
         BigInt(py_result.issue_proof[0]),
         BigInt(py_result.issue_proof[1]),
@@ -237,7 +237,7 @@ let get_blind_sign = async (tx_blind_sign_id, tx_blind_sign_index) => {
   console.log("Blind sign datum:", datum.fields[0]);
 };
 
-let mintVerify = async (verify_id, verify_index) => {
+let mintVerify = async () => {
   console.log("Minting verify ...");
   const { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_redeemer } = await start();
 
@@ -262,13 +262,13 @@ let mintVerify = async (verify_id, verify_index) => {
 }
 
 // oracle();
-let oracle_tx = "8e67aa880317a25cdc134ef1844f25e0dd220cd681e71302247cfe8628e0a4c7"
-mintReq(oracle_tx, 0);
-let mint_req_tx = "eab0c5269e3375f0f69de68cd794775e81697b2d739f4956ed6148b1bf198587"
+let oracle_tx = "45d820b7cca41ea2de61b51ef423e07a997d7a806161dead8b74084729fee5bc"
+// mintReq(oracle_tx, 0);
+let mint_req_tx = "fda4a285e9f6d43f0cfafee52420a0cc86051a801b611c51f6408a0cce2196d1"
 // mintBlindSign(mint_req_tx, 0, 1);
 let blind_sig1 = "8738bcb2020363b371202717f26ed237676069f4d5154148b587583cb8d8bde9";
 let blind_sig2 = "8d972a05b4e1a71332513b29b2cc9ea8c7d754fe31f292b91690d66e2c4b1e0c";
 // get_blind_sign(blind_sig1, 0);
 // get_blind_sign(blind_sig2, 0);
 
-// mintVerify();
+mintVerify();

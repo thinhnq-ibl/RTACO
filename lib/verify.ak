@@ -146,7 +146,7 @@ pub fn verify_pi_v(
       disclose_attr,
       timestamp,
     )
-  theta.proof.c == from_bytearray_big_endian(challenge)
+  theta.proof.c == from_bytearray_big_endian(challenge) % scalar.field_prime
 }
 
 test to_challenge_verify_test() {
@@ -201,7 +201,7 @@ test to_challenge_verify_test() {
       disclose_attr,
       timestamp,
     ),
-  )
+  ) % scalar.field_prime
 }
 
 pub fn to_challenge_verify(
