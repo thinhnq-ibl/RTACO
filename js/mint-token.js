@@ -45,6 +45,7 @@ let start = async () => {
   const py_result = await runPythonScript();
   // console.log("Python script result:", py_result.issue_proof[4]);
   const oracle_datum = Data.to(new Constr(0, [
+      new Constr(0, []),
       py_result.issue_proof[4]
     ])
   );
@@ -91,6 +92,7 @@ let start = async () => {
   }
 
   const datum = Data.to(new Constr(0, [
+      new Constr(1, []),
       new Constr(0, [
         BigInt(py_result.issue_proof[0]),
         BigInt(py_result.issue_proof[1]),
@@ -116,7 +118,7 @@ let start = async () => {
   const blind_sign_1_datum = Data.to(new Constr(0, [py_result.blind_sig1]));
   const blind_sign_2_datum = Data.to(new Constr(0, [py_result.blind_sig2]));
 
-  const verify_datum = Data.to(new Constr(2, [
+  const verify_redeemer = Data.to(new Constr(2, [
     new Constr(0, [
       py_result.theta[0],
       py_result.theta[1],
@@ -136,12 +138,12 @@ let start = async () => {
     py_result.hs_compressed
   ]));
   // console.log("Datum:", py_result.commits_compressed);
-  return { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_datum }
+  return { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_redeemer }
 }
 
 let oracle = async () => {
   console.log("Oracle...");
-  const { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_datum } = await start();
+  const { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_redeemer } = await start();
   const tx = await lucid
     .newTx()
     .pay.ToContract(
@@ -162,7 +164,7 @@ let oracle = async () => {
 
 let mintReq = async (tx_oracle_id, tx_oracle_index) => {
   console.log("Minting req ...");
-  const { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_datum } = await start();
+  const { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_redeemer } = await start();
   let utxos = await lucid.utxosByOutRef([{ txHash: tx_oracle_id, outputIndex: tx_oracle_index }]);
   if(utxos.length === 0) {
     console.error("No UTxOs found");
@@ -191,7 +193,7 @@ let mintReq = async (tx_oracle_id, tx_oracle_index) => {
 };
 
 let mintBlindSign = async (tx_mint_req_id, tx_mint_req_index, id) => {
-  const { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_datum } = await start();
+  const { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_redeemer } = await start();
   console.log("Minting blind sign ...");
   let utxos = await lucid.utxosByOutRef([{ txHash: tx_mint_req_id, outputIndex: tx_mint_req_index }]);
   if(utxos.length === 0) {
@@ -235,11 +237,11 @@ let get_blind_sign = async (tx_blind_sign_id, tx_blind_sign_index) => {
   console.log("Blind sign datum:", datum.fields[0]);
 };
 
-let mintVerify = async (verify_id, verify_index) => {
+let mintVerify = async () => {
   console.log("Minting verify ...");
-  const { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_datum } = await start();
+  const { datum, oracle_datum, blind_sign_1_datum, blind_sign_2_datum, verify_redeemer } = await start();
 
-  const redeemer = verify_datum
+  const redeemer = verify_redeemer 
   const tx = await lucid
     .newTx()
     .attach.MintingPolicy(mintValidator)
@@ -260,9 +262,9 @@ let mintVerify = async (verify_id, verify_index) => {
 }
 
 // oracle();
-let oracle_tx = "2f29ea2d7367ccc16cd1a8bcfab0f520c2b762f735c41f4a5869747b59cf0a9f"
+let oracle_tx = "45d820b7cca41ea2de61b51ef423e07a997d7a806161dead8b74084729fee5bc"
 // mintReq(oracle_tx, 0);
-let mint_req_tx = "eab0c5269e3375f0f69de68cd794775e81697b2d739f4956ed6148b1bf198587"
+let mint_req_tx = "fda4a285e9f6d43f0cfafee52420a0cc86051a801b611c51f6408a0cce2196d1"
 // mintBlindSign(mint_req_tx, 0, 1);
 let blind_sig1 = "8738bcb2020363b371202717f26ed237676069f4d5154148b587583cb8d8bde9";
 let blind_sig2 = "8d972a05b4e1a71332513b29b2cc9ea8c7d754fe31f292b91690d66e2c4b1e0c";
