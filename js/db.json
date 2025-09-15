@@ -12,7 +12,7 @@
   ],
   "schemas": [
     {
-      "name": "IDENTITY",
+      "name": "Identity Certificate",
       "schema": {
         "msk": {
           "type": "2",
@@ -31,10 +31,22 @@
           "visibility": "private"
         }
       },
-      "schemaOrder": ["msk", "name", "dob", "r"]
+      "schemaOrder": [
+        "msk",
+        "name",
+        "dob",
+        "r"
+      ],
+      "params": [
+        "afcccdf181372ae095c90ab978b2644ea70a26a9882f958f4b444198526a08df0ac0d2f3a22def8fe9bc90dd6c026fc3",
+        "a96a8434d5128874888977d279af969e6de98ff9d4abd5a640dd8ab425db07c0d7fa89c49681b7dc39f14de669cd2482",
+        "a8bd2ff8845790d820c3c180fc29cf57545cf5d37db7eb06cf0a0d4ae2f8fa32bcce4fe84828ab57126658c40402761f"
+      ],
+      "pk": "b7b630de03a7adfff503b5e177ee834dbb284b1cf4aeafe9298a6af36414c935e55e1d00baef34188ad29a41aeb5c0c1",
+      "sk": "9221480184562902123126184236307642765782798433485955886965875136242544281309"
     },
     {
-      "name": "INCOME",
+      "name": "Income Certificate",
       "schema": {
         "msk": {
           "type": "2",
@@ -53,7 +65,19 @@
           "visibility": "private"
         }
       },
-      "schemaOrder": ["msk", "organization", "salary", "r"]
+      "schemaOrder": [
+        "msk",
+        "organization",
+        "salary",
+        "r"
+      ],
+      "params": [
+        "86fa463aeca16b8a4b40983734410be0108e1d708fde32ca51eae6b971f6cd24555b7372a7a84238ab1941205a8b2c4d",
+        "9728604cdc4edd3950b0b9c815a7f08cdd9bf2983b9a049b79c1150036ae0c9b036c3000b291c805942d2bfc741cc5f3",
+        "a1d52c641792291b468fa8a4a7ef473e4ecfa8aa8553bc1645778c71864ada98c700beee7d3165f50a56fc50972ecc6c"
+      ],
+      "pk": "af8b59d7351ec9281883ba91065511e0a7bcfe22528a04ba4b362e73f36461e72370c89d8223145a7922534b824aed87",
+      "sk": "17736026725033159619962563632765001875356771237304511879611290083009102812427"
     }
   ]
 }

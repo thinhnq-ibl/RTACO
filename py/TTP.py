@@ -225,6 +225,15 @@ def get_g1_from_string(bytes_hex):
 	optimize_point = decompress_G1(point_int)
 	return (FQ(optimize_point[0].n), FQ(optimize_point[1].n))
 
+def get_list_g1_from_string(list_bytes_hex):
+	ret = []
+	for bytes_hex in list_bytes_hex:
+		bytes_val = bytes.fromhex(bytes_hex)
+		point_int = os2ip(bytes_val)
+		optimize_point = decompress_G1(point_int)
+		ret.append((FQ(optimize_point[0].n), FQ(optimize_point[1].n)))
+	return ret
+
 def get_g2_bytes(point):
     commit2Uncompress = (FQO2([point[0].coeffs[0].n, point[0].coeffs[1].n]), FQO2([point[1].coeffs[0].n, point[1].coeffs[1].n]), FQO2.one())
     commit2Compress = compress_G2(commit2Uncompress)

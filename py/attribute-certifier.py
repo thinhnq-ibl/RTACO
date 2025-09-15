@@ -28,7 +28,12 @@ def genIdentitySchema():
     schemaOrder.append(key)
     schema.setdefault(key, {"type" : "2", "visibility": "private"})
 
-    return {"schema": schema, "schemaOrder": schemaOrder}
+    q = len(schemaOrder) 
+
+    params = ttp_setup(q-1, "Identity Certificate") # exclude r.
+    pk, sk = ttpKeyGen(params)
+
+    return {"schema": schema, "schemaOrder": schemaOrder, "name": "Identity Certificate", "params": get_list_g1_bytes(params[3]), "pk": get_g1_bytes(pk), "sk": str(sk)}
 
 def genIncomeSchema():
     schema = {}
@@ -50,10 +55,12 @@ def genIncomeSchema():
     schemaOrder.append(key)
     schema.setdefault(key, {"type" : "2", "visibility": "private"})
 
-    # print("Schema:", schema)
-    # print("Schema Order:", schemaOrder)
+    q = len(schemaOrder) 
 
-    return {"schema": schema, "schemaOrder": schemaOrder}
+    params = ttp_setup(q-1, "Income Certificate") # exclude r.
+    pk, sk = ttpKeyGen(params)
+
+    return {"schema": schema, "schemaOrder": schemaOrder, "name": "Income Certificate", "params": get_list_g1_bytes(params[3]), "pk": get_g1_bytes(pk), "sk": str(sk)}
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -62,11 +69,19 @@ if __name__ == "__main__":
             result = genIdentitySchema()
             out["schema"] = result["schema"]
             out["schemaOrder"] = result["schemaOrder"]
+            out["name"] = result["name"]
+            out["params"] = result["params"]
+            out["pk"] = result["pk"]
+            out["sk"] = result["sk"]
             print(json.dumps(out))
         elif name == "genIncomeSchema":
             result = genIncomeSchema()
             out["schema"] = result["schema"]
             out["schemaOrder"] = result["schemaOrder"]
+            out["name"] = result["name"]
+            out["params"] = result["params"]
+            out["pk"] = result["pk"]
+            out["sk"] = result["sk"]
             print(json.dumps(out))
 
     else:
