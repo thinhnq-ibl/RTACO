@@ -24,3 +24,15 @@ const createUser = async (db, user) => {
 //   organization: "UCLA",
 //   salary: 100000,
 // });
+
+const createCommitZKP = async (db, title) => {
+  let data = await runPythonScript("../py/user.py", ["genCommitZKP"]);
+  console.log("Generated commitZKP:", data.commitZKP);
+  db.commitZKPs.push({
+    id: db.commitZKPs.length + 1,
+    title,
+    commitZKP: data.commitZKP,
+  });
+  fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
+  console.log("CommitZKP created:", { title, commitZKP: data.commitZKP });
+};
