@@ -31,12 +31,29 @@
           "visibility": "private"
         }
       },
-      "schemaOrder": [
-        "msk",
-        "name",
-        "dob",
-        "r"
-      ]
+      "schemaOrder": ["msk", "name", "dob", "r"]
+    },
+    {
+      "name": "INCOME",
+      "schema": {
+        "msk": {
+          "type": "2",
+          "visibility": "private"
+        },
+        "organization": {
+          "type": "1",
+          "visibility": "private"
+        },
+        "salary": {
+          "type": "2",
+          "visibility": "private"
+        },
+        "r": {
+          "type": "2",
+          "visibility": "private"
+        }
+      },
+      "schemaOrder": ["msk", "organization", "salary", "r"]
     }
   ]
 }
