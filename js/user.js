@@ -16,11 +16,11 @@ const createUser = async (db, user) => {
   console.log("User created:", user);
 };
 
-createUser(db, {
-  id: db.users.length + 1,
-  name: "Justin",
-  dob: "2000-01-01",
-  email: "newuser@example.com",
-  organization: "UCLA",
-  salary: 100000,
-});
+// createUser(db, {
+//   id: db.users.length + 1,
+//   name: "Justin",
+//   dob: "2000-01-01",
+//   email: "newuser@example.com",
+//   organization: "UCLA",
+//   salary: 100000,
+// });

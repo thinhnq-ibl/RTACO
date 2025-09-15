@@ -9,5 +9,34 @@
       "salary": 100000,
       "msk": "18884323824090093276566674640885886162558510912327725125915188093942936802435"
     }
+  ],
+  "schemas": [
+    {
+      "name": "IDENTITY",
+      "schema": {
+        "msk": {
+          "type": "2",
+          "visibility": "private"
+        },
+        "name": {
+          "type": "1",
+          "visibility": "private"
+        },
+        "dob": {
+          "type": "3",
+          "visibility": "private"
+        },
+        "r": {
+          "type": "2",
+          "visibility": "private"
+        }
+      },
+      "schemaOrder": [
+        "msk",
+        "name",
+        "dob",
+        "r"
+      ]
+    }
   ]
 }
