@@ -39,7 +39,7 @@ const signCertificate = async (db, userEmail, requestId, title) => {
     return;
   }
 
-  const precert = db.precert.find(
+  const precert = db.precerts.find(
     (r) => r.id == requestId && r.userId == user.id && r.title == title
   );
   if (!precert) {
@@ -59,24 +59,22 @@ const signCertificate = async (db, userEmail, requestId, title) => {
   ]);
   console.log("Signed certificate data:", data);
 
-  // let id = db.cert.filter(
-  //   (c) => c.userId === user.id && c.title === schemaName
-  // );
-  // let cert_obj = {
-  //   sk: schema.sk,
-  //   pk: schema.pk,
-  //   params: schema.params,
-  //   schema: schema.schema,
-  //   schemaOrder: schema.schemaOrder,
-  //   cert: {
-  //     commit: request.commit,
-  //     zkpok_c: request.zkpok_c,
-  //     zkpok_totalrm: request.zkpok_totalrm,
-  //   },
-  // };
-  // db.cert.push(cert_obj);
-  // fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
-  // console.log("Certificate signed:", cert_obj);
+  let cert_obj = {
+    user_id: user.id,
+    requestId: requestId,
+    title: title,
+    vcert: {
+      attrs: [user.name, user.dob],
+      encode_attrs: [1, 3],
+      commit: precert.cert.commit,
+      sign_r: data.vcert_r,
+      sign_s: data.vcert_s,
+      sign_point: data.vcert_p1,
+    },
+  };
+  db.certs.push(cert_obj);
+  fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
+  console.log("Certificate signed:", cert_obj);
 };
 
 // createSchema(db, "Identity Certificate");
