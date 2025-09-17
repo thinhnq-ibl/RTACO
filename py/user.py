@@ -24,8 +24,6 @@ def genPreCert(msk, hs, attributes, encode_strs, prevHs=[], pre_attributes =[], 
     encoded_attribute.insert(0, msk)
     encoded_attribute.append(r)
 
-    
-
     params = ((FQ, FQ2, FQ12), G1, int(curve_order), hs)
     commit = GenCommitment(params, encoded_attribute)
 

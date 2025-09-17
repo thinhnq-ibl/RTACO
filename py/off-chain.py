@@ -179,6 +179,7 @@ no = 3 #getTotalOpeners(args.title)
 (opk1, osk1) = opener_keygen(validator_params)
 (opk2, osk2) = opener_keygen(validator_params)
 opks = [opk, opk1, opk2]
+osks = [osk, osk1, osk2]
 
 combination = ["Identity Certificate", "Income Certificate"]
 vcerts = [vcert, vcert2]

@@ -112,4 +112,6 @@ const createIncomeCertificate = async (db, userEmail, name) => {
 };
 
 // createIdentityCertificate(db, "newuser@example.com", "Identity Certificate");
-createIncomeCertificate(db, "newuser@example.com", "Income Certificate");
+// createIncomeCertificate(db, "newuser@example.com", "Income Certificate");
+
+const createCredentialRequest = async () => {};
