@@ -26,7 +26,7 @@ const createSchema = async (db, name) => {
   console.log("SCHEMA created:", newSchema);
 };
 
-const signCertificate = async (db, userEmail, requestId, title) => {
+const signIdentityCertificate = async (db, userEmail, requestId, title) => {
   const user = db.users.find((u) => u.email === userEmail);
   if (!user) {
     console.log("User not found:", userEmail);
@@ -50,12 +50,15 @@ const signCertificate = async (db, userEmail, requestId, title) => {
   let data = await runPythonScript("../py/attribute-certifier.py", [
     "signAttributeCertificate",
     schema.sk,
-    schema.params,
-    [user.name, user.dob],
-    [1, 3],
-    precert.cert.commit,
-    precert.cert.zkpok_c,
-    precert.cert.zkpok_totalrm,
+    JSON.stringify(db.schemas.find((s) => s.name === title).params),
+    JSON.stringify([user.name, user.dob]),
+    JSON.stringify([1, 3]), // encode_str
+    JSON.stringify(precert.cert.commit),
+    JSON.stringify(precert.cert.zkpok_c),
+    JSON.stringify(precert.cert.zkpok_totalrm),
+    JSON.stringify([]),
+    JSON.stringify([]),
+    JSON.stringify([]),
   ]);
   console.log("Signed certificate data:", data);
 
@@ -72,11 +75,82 @@ const signCertificate = async (db, userEmail, requestId, title) => {
       sign_point: data.vcert_p1,
     },
   };
-  db.vcerts.push(cert_obj);
-  fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
+  // db.vcerts.push(cert_obj);
+  // fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
+  console.log("Certificate signed:", cert_obj);
+};
+
+const signIncomeCertificate = async (db, userEmail, requestId, title) => {
+  const user = db.users.find((u) => u.email === userEmail);
+  if (!user) {
+    console.log("User not found:", userEmail);
+    return;
+  }
+
+  const schema = db.schemas.find((s) => s.name === title);
+  if (!schema) {
+    console.log("Schema not found:", title);
+    return;
+  }
+
+  const precert = db.precerts.find(
+    (r) => r.id == requestId && r.user_id == user.id && r.title == title
+  );
+  if (!precert) {
+    console.log("Request not found or not approved:", requestId);
+    return;
+  }
+
+  const identityCert = db.vcerts.find(
+    (r) => r.user_id == user.id && r.title == "Identity Certificate"
+  );
+  if (!identityCert) {
+    console.log("Request not found or not approved:", requestId);
+    return;
+  }
+
+  let data = await runPythonScript("../py/attribute-certifier.py", [
+    "signAttributeCertificate",
+    schema.sk,
+    JSON.stringify(db.schemas.find((s) => s.name === title).params),
+    JSON.stringify([user.organization, user.salary]),
+    JSON.stringify([1, 2]), // encode_str
+    JSON.stringify(precert.cert.commit),
+    JSON.stringify(precert.cert.zkpok_c),
+    JSON.stringify(precert.cert.zkpok_totalrm),
+    JSON.stringify([
+      db.schemas.find((s) => s.name === "Identity Certificate").params,
+    ]),
+    JSON.stringify([identityCert.vcert.commit]),
+    JSON.stringify([
+      [
+        identityCert.vcert.sign_r,
+        identityCert.vcert.sign_s,
+        identityCert.vcert.sign_point,
+      ],
+    ]),
+  ]);
+  console.log("Signed certificate data:", data);
+
+  let cert_obj = {
+    user_id: user.id,
+    requestId: requestId,
+    title: title,
+    vcert: {
+      attrs: [user.organization, user.salary],
+      encode_attrs: [1, 2],
+      commit: precert.cert.commit,
+      sign_r: data.vcert_r,
+      sign_s: data.vcert_s,
+      sign_point: data.vcert_p1,
+    },
+  };
+  // db.vcerts.push(cert_obj);
+  // fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
   console.log("Certificate signed:", cert_obj);
 };
 
 // createSchema(db, "Identity Certificate");
 // createSchema(db, "Income Certificate");
-signCertificate(db, "newuser@example.com", 1, "Identity Certificate");
+signIdentityCertificate(db, "newuser@example.com", 1, "Identity Certificate");
+// signIncomeCertificate(db, "newuser@example.com", 2, "Income Certificate");

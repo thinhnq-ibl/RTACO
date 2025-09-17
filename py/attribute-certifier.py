@@ -62,7 +62,7 @@ def genIncomeSchema():
 
     return {"schema": schema, "schemaOrder": schemaOrder, "name": "Income Certificate", "params": get_list_g1_bytes(params[3]), "pk": get_g1_bytes(pk), "sk": str(sk)}
 
-def signAttributeCertificate(ttp_sk, ttp_hs, attributes, encode_str, commit, zkpok, prev_hs = []):
+def signAttributeCertificate(ttp_sk, ttp_hs, attributes, encode_str, commit, zkpok, prev_hs = [],  pre_commits = [], pre_signs = []):
     params = ((FQ, FQ2, FQ12), G1, int(curve_order), ttp_hs)
     prevParams = [((FQ, FQ2, FQ12), G1, int(curve_order), hsi) for hsi in prev_hs]
 
@@ -75,7 +75,15 @@ def signAttributeCertificate(ttp_sk, ttp_hs, attributes, encode_str, commit, zkp
             
     encoded_attribute = encode_attributes(attributes, encode_str)
 
-    verify_zkp = VerifyZKPoK(params, [], [], encoded_attribute, commit, zkpok)
+    prevVcerts = []
+    for i in range(len(pre_commits)):
+        prevVcerts.append((pre_commits[i], pre_signs[i]))
+
+    #params, prevParams, prevVcerts, encoded_attribute, commit,
+    verify_zkp = VerifyZKPoK(params, prevParams, prevVcerts, encoded_attribute, commit, zkpok)
+    if verify_zkp == False:
+        return 
+
     # print ("verify_zkp", verify_zkp)
     signature = SignCommitment(params, ttp_sk, commit)
     return signature
@@ -103,14 +111,28 @@ if __name__ == "__main__":
             print(json.dumps(out))
         elif name == "signAttributeCertificate":
             ttp_sk = int(sys.argv[2])
-            ttp_hs = [get_g1_from_string(i) for i in sys.argv[3].split(',')]
-            attributes = sys.argv[4].split(',')
-            encode_str = [int(i) for i in sys.argv[5].split(',')]
-            user_commit = get_g1_from_string(sys.argv[6])
-            zkpok_c = int(sys.argv[7])
-            zkpok_totalrm = [[int(j) for j in i.split(',')] for i in sys.argv[8].split(';')]
-            zkpok = (zkpok_c, zkpok_totalrm)
-            vcert = signAttributeCertificate(ttp_sk, ttp_hs, attributes, encode_str, user_commit, zkpok)
+            ttp_hs = json.loads(sys.argv[3])
+            attributes = json.loads(sys.argv[4])
+            encode_str = json.loads(sys.argv[5])
+            user_commit = json.loads(sys.argv[6])
+            zkpok_c = json.loads(sys.argv[7])
+            zkpok_totalrm = json.loads(sys.argv[8])
+            pre_hs = json.loads(sys.argv[9])
+            pre_commits = json.loads(sys.argv[10])
+            pre_signs = json.loads(sys.argv[11])
+
+            user_commit = get_g1_from_string(user_commit)
+            ttp_hs = get_list_g1_from_string(ttp_hs) 
+            pre_hs = [get_list_g1_from_string(h) for h in pre_hs]
+
+            pre_commits = get_list_g1_from_string(pre_commits)
+            pre_sign_new = []
+            for i in range(len(pre_signs)):
+                pre_sign_new.append((int(pre_signs[i][0]), int(pre_signs[i][1]), get_g1_from_string(pre_signs[i][2])))
+                
+            zkpok = (int(zkpok_c), [[int(j) for j in i] for i in zkpok_totalrm])
+            
+            vcert = signAttributeCertificate(ttp_sk, ttp_hs, attributes, encode_str, user_commit, zkpok, pre_hs ,  pre_commits, pre_sign_new)
             # r, s, p1
             out["vcert_r"] = str(vcert[0])
             out["vcert_s"] = str(vcert[1])

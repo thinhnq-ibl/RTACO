@@ -92,7 +92,7 @@ const createIncomeCertificate = async (db, userEmail, name) => {
   let id = db.precerts.filter((c) => c.user_id === user.id);
   let precert_obj = {
     id: id.length > 0 ? id.length + 1 : 1,
-    user_jd: user.id,
+    user_id: user.id,
     title: "Income Certificate",
     cert: {
       commit: data.commit,
