@@ -100,16 +100,18 @@ def GenZKPoK(params, prev_params, prev_vcerts, all_enc_attr, comm):
 
 	c = toChallenge(element_list) % o
 	total_rm = [[(total_wm[i][j] - c*all_enc_attr[i][j] ) % o for j in range(len(total_wm[i]))] for i in range(len(total_wm))]
+	
 	return (c, total_rm)
 
 def VerifyZKPoK(params, prev_params, prev_vcerts, encoded_attr, comm, ZKPoK):
 	c, total_rm = ZKPoK
+	
 	for i in range(1, len(total_rm)):
 		if total_rm[0][0] != total_rm[i][0]:
 			return False
-
+		
 	_, g, o, hs= params
-
+	
 	tmp_comm = multiply(hs[1], encoded_attr[0])
 
 	for i in range(2, len(hs)):

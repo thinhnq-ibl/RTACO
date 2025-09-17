@@ -9,7 +9,7 @@ import json
 out = {}
 encoding_type_map = {"1": type("string"), "2": type(1), "3": type(datetime.datetime.now())}
 
-def genPreCert(msk, hs, attributes, encode_strs, prevHs=[], pre_attributes =[],  pre_encode_strs=[], pre_commits = [], pre_signs = []):
+def genPreCert(msk, hs, attributes, encode_strs, prevHs=[], pre_attributes =[],  pre_encode_strs=[], pre_commits = [], pre_signs = [], pre_r = []):
     r = genRandom()
     
     for i in range(len(encode_strs)):
@@ -40,17 +40,19 @@ def genPreCert(msk, hs, attributes, encode_strs, prevHs=[], pre_attributes =[], 
                     value_date = int(_date.strftime('%Y%m%d'))
                     pre_attribute[j] = value_date
                     pre_encode_str[j] = 2
-            prevAttributes.append(encode_attributes(pre_attribute, pre_encode_str))
+            pre_vcert = encode_attributes(pre_attribute, pre_encode_str)
+            pre_vcert.insert(0, msk)
+            pre_vcert.append(pre_r[i])
+            prevAttributes.append(pre_vcert)
 
     prevAttributes.append([encoded_attribute[0], encoded_attribute[-1]])
-
     prevParams = [((FQ, FQ2, FQ12), G1, int(curve_order), hsi) for hsi in prevHs]
 
     prevVcerts = []
     for i in range(len(pre_commits)):
         prevVcerts.append((pre_commits[i], pre_signs[i]))
     zkpok = GenZKPoK(params, prevParams, prevVcerts, prevAttributes, commit)
-    return (commit, zkpok)
+    return (commit, zkpok, r)
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -69,6 +71,7 @@ if __name__ == "__main__":
             pre_encode_strs = json.loads(sys.argv[8])
             pre_commits = json.loads(sys.argv[9])
             pre_signs = json.loads(sys.argv[10])
+            pre_r = json.loads(sys.argv[11])
 
             hs = get_list_g1_from_string(hs) 
             pre_hs = [get_list_g1_from_string(h) for h in pre_hs]
@@ -78,11 +81,13 @@ if __name__ == "__main__":
             for i in range(len(pre_signs)):
                 pre_sign_new.append((int(pre_signs[i][0]), int(pre_signs[i][1]), get_g1_from_string(pre_signs[i][2])))
                 
+            new_pre_r = [int(i) for i in pre_r] 
 
-            (commit, zkpok) = genPreCert(msk, hs, attributes, encode_str, pre_hs, pre_attributes, pre_encode_strs, pre_commits, pre_sign_new)
+            (commit, zkpok, r) = genPreCert(msk, hs, attributes, encode_str, pre_hs, pre_attributes, pre_encode_strs, pre_commits, pre_sign_new, new_pre_r)
             out["commit"] = get_g1_bytes(commit)
             out["zkpok_c"] = str(zkpok[0])
             out["zkpok_totalrm"] = [[str(j) for j in i] for i in zkpok[1]]
+            out["r"] = str(r)
             print(json.dumps(out))
     else:
         print("Hello from Python!")

@@ -49,6 +49,7 @@ const createIdentityCertificate = async (db, userEmail, name) => {
     user_id: user.id,
     title: "Identity Certificate",
     cert: {
+      r: data.r,
       commit: data.commit,
       zkpok_c: data.zkpok_c,
       zkpok_totalrm: data.zkpok_totalrm,
@@ -66,6 +67,10 @@ const createIncomeCertificate = async (db, userEmail, name) => {
     return;
   }
   const identityCert = db.vcerts.find(
+    (x) => x.user_id == user.id && x.title == "Identity Certificate"
+  );
+
+  const identityPreCert = db.precerts.find(
     (x) => x.user_id == user.id && x.title == "Identity Certificate"
   );
 
@@ -88,6 +93,7 @@ const createIncomeCertificate = async (db, userEmail, name) => {
         identityCert.vcert.sign_point,
       ],
     ]),
+    JSON.stringify([identityPreCert.cert.r]),
   ]);
   let id = db.precerts.filter((c) => c.user_id === user.id);
   let precert_obj = {

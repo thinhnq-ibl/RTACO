@@ -62,9 +62,9 @@ def genIncomeSchema():
 
     return {"schema": schema, "schemaOrder": schemaOrder, "name": "Income Certificate", "params": get_list_g1_bytes(params[3]), "pk": get_g1_bytes(pk), "sk": str(sk)}
 
-def signAttributeCertificate(ttp_sk, ttp_hs, attributes, encode_str, commit, zkpok, prev_hs = [],  pre_commits = [], pre_signs = []):
+def signAttributeCertificate(ttp_sk, ttp_hs, attributes, encode_str, commit, zkpok, pre_hs = [],  pre_commits = [], pre_signs = [], pre_pks = []):
     params = ((FQ, FQ2, FQ12), G1, int(curve_order), ttp_hs)
-    prevParams = [((FQ, FQ2, FQ12), G1, int(curve_order), hsi) for hsi in prev_hs]
+    prevParams = [((FQ, FQ2, FQ12), G1, int(curve_order), hsi) for hsi in pre_hs]
 
     for i in range(len(encode_str)):
         if encode_str[i] == 3:
@@ -78,6 +78,11 @@ def signAttributeCertificate(ttp_sk, ttp_hs, attributes, encode_str, commit, zkp
     prevVcerts = []
     for i in range(len(pre_commits)):
         prevVcerts.append((pre_commits[i], pre_signs[i]))
+
+    for i in range(len(prevVcerts)):
+        if not VerifyVcerts(prevParams[i], pre_pks[i], (prevVcerts[i][1][0], prevVcerts[i][1][1]), SHA256(prevVcerts[i][0])):
+            print("Failed Vcert Verification")
+            continue
 
     #params, prevParams, prevVcerts, encoded_attribute, commit,
     verify_zkp = VerifyZKPoK(params, prevParams, prevVcerts, encoded_attribute, commit, zkpok)
@@ -120,6 +125,7 @@ if __name__ == "__main__":
             pre_hs = json.loads(sys.argv[9])
             pre_commits = json.loads(sys.argv[10])
             pre_signs = json.loads(sys.argv[11])
+            pre_pks = json.loads(sys.argv[12])
 
             user_commit = get_g1_from_string(user_commit)
             ttp_hs = get_list_g1_from_string(ttp_hs) 
@@ -131,8 +137,9 @@ if __name__ == "__main__":
                 pre_sign_new.append((int(pre_signs[i][0]), int(pre_signs[i][1]), get_g1_from_string(pre_signs[i][2])))
                 
             zkpok = (int(zkpok_c), [[int(j) for j in i] for i in zkpok_totalrm])
+            pre_pks = get_list_g1_from_string(pre_pks)
             
-            vcert = signAttributeCertificate(ttp_sk, ttp_hs, attributes, encode_str, user_commit, zkpok, pre_hs ,  pre_commits, pre_sign_new)
+            vcert = signAttributeCertificate(ttp_sk, ttp_hs, attributes, encode_str, user_commit, zkpok, pre_hs ,  pre_commits, pre_sign_new, pre_pks)
             # r, s, p1
             out["vcert_r"] = str(vcert[0])
             out["vcert_s"] = str(vcert[1])

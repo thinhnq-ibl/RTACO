@@ -59,6 +59,7 @@ const signIdentityCertificate = async (db, userEmail, requestId, title) => {
     JSON.stringify([]),
     JSON.stringify([]),
     JSON.stringify([]),
+    JSON.stringify([]),
   ]);
   console.log("Signed certificate data:", data);
 
@@ -75,8 +76,8 @@ const signIdentityCertificate = async (db, userEmail, requestId, title) => {
       sign_point: data.vcert_p1,
     },
   };
-  // db.vcerts.push(cert_obj);
-  // fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
+  db.vcerts.push(cert_obj);
+  fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
   console.log("Certificate signed:", cert_obj);
 };
 
@@ -129,6 +130,9 @@ const signIncomeCertificate = async (db, userEmail, requestId, title) => {
         identityCert.vcert.sign_point,
       ],
     ]),
+    JSON.stringify([
+      db.schemas.find((s) => s.name === "Identity Certificate").pk,
+    ]),
   ]);
   console.log("Signed certificate data:", data);
 
@@ -145,12 +149,12 @@ const signIncomeCertificate = async (db, userEmail, requestId, title) => {
       sign_point: data.vcert_p1,
     },
   };
-  // db.vcerts.push(cert_obj);
-  // fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
+  db.vcerts.push(cert_obj);
+  fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
   console.log("Certificate signed:", cert_obj);
 };
 
 // createSchema(db, "Identity Certificate");
 // createSchema(db, "Income Certificate");
-signIdentityCertificate(db, "newuser@example.com", 1, "Identity Certificate");
-// signIncomeCertificate(db, "newuser@example.com", 2, "Income Certificate");
+// signIdentityCertificate(db, "newuser@example.com", 1, "Identity Certificate");
+signIncomeCertificate(db, "newuser@example.com", 2, "Income Certificate");
