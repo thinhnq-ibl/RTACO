@@ -25,7 +25,7 @@ const createUser = async (db, user) => {
 //   salary: 100000,
 // });
 
-const createIdentityCredential = async (db, userEmail, name) => {
+const createIdentityCertificate = async (db, userEmail, name) => {
   const user = db.users.find((u) => u.email === userEmail);
   if (!user) {
     console.log("User not found:", userEmail);
@@ -34,17 +34,19 @@ const createIdentityCredential = async (db, userEmail, name) => {
   let data = await runPythonScript("../py/user.py", [
     "genPreCert",
     user.msk,
-    db.schemas.find((s) => s.name === name).params,
-    [user.name, user.dob],
-    [1, 3], // encode_str
-    [],
-    [],
-    [], // pre_encoded_attribute
+    JSON.stringify(db.schemas.find((s) => s.name === name).params),
+    JSON.stringify([user.name, user.dob]),
+    JSON.stringify([1, 3]), // encode_str
+    JSON.stringify([]),
+    JSON.stringify([]),
+    JSON.stringify([]), // pre_encoded_attribute
+    JSON.stringify([]),
+    JSON.stringify([]),
   ]);
-  let id = db.precert.filter((c) => c.userId === user.id);
+  let id = db.precerts.filter((c) => c.user_id === user.id);
   let precert_obj = {
     id: id.length > 0 ? id.length + 1 : 1,
-    userId: user.id,
+    user_id: user.id,
     title: "Identity Certificate",
     cert: {
       commit: data.commit,
@@ -52,9 +54,56 @@ const createIdentityCredential = async (db, userEmail, name) => {
       zkpok_totalrm: data.zkpok_totalrm,
     },
   };
-  db.precert.push(precert_obj);
+  db.precerts.push(precert_obj);
   fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
   console.log("Pre-cert created:", precert_obj);
 };
 
-createIdentityCredential(db, "newuser@example.com", "Identity Certificate");
+const createIncomeCertificate = async (db, userEmail, name) => {
+  const user = db.users.find((u) => u.email === userEmail);
+  if (!user) {
+    console.log("User not found:", userEmail);
+    return;
+  }
+  const identityCert = db.vcerts.find(
+    (x) => x.user_id == user.id && x.title == "Identity Certificate"
+  );
+
+  let data = await runPythonScript("../py/user.py", [
+    "genPreCert",
+    user.msk,
+    JSON.stringify(db.schemas.find((s) => s.name === name).params),
+    JSON.stringify([user.organization, user.salary]),
+    JSON.stringify([1, 2]), // encode_str
+    JSON.stringify([
+      db.schemas.find((s) => s.name === "Identity Certificate").params,
+    ]),
+    JSON.stringify([identityCert.vcert.attrs]),
+    JSON.stringify([identityCert.vcert.encode_attrs]), // pre_encoded_attribute
+    JSON.stringify([identityCert.vcert.commit]),
+    JSON.stringify([
+      [
+        identityCert.vcert.sign_r,
+        identityCert.vcert.sign_s,
+        identityCert.vcert.sign_point,
+      ],
+    ]),
+  ]);
+  let id = db.precerts.filter((c) => c.user_id === user.id);
+  let precert_obj = {
+    id: id.length > 0 ? id.length + 1 : 1,
+    user_jd: user.id,
+    title: "Income Certificate",
+    cert: {
+      commit: data.commit,
+      zkpok_c: data.zkpok_c,
+      zkpok_totalrm: data.zkpok_totalrm,
+    },
+  };
+  db.precerts.push(precert_obj);
+  fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
+  console.log("Pre-cert created:", precert_obj);
+};
+
+// createIdentityCertificate(db, "newuser@example.com", "Identity Certificate");
+createIncomeCertificate(db, "newuser@example.com", "Income Certificate");

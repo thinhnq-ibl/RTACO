@@ -31,7 +31,12 @@
           "visibility": "private"
         }
       },
-      "schemaOrder": ["msk", "name", "dob", "r"],
+      "schemaOrder": [
+        "msk",
+        "name",
+        "dob",
+        "r"
+      ],
       "params": [
         "afcccdf181372ae095c90ab978b2644ea70a26a9882f958f4b444198526a08df0ac0d2f3a22def8fe9bc90dd6c026fc3",
         "a96a8434d5128874888977d279af969e6de98ff9d4abd5a640dd8ab425db07c0d7fa89c49681b7dc39f14de669cd2482",
@@ -60,7 +65,12 @@
           "visibility": "private"
         }
       },
-      "schemaOrder": ["msk", "organization", "salary", "r"],
+      "schemaOrder": [
+        "msk",
+        "organization",
+        "salary",
+        "r"
+      ],
       "params": [
         "86fa463aeca16b8a4b40983734410be0108e1d708fde32ca51eae6b971f6cd24555b7372a7a84238ab1941205a8b2c4d",
         "9728604cdc4edd3950b0b9c815a7f08cdd9bf2983b9a049b79c1150036ae0c9b036c3000b291c805942d2bfc741cc5f3",
@@ -73,7 +83,7 @@
   "precerts": [
     {
       "id": 1,
-      "userId": 1,
+      "user_id": 1,
       "title": "Identity Certificate",
       "cert": {
         "commit": "80da74e9db4c3cba55604f3fa2010d71c00c1174c21e13841c52a25717606c4d98bac857b571a7eae9e82246635ddefa",
@@ -85,16 +95,41 @@
           ]
         ]
       }
+    },
+    {
+      "id": 2,
+      "user_jd": 1,
+      "title": "Income Certificate",
+      "cert": {
+        "commit": "97456058d96cc154a03b91a775982449afca66fd19bb968cf32e0355de9436315103dfe8043d4396f88cd4ef1c7ca8cc",
+        "zkpok_c": "24511908390728592287527115915548219444789033058607263466023447102760003826671",
+        "zkpok_totalrm": [
+          [
+            "17208471437995930817186553008787676326362584245170625949159390287567007236262",
+            "12592040894792861644281048108672818683698041297815907220895544523127397017941"
+          ],
+          [
+            "16877398352716718079598028601900399218958280838980535873856723325187516004963",
+            "7176261724369171658258922582454047795047133308315528256206591182734380575581"
+          ]
+        ]
+      }
     }
   ],
-  "certs": [
+  "vcerts": [
     {
       "user_id": 1,
-      "requestId": 1,
+      "request_id": 1,
       "title": "Identity Certificate",
       "vcert": {
-        "attrs": ["Justin", "2000-01-01"],
-        "encode_attrs": [1, 3],
+        "attrs": [
+          "Justin",
+          "2000-01-01"
+        ],
+        "encode_attrs": [
+          1,
+          3
+        ],
         "commit": "80da74e9db4c3cba55604f3fa2010d71c00c1174c21e13841c52a25717606c4d98bac857b571a7eae9e82246635ddefa",
         "sign_r": "764062791280479681307595155731650190550173901792909972212818184533937538657188066950833684288914214579910764741453",
         "sign_s": "5043142152234786594043929186747648568852191215960563175770146865505651916752",

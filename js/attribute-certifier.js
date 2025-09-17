@@ -40,7 +40,7 @@ const signCertificate = async (db, userEmail, requestId, title) => {
   }
 
   const precert = db.precerts.find(
-    (r) => r.id == requestId && r.userId == user.id && r.title == title
+    (r) => r.id == requestId && r.user_id == user.id && r.title == title
   );
   if (!precert) {
     console.log("Request not found or not approved:", requestId);
@@ -72,7 +72,7 @@ const signCertificate = async (db, userEmail, requestId, title) => {
       sign_point: data.vcert_p1,
     },
   };
-  db.certs.push(cert_obj);
+  db.vcerts.push(cert_obj);
   fs.writeFileSync("db.json", JSON.stringify(db, null, 2));
   console.log("Certificate signed:", cert_obj);
 };
