@@ -25,7 +25,10 @@ def genValidator(q, ac_title):
     opks = [opk, opk1, opk2,]
     osks = [osk, osk1, osk2]
 
-    return (hs, sk, vk, aggregate_vk, opks, osks)
+    vk_byte = [[get_g2_bytes(i[0]), get_g2_bytes(i[1]), get_list_g1_bytes(i[2]), get_list_g2_bytes(i[3])]for i in vk]
+    aggregate_vk_byte = [get_g2_bytes(aggregate_vk[0]), get_g2_bytes(aggregate_vk[1]), get_list_g1_bytes(aggregate_vk[2]), get_list_g2_bytes(aggregate_vk[3])]
+
+    return (hs, [[str(i[0]), [str(j) for j in i[1]]] for i in sk], vk_byte, aggregate_vk_byte, get_list_g2_bytes(opks), [str(i) for i in osks])
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -34,7 +37,12 @@ if __name__ == "__main__":
             q = int(sys.argv[2])
             ac_title = json.loads(sys.argv[3])
             (hs, sk, vk, aggregate_vk, opks, osks) = genValidator(q, ac_title)
-            out["hs"] = [str (i ) for i in hs]
+            out["hs"] = [get_g1_bytes (i ) for i in hs]
+            out["sk"] = sk
+            out["vk"] = vk
+            out["aggregate_vk"] = aggregate_vk
+            out["opks"] = opks
+            out["osks"] = osks
             print(json.dumps(out))
     else:
         print("Hello from Python!")
