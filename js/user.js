@@ -157,62 +157,63 @@ const createIncomeCertificate = async (db, userEmail, name) => {
 // createIncomeCertificate(db, "newuser@example.com", "Income Certificate");
 
 const createCredentialRequest = async () => {
-   console.log("Minting req ...");
+  // call Py to create precreddential
+  console.log("Minting req ...");
     
-    const datum = [
-      new Constr(1, []),
-      new Constr(0, [
-        BigInt(py_result.issue_proof[0]),
-        BigInt(py_result.issue_proof[1]),
-        issue_proof_2,
-        issue_proof_3,
-        py_result.issue_proof[4]
-      ]),
-      new Constr(0, [
-        py_result.open_proof[0],
-        py_result.open_proof[1],
-        open_proof_3
-      ]),
-      vcerts,
-      py_result.cm_compressed,
-      py_result.hs_compressed,
-      include_indexes_bignum,
-      py_result.combine_hs_compressed,
-      py_result.commits_compressed,
-      py_result.combine_commits_compressed
-    ]
-    
-    let utxos = await lucid.utxosByOutRef([{ txHash: tx_oracle_id, outputIndex: tx_oracle_index }]);
-    if(utxos.length === 0) {
-      console.error("No UTxOs found");
-      return;
-    }
+  const datum = [
+    new Constr(1, []),
+    new Constr(0, [
+      BigInt(py_result.issue_proof[0]),
+      BigInt(py_result.issue_proof[1]),
+      issue_proof_2,
+      issue_proof_3,
+      py_result.issue_proof[4]
+    ]),
+    new Constr(0, [
+      py_result.open_proof[0],
+      py_result.open_proof[1],
+      open_proof_3
+    ]),
+    vcerts,
+    py_result.cm_compressed,
+    py_result.hs_compressed,
+    include_indexes_bignum,
+    py_result.combine_hs_compressed,
+    py_result.commits_compressed,
+    py_result.combine_commits_compressed
+  ]
+
+  let utxos = await lucid.utxosByOutRef([{ txHash: tx_oracle_id, outputIndex: tx_oracle_index }]);
+  if(utxos.length === 0) {
+    console.error("No UTxOs found");
+    return;
+  }
   
-    const mint_datum = Data.to(new Constr(0, [
-      ...datum,
-      utxos[0].txHash, 
-      BigInt(utxos[0].outputIndex),
-    ]));
+  const mint_datum = Data.to(new Constr(0, [
+    ...datum,
+    utxos[0].txHash, 
+    BigInt(utxos[0].outputIndex),
+  ]));
   
-    // console.log("Mint datum:", mint_datum);
+  // console.log("Mint datum:", mint_datum);
   
-    const redeemer = Data.to(new Constr(0, []));
-    const tx = await lucid
-      .newTx()
-      .readFrom(utxos)
-      .attach.MintingPolicy(mintValidator)
-      .mintAssets({ [mint_asset_unit]: 1n }, redeemer)
-      .pay.ToContract(
-        scriptAddress,
-        { kind: "inline", value: mint_datum },
-        { [mint_asset_unit]: 1n, lovelace: 5_000_000n }
-      )
-      .complete();
+  const redeemer = Data.to(new Constr(0, []));
+  const tx = await lucid
+    .newTx()
+    .readFrom(utxos)
+    .attach.MintingPolicy(mintValidator)
+    .mintAssets({ [mint_asset_unit]: 1n }, redeemer)
+    .pay.ToContract(
+      scriptAddress,
+      { kind: "inline", value: mint_datum },
+      { [mint_asset_unit]: 1n, lovelace: 5_000_000n }
+    )
+    .complete();
+
+  const signedTx = await tx.sign.withWallet().complete();
   
-    const signedTx = await tx.sign.withWallet().complete();
-  
-    const txHash = await signedTx.submit();
-    await lucid.awaitTx(txHash);
-    console.log("Transaction submitted successfully:", txHash);
-    return txHash;
+  const txHash = await signedTx.submit();
+  await lucid.awaitTx(txHash);
+  console.log("Transaction submitted successfully:", txHash);
+  return txHash;
 };

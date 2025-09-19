@@ -52,19 +52,24 @@ def genPreCert(msk, hs, attributes, encode_strs, prevHs=[], pre_attributes =[], 
     zkpok = GenZKPoK(params, prevParams, prevVcerts, prevAttributes, commit)
     return (commit, zkpok, r)
 
-def genCredRequest():
-    vcerts = [vcert, vcert2]
-
-    prevVcerts = [(vcert["commit"], vcert["signature"]), (vcert2["commit"], vcert2["signature"])]	
-    prevParams = [params, params2]
-    all_encoded_attr = [encoded_attribute, encoded_attribute2]
-
-    include_indexes = [[0, 0, 1, 0], [0, 0, 1, 0]]
+def genCredRequest(validator_hs, pre_list_hs, aggregate_vk, include_indexes, opks, all_encoded_attr, list_commit):
+    prevParams = [ ((FQ, FQ2, FQ12), G1, int(curve_order), hs) for hs in pre_list_hs]
+    to = 2
+    no = 3
+    validator_params = ((FQ, FQ2, FQ12), G1, int(curve_order), validator_hs)
     Lambda, os = PrepareCredRequest(validator_params, aggregate_vk, to, no, opks, prevParams, all_encoded_attr, include_indexes, public_m=[])
 
     (cm, commitments, pi_s, hp, C, pi_o, Dw, Ew, hr, bo) = Lambda
 
+    combine_hs = []
+    combine_commitments = []
+    (c, rr, ros, total_rm) = pi_s
+    for i in range(len(total_rm) - 1):
+        _, ttp_g, _, ttp_hs = prevParams[i]
+        combine_hs.append([get_g1_bytes(x) for x in ttp_hs])
+        combine_commitments.append(get_g1_bytes(list_commit[i]))
 
+    return [Lambda, combine_hs, combine_commitments]
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
