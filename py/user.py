@@ -52,6 +52,20 @@ def genPreCert(msk, hs, attributes, encode_strs, prevHs=[], pre_attributes =[], 
     zkpok = GenZKPoK(params, prevParams, prevVcerts, prevAttributes, commit)
     return (commit, zkpok, r)
 
+def genCredRequest():
+    vcerts = [vcert, vcert2]
+
+    prevVcerts = [(vcert["commit"], vcert["signature"]), (vcert2["commit"], vcert2["signature"])]	
+    prevParams = [params, params2]
+    all_encoded_attr = [encoded_attribute, encoded_attribute2]
+
+    include_indexes = [[0, 0, 1, 0], [0, 0, 1, 0]]
+    Lambda, os = PrepareCredRequest(validator_params, aggregate_vk, to, no, opks, prevParams, all_encoded_attr, include_indexes, public_m=[])
+
+    (cm, commitments, pi_s, hp, C, pi_o, Dw, Ew, hr, bo) = Lambda
+
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         name = sys.argv[1]
@@ -87,5 +101,9 @@ if __name__ == "__main__":
             out["zkpok_totalrm"] = [[str(j) for j in i] for i in zkpok[1]]
             out["r"] = str(r)
             print(json.dumps(out))
+
+        elif name == "genCredRequest":
+            print(json.dumps(out))
+
     else:
         print("Hello from Python!")
