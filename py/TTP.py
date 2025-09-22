@@ -100,16 +100,18 @@ def GenZKPoK(params, prev_params, prev_vcerts, all_enc_attr, comm):
 
 	c = toChallenge(element_list) % o
 	total_rm = [[(total_wm[i][j] - c*all_enc_attr[i][j] ) % o for j in range(len(total_wm[i]))] for i in range(len(total_wm))]
+	
 	return (c, total_rm)
 
 def VerifyZKPoK(params, prev_params, prev_vcerts, encoded_attr, comm, ZKPoK):
 	c, total_rm = ZKPoK
+	
 	for i in range(1, len(total_rm)):
 		if total_rm[0][0] != total_rm[i][0]:
 			return False
-
+		
 	_, g, o, hs= params
-
+	
 	tmp_comm = multiply(hs[1], encoded_attr[0])
 
 	for i in range(2, len(hs)):
@@ -224,6 +226,15 @@ def get_g1_from_string(bytes_hex):
 	point_int = os2ip(bytes_val)
 	optimize_point = decompress_G1(point_int)
 	return (FQ(optimize_point[0].n), FQ(optimize_point[1].n))
+
+def get_list_g1_from_string(list_bytes_hex):
+	ret = []
+	for bytes_hex in list_bytes_hex:
+		bytes_val = bytes.fromhex(bytes_hex)
+		point_int = os2ip(bytes_val)
+		optimize_point = decompress_G1(point_int)
+		ret.append((FQ(optimize_point[0].n), FQ(optimize_point[1].n)))
+	return ret
 
 def get_g2_bytes(point):
     commit2Uncompress = (FQO2([point[0].coeffs[0].n, point[0].coeffs[1].n]), FQO2([point[1].coeffs[0].n, point[1].coeffs[1].n]), FQO2.one())

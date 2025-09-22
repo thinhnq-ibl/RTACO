@@ -74,7 +74,7 @@ new_encode_str = [1,2]
 new_encoded_attribute = encode_attributes(new_attribute, new_encode_str)
 # hide msk and r when verifying the zkpok
 verify_zkp = VerifyZKPoK(params, prevParams, prevVcerts, new_encoded_attribute, commit, zkpok)
-# print ("verify_zkp", verify_zkp)
+print ("verify_zkp", verify_zkp)
 signature = SignCommitment(params, sk, commit)
 # print("signature", {
 #     "r":  signature[0],
@@ -132,14 +132,19 @@ commit2 = GenCommitment(params2, encoded_attribute2)
 # raw commit2
 # print("commit2", ((commit2[0].n).to_bytes(48, 'big').hex() , (commit2[1].n).to_bytes(48, 'big').hex()))
 
-prevAttributes2 = [new_encoded_attribute]
+prevAttributes2 = [encoded_attribute]
 prevAttributes2.append([encoded_attribute2[0], encoded_attribute2[-1]])
 
 prevParams2 = [params]
 prevVcerts2 = [(commit, signature)]
 zkpok2 = GenZKPoK(params2, prevParams2, prevVcerts2, prevAttributes2, commit2)
-verify_zkp2 = VerifyZKPoK(params2, prevParams2, prevVcerts2, ["company a", 100000], commit2, zkpok2)
-# print ("verify_zkp2", verify_zkp2)
+
+new_attribute2 = ["company a", 100000]
+new_encode_str2 = [1,2]
+new_encoded_attribute2 = encode_attributes(new_attribute2, new_encode_str2)
+
+verify_zkp2 = VerifyZKPoK(params2, prevParams2, prevVcerts2, new_encoded_attribute2, commit2, zkpok2)
+print ("verify_zkp2", verify_zkp2)
 signature2 = SignCommitment(params2, sk2, commit2)
 
 # print("signature2", {
@@ -174,6 +179,7 @@ no = 3 #getTotalOpeners(args.title)
 (opk1, osk1) = opener_keygen(validator_params)
 (opk2, osk2) = opener_keygen(validator_params)
 opks = [opk, opk1, opk2]
+osks = [osk, osk1, osk2]
 
 combination = ["Identity Certificate", "Income Certificate"]
 vcerts = [vcert, vcert2]
