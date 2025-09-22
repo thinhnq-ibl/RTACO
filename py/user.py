@@ -108,6 +108,17 @@ if __name__ == "__main__":
             print(json.dumps(out))
 
         elif name == "genCredRequest":
+            val_hs = json.loads(sys.argv[3])
+            pre_hs = json.loads(sys.argv[4])
+            aggregate_vk = json.loads(sys.argv[5])
+            include_indexes = json.loads(sys.argv[6])
+            opks = json.loads(sys.argv[7])
+            all_encoded_attr = json.loads(sys.argv[8])
+            list_commit = json.loads(sys.argv[9])
+
+            pre_hs = [get_list_g1_from_string(h) for h in pre_hs]
+            val_hs = get_list_g1_from_string(val_hs)
+
             print(json.dumps(out))
 
     else:
