@@ -22,6 +22,9 @@ const lucid = await Lucid(
 
 let seedPhrase =
   "duck process cigar amount dumb foam verb raven carry nurse icon lunar oil suit pencil message hip call program you wet grass inside bean"; // Replace with your actual seed phrase
+  // "fiber twenty jeans author army abstract total turn payment upset auto ugly dial replace column dove render scan walk rug end type ski erupt"
+  // "cup melt minimum cereal disorder what cattle panda behind hybrid reunion hat arrive fame purity produce flee rent include letter matrix negative crew marble"
+  // "pencil trim desert strategy property dry token segment pair youth check unique suffer tumble small dice fat dial urban oak buffalo ankle antenna picture"
 lucid.selectWallet.fromSeed(seedPhrase);
 
 const address = await lucid.wallet().address(); // Bech32 address
@@ -217,3 +220,4 @@ const createCredentialRequest = async () => {
   console.log("Transaction submitted successfully:", txHash);
   return txHash;
 };
+

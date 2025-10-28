@@ -539,34 +539,6 @@ def calculate_T(params, rand_sig, reg, no):
             T[h].setdefault(opener, e(reg[opener][h][0], h_prime))
     return T
 
-def open_cred(params, rand_sig, T, reg, opener_, indexes, no, to, aggr_vk):
-    (G, o, g1, hs, g2, e) = params
-    _, alpha, _, beta = aggr_vk 
-    h_prime, s_prime = rand_sig
-
-    assert len(indexes) > to
-
-    l = lagrange_basis(indexes, o)
-
-    #assume all registries are upto date
-    for h in reg.keys():
-        flag = 0
-        share = T[h][indexes[0]] ** l[0]
-        count = 1
-        for i in range(1, len(indexes)):
-            try:
-                share = T[h][indexes[i]] * l[i]
-            except:
-                flag = 1
-            count += 1
-        if count < to +1:
-            continue
-        a = e(alpha, h_prime) * share * e(reg[h][1], h_prime)
-        b = e(g2, s_prime)
-        if a == b:
-            return h
-    return None
-
 def verify_disclosure(params, commit, disclosed_attr, disclose_index, encode_str, ZKPoK):
     (G, o, g1, hs, g2, e) = params
     filter_encode_str = []
