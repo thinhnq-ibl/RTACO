@@ -284,7 +284,7 @@ sigma = Unblind(validator_params, aggregate_vk, blind_sig, os)
 
 # validator 2
 # Lambda2 = (cm, commitments)
-blind_sig2 = BlindSignAttr(validator_params, sk[2], Lambda2, [])
+blind_sig2 = BlindSignAttr(validator_params, sk[1], Lambda2, [])
 
 send_h2 = [blind_sig2[0][0].n, blind_sig2[0][1].n]
 send_t2 = [blind_sig2[1][0].n, blind_sig2[1][1].n]
@@ -351,19 +351,18 @@ print(json_formatted_str)
 
 encoded_ciphershares= [([([C[i][j][0].coeffs[1].n,C[i][j][0].coeffs[0].n],[C[i][j][1].coeffs[1].n, C[i][j][1].coeffs[0].n]) for j in range(2)],) for i in range(len(C))]
 id = 1
-i = id - 1
-ciphershares = (
-    (
+i = 0
+
+ciphershares = ((
         FQ2([encoded_ciphershares[i][0][0][0][1], encoded_ciphershares[i][0][0][0][0],]), 
         FQ2([encoded_ciphershares[i][0][0][1][1], encoded_ciphershares[i][0][0][1][0],])
     ), (
         FQ2([encoded_ciphershares[i][0][1][0][1], encoded_ciphershares[i][0][1][0][0],]), 
-        FQ2([encoded_ciphershares[i][0][1][1][1],encoded_ciphershares[i][0][1][1][0],])
+        FQ2([encoded_ciphershares[i][0][1][1][1], encoded_ciphershares[i][0][1][1][0],])
     ))
 open_sigma = rand_sig
 h = compute_hash(validator_params, open_sigma[0])
-service_session_id = int.from_bytes(to_binary256(h), 'big', signed=False)
-issuing_session_id = service_session_id
+issuing_session_id = int.from_bytes(to_binary256(h), 'big', signed=False)
 public_share = None
 
 Registry = {}
@@ -377,7 +376,7 @@ Registry[credential_id][issuing_session_id].setdefault("vcerts", vcerts)
 Registry[credential_id][issuing_session_id].setdefault("combination", combination)
 shareRegistry = PreOpening(validator_params, Registry[credential_id], open_sigma)
 shares = shareRegistry[issuing_session_id]
-print("shares", shares)
+# print("shares", shares)
 
 i = 1
 ciphershares2 = (
@@ -393,27 +392,40 @@ Registry2 = {}
 credential_id = 1
 Registry2.setdefault(credential_id, {})
 Registry2[credential_id].setdefault(issuing_session_id, {})
-Registry2[credential_id][issuing_session_id].setdefault("private-share", elgamal_dec(validator_params, osk, ciphershares2))
+Registry2[credential_id][issuing_session_id].setdefault("private-share", elgamal_dec(validator_params, osk1, ciphershares2))
 
 Registry2[credential_id][issuing_session_id].setdefault("public-share", public_share) # it contains attributes in the order of schemaOrder
 Registry2[credential_id][issuing_session_id].setdefault("vcerts", vcerts)
 Registry2[credential_id][issuing_session_id].setdefault("combination", combination)
 shareRegistry2 = PreOpening(validator_params, Registry2[credential_id], open_sigma)
 shares2 = shareRegistry2[issuing_session_id]
-print("shares2", type(shares2))
+# print("shares2", shares2)
 
 
 ret_shares = {}
 indexes = [] # opener-ids
 
 indexes.append(1)
-ret_shares[1] = {}
-ret_shares[1].setdefault(issuing_session_id, shares) 
 indexes.append(2)
-ret_shares[2] = {}
-ret_shares[2].setdefault(issuing_session_id, shares2) 
 
-print(ret_shares[indexes[0]][issuing_session_id])
+openingshares = []
+pairing_values = [0]* 13
+pairing_values[0] = issuing_session_id
+for i in range(12):
+    pairing_values[i+1] = shares.coeffs[i].n
+openingshares.append(pairing_values)
+
+pairing_values2 = [0]* 13
+pairing_values2[0] = issuing_session_id
+for i in range(12):
+    pairing_values2[i+1] = shares2.coeffs[i].n
+openingshares.append(pairing_values2)
+
+ret_shares[1] = {}
+ret_shares[1].setdefault(issuing_session_id, FQ12(openingshares[0][1:13])) 
+ret_shares[2] = {}
+ret_shares[2].setdefault(issuing_session_id, FQ12(openingshares[1][1:13])) 
+
 
 issuing_session_id = OpenCred(validator_params, ret_shares, indexes, open_sigma, to, Registry[credential_id], aggregate_vk)
 print("issuing_session_id", issuing_session_id)

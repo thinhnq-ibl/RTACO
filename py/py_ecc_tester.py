@@ -580,7 +580,7 @@ def OpenCred(params, ret_shares, indexes, sigma, to, Reg, aggr_vk):
     for issuing_session_id in Reg.keys():
         share = ret_shares[indexes[0]][issuing_session_id] ** l[0]
         for i in range(1, len(indexes)):
-            share = ((ret_shares[indexes[i]][issuing_session_id]) * l[i])
+            share *= ((ret_shares[indexes[i]][issuing_session_id]) ** l[i])
         a = e(alpha, h_prime) * share * e(Reg[issuing_session_id]["public-share"], h_prime)
         b = e(g2, s_prime)
         if a == b:
